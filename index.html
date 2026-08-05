@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fare-Ride Customer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">Fare-Ride</div>
+        <h1>Book your ride</h1>
+      </div>
+      <button class="icon-btn" id="profileBtn" aria-label="Profile">👤</button>
+    </header>
+
+    <main>
+      <section class="card ride-card">
+        <label for="pickup">Pickup</label>
+        <div class="input-wrap">
+          <span>●</span>
+          <input id="pickup" placeholder="Enter pickup location" />
+        </div>
+
+        <label for="destination">Destination</label>
+        <div class="input-wrap">
+          <span>■</span>
+          <input id="destination" placeholder="Where are you going?" />
+        </div>
+
+        <button class="primary" id="estimateBtn">Get fare estimate</button>
+      </section>
+
+      <section class="map-card" aria-label="Map preview">
+        <div class="map-grid"></div>
+        <div class="map-marker pickup-marker">P</div>
+        <div class="map-marker destination-marker">D</div>
+        <div class="map-label">Live map area</div>
+      </section>
+
+      <section class="card hidden" id="estimatePanel">
+        <div class="section-head">
+          <h2>Choose a ride</h2>
+          <span id="tripDistance">—</span>
+        </div>
+
+        <button class="ride-option selected" data-type="Standard" data-price="18">
+          <div class="ride-icon">🚗</div>
+          <div class="ride-copy">
+            <strong>Standard</strong>
+            <span>Affordable everyday ride</span>
+          </div>
+          <strong class="price">$18</strong>
+        </button>
+
+        <button class="ride-option" data-type="Comfort" data-price="24">
+          <div class="ride-icon">🚙</div>
+          <div class="ride-copy">
+            <strong>Comfort</strong>
+            <span>Newer car, extra room</span>
+          </div>
+          <strong class="price">$24</strong>
+        </button>
+
+        <button class="ride-option" data-type="XL" data-price="31">
+          <div class="ride-icon">🚐</div>
+          <div class="ride-copy">
+            <strong>XL</strong>
+            <span>Seats up to 6</span>
+          </div>
+          <strong class="price">$31</strong>
+        </button>
+
+        <div class="fare-summary">
+          <span>Estimated fare</span>
+          <strong id="selectedFare">$18</strong>
+        </div>
+
+        <button class="primary" id="requestBtn">Request Standard</button>
+      </section>
+
+      <section class="card hidden" id="statusPanel">
+        <div class="status-badge">Driver search active</div>
+        <h2>Finding your driver…</h2>
+        <p id="statusText">We’re matching you with a nearby driver.</p>
+        <div class="loader"><span></span></div>
+        <button class="secondary" id="cancelBtn">Cancel request</button>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <button class="active">🏠<span>Home</span></button>
+      <button>🕘<span>Trips</span></button>
+      <button>💳<span>Wallet</span></button>
+      <button>⚙️<span>Settings</span></button>
+    </nav>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
