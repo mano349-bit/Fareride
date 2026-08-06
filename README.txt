@@ -1,15 +1,21 @@
-FARE RIDE WEB APP MVP
+FARE RIDE — THREE SEPARATE WEB APPS
 
-Three account areas:
-- Rider: registration, ride request, fare estimate, current trip, trip history, wallet.
-- Driver: online/offline status, ride requests, earnings, vehicle details.
-- Admin: overview, driver approvals, riders, live rides, pricing controls.
+Folders:
+- rider/index.html
+- driver/index.html
+- admin/index.html
 
-RUN LOCALLY
-Open index.html in Chrome.
+The root index.html is only a launcher page.
 
-PUBLISH ON GITHUB PAGES
-Upload index.html, styles.css, and app.js to the repository root.
+To test:
+1. Extract the ZIP.
+2. Open index.html.
+3. Choose Rider, Driver, or Admin.
 
-IMPORTANT
-This is a working front-end prototype using browser localStorage. A real launch still needs a secure backend, authentication, maps/GPS, payments, notifications, and role-based permissions.
+To publish:
+Upload the complete folder structure to GitHub Pages.
+
+Important:
+This is a front-end MVP. It uses localStorage for demo data.
+A production version still needs secure authentication, a database,
+maps/GPS, payment processing, messaging, and server-side permissions.
