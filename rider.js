@@ -1,22 +1,68 @@
+
 (() => {
-const F=window.FareRide; F.tabs();
-const user=F.currentUser('rider');
-document.querySelector('#profileBtn').textContent=user.name;
-function pricing(){return F.read(F.KEYS.pricing,{base:3.5,mile:2.25,minute:0.35,minimum:8})}
-function render(){
-  const rides=F.read(F.KEYS.rides,[]).filter(r=>r.riderId===user.id);
-  const body=document.querySelector('#historyBody');
-  body.innerHTML=(rides.length?rides:[{date:'Jul 28, 2026',pickup:'Downtown',dropoff:'Airport',driver:'James D.',fare:'$34.80',status:'Completed'}])
-  .map(r=>`<tr><td>${r.date}</td><td>${r.pickup} → ${r.dropoff}</td><td>${r.driver||'Searching'}</td><td>${r.fare}</td><td><span class="status good">${r.status}</span></td></tr>`).join('');
+'use strict';
+const $=s=>document.querySelector(s);
+let latestEstimate=null;
+
+function toast(text){
+  const el=$('#toast'); el.textContent=text; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2200);
 }
-document.querySelector('#rideForm').addEventListener('submit',e=>{
+function setLoading(on){
+  $('#estimateBtn').classList.toggle('loading',on);
+  $('#estimateBtn').textContent=on?'Calculating route…':'Calculate real fare';
+}
+function renderHistory(){
+  const rides=JSON.parse(localStorage.getItem('fr_real_rides')||'[]');
+  $('#historyBody').innerHTML=rides.length
+    ? rides.map(r=>`<tr><td>${r.date}</td><td>${r.origin} → ${r.destination}</td><td>${r.distanceMiles} mi</td><td>${r.customQuoteRequired?'Custom quote':'$'+r.fare}</td><td><span class="status good">${r.status}</span></td></tr>`).join('')
+    : '<tr><td colspan="5">No rides requested yet.</td></tr>';
+}
+async function estimate(){
+  const origin=$('#pickup').value.trim();
+  const destination=$('#dropoff').value.trim();
+  const rideType=$('#rideType').value;
+  if(!origin||!destination){toast('Enter pickup and destination');return}
+  setLoading(true);
+  try{
+    const response=await fetch('/api/fare-estimate',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({origin,destination,rideType})
+    });
+    const data=await response.json();
+    if(!response.ok) throw new Error(data.error||'Unable to calculate fare');
+    latestEstimate={...data,origin,destination,rideType};
+    $('#distance').textContent=`${data.distanceMiles} mi`;
+    $('#duration').textContent=`${data.durationMinutes} min`;
+    $('#fare').textContent=data.customQuoteRequired?'Custom quote':`$${data.fare}`;
+    $('#quoteBox').classList.toggle('hidden',!data.customQuoteRequired);
+    $('#quoteBox').textContent=data.message||'';
+    $('#requestBtn').classList.toggle('hidden',data.customQuoteRequired);
+    $('#resultArea').classList.remove('hidden');
+  }catch(err){
+    toast(err.message);
+  }finally{
+    setLoading(false);
+  }
+}
+$('#estimateBtn').addEventListener('click',estimate);
+$('#rideForm').addEventListener('submit',async e=>{
   e.preventDefault();
-  const p=pricing(),distance=7.4,minutes=18,amount=Math.max(p.minimum,p.base+distance*p.mile+minutes*p.minute);
-  const ride={id:'FR-'+Date.now(),riderId:user.id,date:new Date().toLocaleString(),pickup:pickup.value.trim(),dropoff:dropoff.value.trim(),driver:'James D.',fare:'$'+amount.toFixed(2),status:'Driver assigned'};
-  const rides=F.read(F.KEYS.rides,[]);rides.unshift(ride);F.write(F.KEYS.rides,rides);
-  document.querySelector('#currentRoute').textContent=`${ride.pickup} → ${ride.dropoff}`;
-  render();F.toast('Ride requested');document.querySelector('[data-tab="current"]').click();
+  if(!latestEstimate){toast('Calculate the fare first');return}
+  try{
+    const response=await fetch('/api/create-ride',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(latestEstimate)
+    });
+    const data=await response.json();
+    if(!response.ok) throw new Error(data.error||'Unable to create ride');
+    const rides=JSON.parse(localStorage.getItem('fr_real_rides')||'[]');
+    rides.unshift({...latestEstimate,date:new Date().toLocaleString(),status:'Requested',rideId:data.rideId});
+    localStorage.setItem('fr_real_rides',JSON.stringify(rides));
+    renderHistory();toast('Ride request created');
+  }catch(err){toast(err.message)}
 });
-document.querySelector('#cancelRide').onclick=()=>F.toast('Ride cancelled');
-render();
+renderHistory();
 })();

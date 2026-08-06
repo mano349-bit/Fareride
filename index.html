@@ -1,4 +1,32 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FareRide Driver</title><link rel="stylesheet" href="../shared/styles.css"></head><body>
-<header class="topbar"><div class="brand"><div class="brand-mark">FR</div><div><h1>FareRide Driver</h1><p>Driver dashboard</p></div></div><a class="ghost" href="../">App home</a></header>
-<main class="page"><section class="hero"><div><span class="eyebrow">Driver</span><h2>Live dispatch comes next</h2><p>The real-fare stage is connected. The next stage will add Firebase Authentication, driver location, availability, and accepting rides from Firestore.</p></div></section>
-<div class="grid-3"><div class="card"><h2>Online status</h2><button class="primary">Go online</button></div><div class="card"><h2>Requests</h2><p>No assigned requests.</p></div><div class="card"><h2>Today</h2><p>$0.00 · 0 trips</p></div></div></main></body></html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FareRide Rider</title><link rel="stylesheet" href="../shared/styles.css"></head><body>
+<div id="toast" class="toast"></div>
+<header class="topbar"><div class="brand"><div class="brand-mark">FR</div><div><h1>FareRide Rider</h1><p>Real distance and fare calculation</p></div></div><a class="ghost" href="../">App home</a></header>
+<main class="page">
+<section class="hero"><div><span class="eyebrow">Rider</span><h2>Where are you going?</h2><p>Enter complete pickup and destination addresses. FareRide asks the secure server for the actual driving route before showing the price.</p></div></section>
+<div class="grid-2">
+<form id="rideForm" class="card">
+  <div class="field"><label for="pickup">Pickup address</label><input id="pickup" required autocomplete="street-address" placeholder="Times Square, New York, NY"></div>
+  <div class="field"><label for="dropoff">Destination address</label><input id="dropoff" required placeholder="Miami, Florida"></div>
+  <div class="two-col">
+    <div class="field"><label for="rideType">Ride type</label><select id="rideType"><option value="economy">Economy</option><option value="comfort">Comfort</option><option value="xl">XL</option></select></div>
+    <div class="field"><label for="payment">Payment</label><select id="payment"><option>Visa •••• 4242</option><option>Cash</option></select></div>
+  </div>
+  <button id="estimateBtn" class="primary full" type="button">Calculate real fare</button>
+
+  <div id="resultArea" class="hidden" style="margin-top:16px">
+    <div class="estimate">
+      <div><span>Driving distance</span><strong id="distance">—</strong></div>
+      <div><span>Estimated time</span><strong id="duration">—</strong></div>
+      <div><span>Estimated fare</span><strong id="fare">—</strong></div>
+    </div>
+    <div id="quoteBox" class="quote-box hidden"></div>
+    <button id="requestBtn" class="dark full" type="submit">Request this ride</button>
+  </div>
+  <p class="small">Very long trips can be changed to “Custom quote required” instead of accepting an automatic booking.</p>
+</form>
+<div class="card"><div class="map"><div class="road a"></div><div class="road b"></div><div class="road c"></div><div class="pin pick">A</div><div class="pin drop">B</div><div class="car">🚗</div></div></div>
+</div>
+
+<section style="margin-top:22px"><div class="card table-wrap"><h3>Requested rides</h3><table><thead><tr><th>Date</th><th>Route</th><th>Distance</th><th>Fare</th><th>Status</th></tr></thead><tbody id="historyBody"></tbody></table></div></section>
+</main>
+<script src="rider.js"></script></body></html>
