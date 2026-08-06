@@ -1,0 +1,62 @@
+FARE RIDE — REAL DISTANCE AND FARE CALCULATION
+
+WHAT THIS VERSION DOES
+- Uses Google Routes API for actual driving distance and traffic-aware duration.
+- Keeps the Google Maps API key in Firebase Functions secrets, not in the browser.
+- Reads fare settings from Firestore.
+- Calculates Economy, Comfort, and XL estimates.
+- Requires a custom quote for trips longer than the admin distance limit.
+- Saves accepted ride requests in Firestore.
+
+WHAT YOU MUST HAVE
+1. A Firebase project on the Blaze billing plan.
+2. A Google Cloud billing account.
+3. Routes API enabled in the same Google Cloud project.
+4. Firebase CLI and Node.js installed.
+
+SETUP COMMANDS
+Open PowerShell inside this extracted folder:
+
+npm install -g firebase-tools
+firebase login
+firebase use --add
+cd functions
+npm install
+cd ..
+
+Create the secure Google Routes key:
+firebase functions:secrets:set GOOGLE_MAPS_API_KEY
+
+Create a private temporary key for the Admin pricing page:
+firebase functions:secrets:set ADMIN_SETUP_KEY
+
+Deploy:
+firebase deploy
+
+After deployment, Firebase prints your Hosting address.
+
+IMPORTANT GOOGLE CLOUD STEPS
+- Enable Routes API.
+- Create a server API key.
+- Restrict the key to Routes API.
+- After the function is deployed, add appropriate server-side restrictions where practical.
+- Set Google Cloud budget alerts and API quotas.
+
+TEST
+Open the Firebase Hosting URL, then Rider.
+Try:
+Pickup: Times Square, New York, NY
+Destination: Miami, Florida
+
+The app should show the real route distance and mark it as a custom quote because it exceeds the default 250-mile automatic-booking limit.
+
+PRODUCTION SECURITY STILL REQUIRED
+This package makes route distance and fare calculation real, but a public rideshare launch still needs:
+- Firebase Authentication
+- verified rider/driver/admin roles
+- driver GPS location and dispatch
+- payment processing
+- identity and vehicle verification
+- insurance/legal compliance
+- server-side revalidation of every booked fare
+- rate limiting and abuse protection
