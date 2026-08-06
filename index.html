@@ -1,8 +1,26 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FareRide</title><link rel="stylesheet" href="shared/styles.css"></head><body>
-<header class="topbar"><div class="brand"><div class="brand-mark">FR</div><div><h1>FareRide</h1><p>Real route pricing prototype</p></div></div></header>
-<main class="page"><section class="hero"><div><span class="eyebrow">FareRide</span><h2>Choose your app</h2><p>The Rider app now calculates real driving distance, estimated time, and fare using a secure Firebase backend and Google Routes API.</p></div></section>
-<div class="grid-3">
-<a class="card" href="rider/"><h2>🧍 Rider</h2><p>Enter real addresses and receive a route-based fare estimate.</p><button class="primary">Open Rider</button></a>
-<a class="card" href="driver/"><h2>🚘 Driver</h2><p>Driver dashboard placeholder for the next live-dispatch stage.</p><button class="secondary">Open Driver</button></a>
-<a class="card" href="admin/"><h2>🛡️ Admin</h2><p>Change the pricing used by the secure fare function.</p><button class="dark">Open Admin</button></a>
-</div></main></body></html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FareRide Admin</title><link rel="stylesheet" href="../shared/styles.css"></head><body>
+<div id="toast" class="toast"></div>
+<header class="topbar"><div class="brand"><div class="brand-mark">FR</div><div><h1>FareRide Admin</h1><p>Fare configuration</p></div></div><a class="ghost" href="../">App home</a></header>
+<main class="page"><section class="hero"><div><span class="eyebrow">Admin</span><h2>Real fare settings</h2><p>These values are read by the backend when it calculates a route price.</p></div></section>
+<div class="card">
+<h3>Economy pricing</h3>
+<div class="two-col"><div class="field"><label>Base fare</label><input id="base" type="number" step=".10"></div><div class="field"><label>Price per mile</label><input id="mile" type="number" step=".05"></div></div>
+<div class="two-col"><div class="field"><label>Price per minute</label><input id="minute" type="number" step=".05"></div><div class="field"><label>Booking fee</label><input id="booking" type="number" step=".10"></div></div>
+<div class="two-col"><div class="field"><label>Minimum fare</label><input id="minimum" type="number" step=".50"></div><div class="field"><label>Automatic-booking distance limit (miles)</label><input id="maxMiles" type="number" step="1"></div></div>
+<button id="save" class="primary">Save backend pricing</button>
+<p class="small"><strong>Security note:</strong> this setup key is for the initial owner setup only. Replace it with Firebase Authentication and admin claims before public launch.</p>
+<div class="field" style="margin-top:14px"><label>Temporary admin setup key</label><input id="adminKey" type="password" placeholder="Same value as ADMIN_SETUP_KEY secret"></div>
+</div></main>
+<script>
+const $=s=>document.querySelector(s);
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2200)}
+async function load(){
+ const r=await fetch('/api/pricing');const p=await r.json();
+ base.value=p.base;mile.value=p.perMile;minute.value=p.perMinute;booking.value=p.bookingFee;minimum.value=p.minimum;maxMiles.value=p.maxAutomaticMiles;
+}
+save.onclick=async()=>{
+ const r=await fetch('/api/pricing',{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Key':adminKey.value},body:JSON.stringify({base:+base.value,perMile:+mile.value,perMinute:+minute.value,bookingFee:+booking.value,minimum:+minimum.value,maxAutomaticMiles:+maxMiles.value})});
+ const d=await r.json(); if(!r.ok){toast(d.error||'Save failed');return} toast('Pricing saved');
+};
+load().catch(()=>toast('Unable to load pricing'));
+</script></body></html>
