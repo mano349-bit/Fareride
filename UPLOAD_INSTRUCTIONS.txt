@@ -1,16 +1,16 @@
-Replace these ROOT files in your GitHub Fareride repository:
-admin.html
-admin.js
+FARE RIDE — CONNECT RIDER PRICING TO ADMIN
+
+Replace these ROOT files:
 styles.css
-
-Keep:
-index.html
-rider.html
 rider.js
-driver.html
-driver.js
+admin.js
 
-Then open:
-https://mano349-bit.github.io/Fareride/admin.html
+Keep all HTML files as they are.
 
-This Admin dashboard works locally. After Firebase is fixed, driver approvals, users, rides and pricing will be stored in the real backend.
+WHAT THIS DOES:
+- One unified styles.css supports Rider, Driver, Admin and Home.
+- Admin fare settings now affect Rider fare estimates immediately in the same browser.
+- Change per-mile, per-minute, base fare, booking fee or max-mile threshold in Admin.
+- Then open Rider and calculate again.
+
+This is still browser-local until Firebase is fixed.
