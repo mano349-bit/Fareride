@@ -1,0 +1,16 @@
+Upload these files individually to the ROOT of the GitHub repository:
+index.html
+rider.html
+driver.html
+admin.html
+styles.css
+rider.js
+
+Do NOT upload the ZIP itself.
+Do NOT put rider.html inside a rider folder.
+
+Use:
+https://mano349-bit.github.io/Fareride/
+https://mano349-bit.github.io/Fareride/rider.html
+https://mano349-bit.github.io/Fareride/driver.html
+https://mano349-bit.github.io/Fareride/admin.html
