@@ -1,11 +1,16 @@
 Replace these ROOT files in your GitHub Fareride repository:
-driver.html
-driver.js
+admin.html
+admin.js
 styles.css
 
-Keep index.html, rider.html, rider.js, admin.html.
+Keep:
+index.html
+rider.html
+rider.js
+driver.html
+driver.js
 
 Then open:
-https://mano349-bit.github.io/Fareride/driver.html
+https://mano349-bit.github.io/Fareride/admin.html
 
-Live dispatch will connect to Firebase after the Blaze issue is resolved.
+This Admin dashboard works locally. After Firebase is fixed, driver approvals, users, rides and pricing will be stored in the real backend.
