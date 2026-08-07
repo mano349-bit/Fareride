@@ -1,0 +1,11 @@
+Replace these three ROOT files in your Fareride GitHub repository:
+rider.html
+rider.js
+styles.css
+
+Keep index.html, driver.html and admin.html.
+
+Then open:
+https://mano349-bit.github.io/Fareride/rider.html
+
+This is still a test estimator. After Firebase/Blaze is fixed, we will replace its local estimator with Google Routes API.
