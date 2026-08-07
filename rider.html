@@ -1,1 +1,24 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FareRide Rider</title><link rel="stylesheet" href="styles.css"></head><body><header><h1>FareRide Rider</h1><a href="index.html">Home</a></header><main><h2>Where are you going?</h2><form id="rideForm"><label>Pickup<input id="pickup" required placeholder="Times Square, New York, NY"></label><label>Destination<input id="dropoff" required placeholder="JFK Airport, Queens, NY"></label><button>Request FareRide</button></form><p id="msg"></p></main><script src="rider.js"></script></body></html>
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FareRide Rider</title><link rel="stylesheet" href="styles.css"></head>
+<body><div id="toast" class="toast"></div>
+<header><div><h1>FareRide Rider</h1><p>Book your ride</p></div><a href="index.html">Home</a></header>
+<main>
+<section class="hero"><h2>Where are you going?</h2><p>Enter pickup and destination, choose a ride type, calculate an estimate, then request the ride.</p></section>
+<div class="layout">
+<form id="rideForm" class="card">
+<label>Pickup<input id="pickup" required placeholder="Times Square, New York, NY"></label>
+<label>Destination<input id="dropoff" required placeholder="JFK Airport, Queens, NY"></label>
+<label>Ride type<select id="rideType"><option value="economy">Economy</option><option value="comfort">Comfort</option><option value="xl">XL</option></select></label>
+<button type="button" id="estimateBtn">Calculate estimate</button>
+<div id="estimatePanel" class="estimate hidden">
+<div><span>Distance</span><b id="distance">—</b></div>
+<div><span>Time</span><b id="duration">—</b></div>
+<div><span>Fare</span><b id="fare">—</b></div>
+</div>
+<button id="requestBtn" class="dark hidden" type="submit">Request FareRide</button>
+</form>
+<div class="card map"><div class="road a"></div><div class="road b"></div><div class="road c"></div><div class="car">🚗</div></div>
+</div>
+<section class="card history"><h3>Recent requests</h3><table><thead><tr><th>Date</th><th>Route</th><th>Type</th><th>Fare</th><th>Status</th></tr></thead><tbody id="historyBody"></tbody></table></section>
+</main><script src="rider.js"></script></body></html>

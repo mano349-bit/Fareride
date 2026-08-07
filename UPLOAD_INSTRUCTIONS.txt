@@ -1,16 +1,11 @@
-Upload these files individually to the ROOT of the GitHub repository:
-index.html
+Replace these three ROOT files in your Fareride GitHub repository:
 rider.html
-driver.html
-admin.html
-styles.css
 rider.js
+styles.css
 
-Do NOT upload the ZIP itself.
-Do NOT put rider.html inside a rider folder.
+Keep index.html, driver.html and admin.html.
 
-Use:
-https://mano349-bit.github.io/Fareride/
+Then open:
 https://mano349-bit.github.io/Fareride/rider.html
-https://mano349-bit.github.io/Fareride/driver.html
-https://mano349-bit.github.io/Fareride/admin.html
+
+This is still a test estimator. After Firebase/Blaze is fixed, we will replace its local estimator with Google Routes API.
