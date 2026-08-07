@@ -1,15 +1,9 @@
-(() => {
-const F=window.FareRide;F.tabs();F.currentUser('driver');
-const requests=[
- {rider:'Sarah M.',pickup:'Times Square',dropoff:'JFK Airport',distance:'14.2 mi',fare:'$48.50'},
- {rider:'David K.',pickup:'5th Avenue',dropoff:'Brooklyn Heights',distance:'7.8 mi',fare:'$27.20'},
- {rider:'Linda R.',pickup:'Queens Center',dropoff:'LaGuardia Airport',distance:'5.5 mi',fare:'$19.80'}
-];
-function render(){
- requestList.innerHTML=requests.map((r,i)=>`<div class="request-card"><strong>${r.rider}</strong><div class="fare">${r.fare}</div><div class="route"><span>📍 ${r.pickup}</span><span>🏁 ${r.dropoff}</span><span>${r.distance}</span></div><button class="primary accept" data-i="${i}">Accept ride</button></div>`).join('');
- document.querySelectorAll('.accept').forEach(btn=>btn.onclick=()=>{btn.textContent='Accepted';btn.disabled=true;F.toast('Ride accepted')});
-}
-online.onchange=e=>{onlineText.textContent=e.target.checked?'Online':'Offline';F.toast(e.target.checked?'You are online':'You are offline')};
-saveVehicle.onclick=()=>F.toast('Vehicle saved');
-render();
-})();
+(()=>{const $=id=>document.getElementById(id);let active=null;
+const reqs=[{r:'Sarah M.',p:'Times Square',d:'JFK Airport',m:'16.8 mi',f:'$48.50'},{r:'David K.',p:'5th Avenue',d:'Brooklyn Heights',m:'7.8 mi',f:'$27.20'},{r:'Linda R.',p:'Queens Center',d:'LaGuardia Airport',m:'5.5 mi',f:'$19.80'}];
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1800)}
+function show(n){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===n));document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.dataset.panel===n))}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>show(b.dataset.tab));
+function renderReq(){requestList.innerHTML=reqs.map((x,i)=>`<div class="request-card"><span class="eyebrow">Nearby rider</span><h3>${x.r}</h3><div class="big-fare">${x.f}</div><p>📍 ${x.p}</p><p>🏁 ${x.d}</p><p>${x.m}</p><button class="accept" data-i="${i}">Accept ride</button></div>`).join('');document.querySelectorAll('.accept').forEach(b=>b.onclick=()=>{active=reqs[+b.dataset.i];activeRider.textContent=active.r;activeRoute.textContent=`${active.p} → ${active.d}`;activeFare.textContent=active.f;pickupBtn.disabled=false;startBtn.disabled=true;completeBtn.disabled=true;show('active');toast('Ride accepted')})}
+pickupBtn.onclick=()=>{pickupBtn.disabled=true;startBtn.disabled=false;toast('Arrived at pickup')};startBtn.onclick=()=>{startBtn.disabled=true;completeBtn.disabled=false;toast('Trip started')};completeBtn.onclick=()=>{if(!active)return;const h=JSON.parse(localStorage.getItem('fr_driver_history')||'[]');h.unshift({date:new Date().toLocaleString(),rider:active.r,route:`${active.p} → ${active.d}`,earn:active.f});localStorage.setItem('fr_driver_history',JSON.stringify(h));active=null;activeRider.textContent='No active ride';activeRoute.textContent='Accept a ride request to begin.';activeFare.textContent='—';completeBtn.disabled=true;renderHist();show('earnings');toast('Trip completed')};
+function renderHist(){const h=JSON.parse(localStorage.getItem('fr_driver_history')||'[]');const f=h.length?h:[{date:'Today, 2:15 PM',rider:'Sarah M.',route:'Downtown → Airport',earn:'$34.80'},{date:'Today, 12:40 PM',rider:'David K.',route:'5th Ave → Brooklyn',earn:'$26.50'}];driverHistoryBody.innerHTML=f.map(x=>`<tr><td>${x.date}</td><td>${x.rider}</td><td>${x.route}</td><td>${x.earn}</td></tr>`).join('')}
+onlineToggle.onchange=e=>{onlineLabel.textContent=e.target.checked?'Online':'Offline';toast(e.target.checked?'You are online':'You are offline')};saveVehicle.onclick=()=>toast('Vehicle saved locally');renderReq();renderHist();})();

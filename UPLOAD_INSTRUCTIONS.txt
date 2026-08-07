@@ -1,11 +1,11 @@
-Replace these three ROOT files in your Fareride GitHub repository:
-rider.html
-rider.js
+Replace these ROOT files in your GitHub Fareride repository:
+driver.html
+driver.js
 styles.css
 
-Keep index.html, driver.html and admin.html.
+Keep index.html, rider.html, rider.js, admin.html.
 
 Then open:
-https://mano349-bit.github.io/Fareride/rider.html
+https://mano349-bit.github.io/Fareride/driver.html
 
-This is still a test estimator. After Firebase/Blaze is fixed, we will replace its local estimator with Google Routes API.
+Live dispatch will connect to Firebase after the Blaze issue is resolved.
