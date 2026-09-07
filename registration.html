@@ -1,0 +1,750 @@
+﻿<!doctype html>
+<html lang="en">
+
+<head>
+
+<meta charset="utf-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1">
+
+<title>FareRide Registration</title>
+
+<link
+  rel="stylesheet"
+  href="styles.css">
+
+<style>
+
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  background:#f4f7fb;
+  color:#17202a;
+  font-family:Arial,sans-serif;
+}
+
+.registration-header{
+  background:white;
+  border-bottom:1px solid #dce3ec;
+  padding:18px 5%;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:15px;
+}
+
+.registration-header h1{
+  margin:0;
+}
+
+.registration-header a{
+  background:#1677ff;
+  color:white;
+  text-decoration:none;
+  padding:10px 15px;
+  border-radius:9px;
+  font-weight:900;
+}
+
+.registration-main{
+  max-width:950px;
+  margin:auto;
+  padding:30px 20px;
+}
+
+.hero{
+  text-align:center;
+  margin-bottom:25px;
+}
+
+.hero h2{
+  font-size:32px;
+  color:#075fd8;
+}
+
+.role-buttons{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:15px;
+  margin:25px 0;
+}
+
+.role-button{
+  padding:20px;
+  border:2px solid #1677ff;
+  border-radius:14px;
+  background:white;
+  color:#075fd8;
+  font-size:21px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.role-button.active{
+  background:#1677ff;
+  color:white;
+}
+
+.form-card{
+  background:white;
+  border:1px solid #dce3ec;
+  border-radius:18px;
+  padding:25px;
+  box-shadow:0 6px 22px rgba(0,0,0,.06);
+}
+
+.hidden{
+  display:none !important;
+}
+
+.section-title{
+  margin-top:30px;
+  padding-bottom:8px;
+  border-bottom:2px solid #e1e7ef;
+  color:#075fd8;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:15px;
+}
+
+label{
+  display:block;
+  font-weight:800;
+}
+
+input,
+select,
+textarea{
+  width:100%;
+  margin-top:6px;
+  padding:11px;
+  border:1px solid #cbd5e1;
+  border-radius:8px;
+  font-size:15px;
+}
+
+textarea{
+  min-height:90px;
+  resize:vertical;
+}
+
+.file-box{
+  margin-top:12px;
+  padding:15px;
+  background:#f8fafc;
+  border:1px solid #dce3ec;
+  border-radius:10px;
+}
+
+.notice{
+  margin-top:20px;
+  padding:15px;
+  background:#fff7e6;
+  border:1px solid #f0c36d;
+  border-radius:10px;
+  line-height:1.6;
+}
+
+.submit-btn{
+  width:100%;
+  margin-top:25px;
+  padding:15px;
+  border:0;
+  border-radius:10px;
+  background:#1677ff;
+  color:white;
+  font-size:18px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.submit-btn:disabled{
+  opacity:.6;
+}
+
+.message{
+  margin-top:18px;
+  padding:14px;
+  border-radius:10px;
+  font-weight:900;
+  display:none;
+}
+
+.success-message{
+  display:block !important;
+  background:#ecfdf3;
+  border:2px solid #16a34a;
+  color:#08783d;
+}
+
+.error-message{
+  display:block !important;
+  background:#fff0f0;
+  border:2px solid #d92d20;
+  color:#b42318;
+}
+
+.driver-share{
+  margin:20px auto;
+  max-width:650px;
+  padding:17px;
+  background:#ecfdf3;
+  border:3px solid #16a34a;
+  border-radius:14px;
+  color:#08783d;
+  font-size:24px;
+  font-weight:900;
+}
+
+@media(max-width:700px){
+
+  .grid,
+  .role-buttons{
+    grid-template-columns:1fr;
+  }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header class="registration-header">
+
+  <h1>
+    FareRide Registration
+  </h1>
+
+  <a href="index.html">
+    Home
+  </a>
+
+</header>
+
+
+<main class="registration-main">
+
+<section class="hero">
+
+  <h2>
+    Join Fare-Ride
+  </h2>
+
+  <p>
+    Choose whether you are registering as a Rider
+    or applying to become a Driver.
+  </p>
+
+</section>
+
+
+<div class="role-buttons">
+
+  <button
+    id="showRiderBtn"
+    class="role-button active"
+    type="button">
+
+    ðŸ§ Register as Rider
+
+  </button>
+
+  <button
+    id="showDriverBtn"
+    class="role-button"
+    type="button">
+
+    ðŸš— Apply as Driver
+
+  </button>
+
+</div>
+
+
+<!-- =====================================================
+     RIDER REGISTRATION
+====================================================== -->
+
+<form
+  id="riderRegistrationForm"
+  class="form-card">
+
+  <h2>
+    Rider Registration
+  </h2>
+
+  <h3 class="section-title">
+    Personal Information
+  </h3>
+
+  <div class="grid">
+
+    <label>
+      Full Legal Name
+      <input
+        id="riderFullName"
+        required>
+    </label>
+
+    <label>
+      Phone Number
+      <input
+        id="riderPhone"
+        type="tel"
+        required>
+    </label>
+
+    <label>
+      Email Address
+      <input
+        id="riderEmail"
+        type="email"
+        required>
+    </label>
+
+    <label>
+      Date of Birth
+      <input
+        id="riderDateOfBirth"
+        type="date"
+        required>
+    </label>
+
+  </div>
+
+
+  <label style="margin-top:15px;">
+    Home Address
+    <input
+      id="riderAddress"
+      required>
+  </label>
+
+
+  <div
+    class="grid"
+    style="margin-top:15px;">
+
+    <label>
+      City
+      <input
+        id="riderCity"
+        required>
+    </label>
+
+    <label>
+      State
+      <input
+        id="riderState"
+        required>
+    </label>
+
+    <label>
+      ZIP Code
+      <input
+        id="riderZipCode"
+        required>
+    </label>
+
+  </div>
+
+
+  <h3 class="section-title">
+    Required Identification
+  </h3>
+
+
+  <div class="file-box">
+
+    <label>
+      Driver License
+      <input
+        id="riderLicenseFile"
+        type="file"
+        accept="image/*,application/pdf"
+        required>
+    </label>
+
+    <p>
+      Upload a clear photo or PDF of the
+      rider's driver license.
+    </p>
+
+  </div>
+
+
+  <div class="notice">
+
+    <strong>Privacy:</strong>
+
+    FareRide uses the uploaded identification
+    only for account review and verification.
+
+  </div>
+
+
+  <label style="margin-top:20px;">
+
+    <input
+      id="riderCertify"
+      type="checkbox"
+      style="width:auto;margin-right:8px;"
+      required>
+
+    I certify that the information provided is accurate.
+
+  </label>
+
+
+  <button
+    id="submitRiderBtn"
+    class="submit-btn"
+    type="submit">
+
+    Submit Rider Registration
+
+  </button>
+
+
+  <div
+    id="riderApplicationMessage"
+    class="message">
+  </div>
+
+</form>
+
+
+<!-- =====================================================
+     DRIVER REGISTRATION
+====================================================== -->
+
+<form
+  id="driverApplicationForm"
+  class="form-card hidden">
+
+  <h2>
+    Driver Application
+  </h2>
+
+  <div class="driver-share">
+    Drivers Keep 75% of the Ride Fare
+  </div>
+
+
+  <h3 class="section-title">
+    Personal Information
+  </h3>
+
+
+  <div class="grid">
+
+    <label>
+      Full Legal Name
+      <input
+        id="fullName"
+        required>
+    </label>
+
+
+    <label>
+      Phone Number
+      <input
+        id="phone"
+        type="tel"
+        required>
+    </label>
+
+
+    <label>
+      Email Address
+      <input
+        id="email"
+        type="email"
+        required>
+    </label>
+
+
+    <label>
+      Date of Birth
+      <input
+        id="dateOfBirth"
+        type="date"
+        required>
+    </label>
+
+  </div>
+
+
+  <label style="margin-top:15px;">
+    Home Address
+    <input
+      id="address"
+      required>
+  </label>
+
+
+  <div
+    class="grid"
+    style="margin-top:15px;">
+
+    <label>
+      City
+      <input
+        id="city"
+        required>
+    </label>
+
+
+    <label>
+      State
+      <input
+        id="state"
+        required>
+    </label>
+
+
+    <label>
+      ZIP Code
+      <input
+        id="zipCode"
+        required>
+    </label>
+
+
+    <label>
+      SSN Last 4 Digits
+      <input
+        id="ssnLast4"
+        inputmode="numeric"
+        maxlength="4"
+        pattern="[0-9]{4}"
+        required>
+    </label>
+
+  </div>
+
+
+  <h3 class="section-title">
+    Vehicle Information
+  </h3>
+
+
+  <div class="grid">
+
+    <label>
+      Vehicle Year
+      <input
+        id="vehicleYear"
+        type="number"
+        min="1980"
+        max="2100"
+        required>
+    </label>
+
+
+    <label>
+      Vehicle Make
+      <input
+        id="vehicleMake"
+        required>
+    </label>
+
+
+    <label>
+      Vehicle Model
+      <input
+        id="vehicleModel"
+        required>
+    </label>
+
+
+    <label>
+      Vehicle Color
+      <input
+        id="vehicleColor"
+        required>
+    </label>
+
+
+    <label>
+      Plate Number
+      <input
+        id="plateNumber"
+        required>
+    </label>
+
+  </div>
+
+
+  <h3 class="section-title">
+    Insurance Information
+  </h3>
+
+
+  <div class="grid">
+
+    <label>
+      Insurance Company
+      <input
+        id="insuranceCompany"
+        required>
+    </label>
+
+
+    <label>
+      Policy Number
+      <input
+        id="insurancePolicyNumber"
+        required>
+    </label>
+
+
+    <label>
+      Insurance Expiration Date
+      <input
+        id="insuranceExpiration"
+        type="date"
+        required>
+    </label>
+
+  </div>
+
+
+  <h3 class="section-title">
+    Required Documents
+  </h3>
+
+
+  <div class="file-box">
+
+    <label>
+      Driver License
+      <input
+        id="driverLicenseFile"
+        type="file"
+        accept="image/*,application/pdf"
+        required>
+    </label>
+
+  </div>
+
+
+  <div class="file-box">
+
+    <label>
+      Insurance Card / Proof of Insurance
+      <input
+        id="insuranceFile"
+        type="file"
+        accept="image/*,application/pdf"
+        required>
+    </label>
+
+  </div>
+
+
+  <div class="file-box">
+
+    <label>
+      Vehicle Registration
+      <input
+        id="registrationFile"
+        type="file"
+        accept="image/*,application/pdf"
+        required>
+    </label>
+
+  </div>
+
+
+  <h3 class="section-title">
+    Additional Information
+  </h3>
+
+
+  <label>
+    Anything You Want FareRide Admin to Know
+    <textarea
+      id="applicantNotes"
+      placeholder="Optional">
+    </textarea>
+  </label>
+
+
+  <label style="margin-top:20px;">
+
+    <input
+      id="certify"
+      type="checkbox"
+      style="width:auto;margin-right:8px;"
+      required>
+
+    I certify that the information provided
+    is accurate.
+
+  </label>
+
+
+  <button
+    id="submitApplicationBtn"
+    class="submit-btn"
+    type="submit">
+
+    Submit Driver Application
+
+  </button>
+
+
+  <div
+    id="applicationMessage"
+    class="message">
+  </div>
+
+</form>
+
+</main>
+
+
+<script
+  type="module"
+  src="registration.js">
+</script>
+
+
+<div style="
+ text-align:center;
+ padding:20px;
+ font-family:Arial,sans-serif;
+">
+
+Already registered?
+
+<a
+ href="./rider-login.html"
+ style="font-weight:bold;">
+Rider Login
+</a>
+
+&nbsp; | &nbsp;
+
+<a
+ href="./driver-login.html"
+ style="font-weight:bold;">
+Driver Login
+</a>
+
+</div>
+
+</body>
+
+</html>

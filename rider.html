@@ -1,1 +1,1150 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FareRide Rider</title><link rel="stylesheet" href="styles.css"></head><body><header><h1>FareRide Rider</h1><a href="index.html">Home</a></header><main><h2>Where are you going?</h2><form id="rideForm"><label>Pickup<input id="pickup" required placeholder="Times Square, New York, NY"></label><label>Destination<input id="dropoff" required placeholder="JFK Airport, Queens, NY"></label><button>Request FareRide</button></form><p id="msg"></p></main><script src="rider.js"></script></body></html>
+﻿<!doctype html>
+<html lang="en">
+
+<head>
+
+<meta charset="utf-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1">
+
+<title>FareRide Rider</title>
+
+<link
+  rel="stylesheet"
+  href="styles.css">
+
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<style>
+
+#msg{
+    margin-top:18px;
+    padding:14px 20px;
+    border:3px solid #1677ff;
+    border-radius:12px;
+    background:#eef6ff;
+    color:#075fd8;
+    font-size:28px;
+    font-weight:900;
+    text-align:center;
+    box-shadow:0 4px 12px rgba(22,119,255,.15);
+    width:fit-content;
+    max-width:100%;
+}
+
+#msg:empty{
+    display:none;
+}
+
+
+/* =========================================================
+   DRIVER MAP
+========================================================= */
+
+.driver-map-card{
+    margin-top:24px;
+    padding:18px;
+    background:#fff;
+    border:1px solid #dfe5ec;
+    border-radius:14px;
+    box-shadow:0 4px 14px rgba(0,0,0,.05);
+}
+
+#driverMap{
+    width:100%;
+    height:420px;
+    margin-top:14px;
+    border-radius:12px;
+    overflow:hidden;
+}
+
+.eta-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    margin-top:14px;
+}
+
+.eta-box{
+    padding:12px;
+    background:#eef6ff;
+    border:1px solid #b9d5ff;
+    border-radius:10px;
+    text-align:center;
+}
+
+.eta-label{
+    display:block;
+    color:#667085;
+    font-size:12px;
+    font-weight:800;
+}
+
+.eta-value{
+    display:block;
+    margin-top:5px;
+    color:#075fd8;
+    font-size:22px;
+    font-weight:900;
+}
+
+#driverEtaStatus{
+    margin-top:12px;
+    font-weight:800;
+    color:#08783d;
+}
+
+
+/* =========================================================
+   RIDER EMERGENCY SOS
+========================================================= */
+
+.rider-emergency-card{
+    margin-top:28px;
+    padding:26px;
+    background:#fff4f4;
+    border:4px solid #d92d20;
+    border-radius:18px;
+    box-shadow:0 8px 24px rgba(217,45,32,.18);
+    text-align:center;
+}
+
+.rider-emergency-card h2{
+    margin-top:0;
+    color:#b42318;
+    font-size:34px;
+}
+
+.rider-emergency-warning{
+    max-width:700px;
+    margin:14px auto 20px;
+    color:#7a271a;
+    line-height:1.6;
+    font-size:17px;
+    font-weight:700;
+}
+
+.rider-sos-button{
+    width:100%;
+    max-width:600px;
+    padding:23px 26px;
+    border:none;
+    border-radius:16px;
+    background:#d92d20;
+    color:white;
+    font-size:28px;
+    font-weight:900;
+    cursor:pointer;
+    box-shadow:0 8px 18px rgba(217,45,32,.28);
+}
+
+.rider-sos-button:hover{
+    background:#b42318;
+}
+
+.rider-sos-button:active{
+    transform:scale(.99);
+}
+
+#riderSosResult{
+    margin:20px auto 0;
+    max-width:680px;
+    font-size:17px;
+    line-height:1.6;
+}
+
+.rider-sos-success{
+    padding:20px;
+    background:white;
+    border:3px solid #d92d20;
+    border-radius:14px;
+    color:#7a271a;
+}
+
+.rider-sos-map{
+    display:inline-block;
+    padding:12px 18px;
+    background:#1677ff;
+    color:white;
+    text-decoration:none;
+    border-radius:10px;
+    font-weight:900;
+}
+
+.rider-call-911{
+    display:inline-block;
+    padding:17px 28px;
+    background:#d92d20;
+    color:white;
+    text-decoration:none;
+    border-radius:10px;
+    font-size:25px;
+    font-weight:900;
+}
+
+.rider-emergency-note{
+    margin-top:16px;
+    color:#667085;
+    font-size:14px;
+    line-height:1.5;
+}
+
+
+/* =========================================================
+   ABOUT FARE-RIDE
+========================================================= */
+
+.about-fareride{
+    margin-top:32px;
+    padding:26px;
+    background:linear-gradient(
+        135deg,
+        #f8fbff,
+        #eef6ff
+    );
+    border:2px solid #1677ff;
+    border-radius:18px;
+    box-shadow:0 6px 20px rgba(22,119,255,.12);
+    text-align:center;
+}
+
+.about-fareride h2{
+    margin-top:0;
+    color:#075fd8;
+    font-size:30px;
+}
+
+.about-fareride h3{
+    margin:8px 0;
+    color:#17202a;
+}
+
+.creator{
+    font-size:18px;
+    font-weight:800;
+    color:#475467;
+}
+
+.mission{
+    max-width:760px;
+    margin:16px auto;
+    line-height:1.7;
+    font-size:17px;
+}
+
+.driver-share{
+    margin:22px auto;
+    padding:18px;
+    max-width:650px;
+    background:#ffffff;
+    border:3px solid #16a34a;
+    border-radius:14px;
+    color:#08783d;
+    font-size:28px;
+    font-weight:900;
+}
+
+.savings-line{
+    margin:16px 0;
+    color:#075fd8;
+    font-size:22px;
+    font-weight:900;
+}
+
+.join-box{
+    margin:24px auto 0;
+    padding:20px;
+    max-width:650px;
+    background:#ffffff;
+    border:1px solid #cbd5e1;
+    border-radius:14px;
+}
+
+.join-box a{
+    display:inline-block;
+    margin:6px 8px;
+    padding:11px 16px;
+    background:#1677ff;
+    color:#ffffff;
+    text-decoration:none;
+    border-radius:9px;
+    font-weight:900;
+}
+
+.join-box a.email{
+    background:#16a34a;
+}
+
+.tagline{
+    margin-top:20px;
+    font-size:18px;
+    font-weight:900;
+    color:#17202a;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media(max-width:650px){
+
+    .eta-grid{
+        grid-template-columns:1fr;
+    }
+
+    #driverMap{
+        height:320px;
+    }
+
+    .driver-share{
+        font-size:22px;
+    }
+
+    .rider-emergency-card{
+        padding:20px 14px;
+    }
+
+    .rider-emergency-card h2{
+        font-size:28px;
+    }
+
+    .rider-sos-button{
+        font-size:23px;
+        padding:20px 15px;
+    }
+
+    .rider-call-911{
+        width:100%;
+        font-size:22px;
+    }
+}
+
+</style>
+
+
+<script
+ type="module"
+ src="./fare-auth-guard.js">
+</script>
+
+</head>
+
+
+<body>
+
+
+<header>
+
+    <h1>
+        FareRide Rider
+    </h1>
+
+    <a href="index.html">
+        Home
+    </a>
+
+</header>
+
+
+<main>
+
+
+<h2>
+    Where are you going?
+</h2>
+
+
+<form id="rideForm">
+
+<label>
+
+    Pickup
+
+    <input
+      id="pickup"
+      required
+      placeholder="Times Square, New York, NY">
+
+</label>
+
+
+<label>
+
+    Destination
+
+    <input
+      id="dropoff"
+      required
+      placeholder="JFK Airport, Queens, NY">
+
+</label>
+
+
+<label>
+
+    Ride type
+
+    <select id="rideType">
+
+        <option value="economy">
+            Economy
+        </option>
+
+        <option value="comfort">
+            Comfort
+        </option>
+
+        <option value="xl">
+            XL
+        </option>
+
+    </select>
+
+</label>
+
+
+<button
+  id="estimateBtn"
+  type="button">
+
+    Calculate mileage & fare
+
+</button>
+
+
+<button
+  id="requestBtn"
+  type="submit"
+  disabled>
+
+    Request FareRide
+
+</button>
+
+
+</form>
+
+
+<div
+  id="summary"
+  class="card"
+  hidden>
+
+    <p>
+        <b>Mileage:</b>
+        <span id="mileage">â€”</span>
+    </p>
+
+    <p>
+        <b>Estimated fare:</b>
+        <span id="fare">â€”</span>
+    </p>
+
+    <p>
+        <b>Route time:</b>
+        <span id="duration">â€”</span>
+    </p>
+
+</div>
+
+
+<div id="msg"></div>
+
+
+<!-- ======================================================
+     DRIVER LOCATION
+======================================================= -->
+
+<div class="driver-map-card">
+
+    <h2>
+        Driver Location
+    </h2>
+
+    <div id="driverEtaStatus">
+        Waiting for ride information...
+    </div>
+
+
+    <div class="eta-grid">
+
+        <div class="eta-box">
+
+            <span class="eta-label">
+                Distance to pickup
+            </span>
+
+            <span
+              id="driverDistance"
+              class="eta-value">
+                â€”
+            </span>
+
+        </div>
+
+
+        <div class="eta-box">
+
+            <span class="eta-label">
+                ETA
+            </span>
+
+            <span
+              id="driverEtaMinutes"
+              class="eta-value">
+                â€”
+            </span>
+
+        </div>
+
+
+        <div class="eta-box">
+
+            <span class="eta-label">
+                Estimated arrival
+            </span>
+
+            <span
+              id="driverEtaTime"
+              class="eta-value">
+                â€”
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div id="driverMap"></div>
+
+</div>
+
+
+<!-- ======================================================
+     RIDER EMERGENCY SOS
+======================================================= -->
+
+<section class="rider-emergency-card">
+
+    <h2>
+        ðŸš¨ Emergency SOS
+    </h2>
+
+    <p class="rider-emergency-warning">
+
+        If you are in immediate danger,
+        press the SOS button.
+
+        FareRide will record your current GPS
+        location and create an emergency alert.
+
+    </p>
+
+
+    <button
+      class="rider-sos-button"
+      type="button"
+      onclick="FareRideRiderSOS.send()">
+
+        ðŸš¨ SOS â€” EMERGENCY
+
+    </button>
+
+
+    <div id="riderSosResult"></div>
+
+
+    <p class="rider-emergency-note">
+
+        FareRide records your SOS and GPS location.
+        The emergency call itself is placed through
+        your phone.
+
+    </p>
+
+</section>
+
+
+<!-- ======================================================
+     ABOUT FARE-RIDE
+======================================================= -->
+
+<section class="about-fareride">
+
+    <h2>
+        About Fare-Ride
+    </h2>
+
+    <div class="creator">
+        Created by Emmanuel Hileah
+    </div>
+
+
+    <h3>
+        A Better Deal for Riders & Drivers
+    </h3>
+
+
+    <p class="mission">
+
+        Fare-Ride was created with a simple mission:
+        help riders save money while giving drivers
+        a better share of the fare they work hard to earn.
+
+    </p>
+
+
+    <div class="driver-share">
+        DRIVERS KEEP 75% OF THE RIDE FARE
+    </div>
+
+
+    <p class="mission">
+
+        More earnings for drivers.
+        More savings for riders.
+        A fairer ride for everyone.
+
+    </p>
+
+
+    <div class="savings-line">
+
+        Riders Save More $$$
+
+        &nbsp; â€¢ &nbsp;
+
+        Drivers Earn More $$$
+
+    </div>
+
+
+    <p class="mission">
+
+        Please share Fare-Ride with your family,
+        friends, drivers and riders.
+
+        The more people who join,
+        the better Fare-Ride becomes for everyone.
+
+    </p>
+
+
+    <div class="join-box">
+
+        <h3>
+            Want to Drive or Join Fare-Ride?
+        </h3>
+
+
+        <a href="tel:+15163764118">
+
+            ðŸ“ž Call or Text:
+            +1 (516) 376-4118
+
+        </a>
+
+
+        <a
+          class="email"
+          href="mailto:fairride2all@gmail.com">
+
+            âœ‰ Email:
+            fairride2all@gmail.com
+
+        </a>
+
+    </div>
+
+
+    <div class="tagline">
+
+        Better for Riders
+        â€¢ Better for Drivers
+        â€¢ Fare-Ride
+
+    </div>
+
+</section>
+
+
+</main>
+
+
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+
+
+<script
+  type="module"
+  src="rider.js">
+</script>
+
+
+<script
+  type="module"
+  src="rider-map.js">
+</script>
+
+
+<!-- ======================================================
+     RIDER SOS JAVASCRIPT
+======================================================= -->
+
+<script type="module">
+
+import {
+  db,
+  doc,
+  updateDoc,
+  addDoc,
+  collection,
+  serverTimestamp
+} from "./firebase-config.js";
+
+
+/* =========================================================
+   FIND ACTIVE RIDER RIDE
+========================================================= */
+
+function getActiveRideId() {
+
+    const possibleKeys = [
+
+        "fareride_active_rider_ride",
+
+        "fareride_active_ride",
+
+        "fareride_current_ride"
+
+    ];
+
+
+    for (
+        const key
+        of possibleKeys
+    ) {
+
+        const value =
+            localStorage
+                .getItem(
+                    key
+                );
+
+
+        if (value) {
+
+            return value;
+
+        }
+
+    }
+
+
+    return null;
+
+}
+
+
+/* =========================================================
+   SHOW SOS RESULT
+========================================================= */
+
+function showRiderSOSResult(
+    latitude,
+    longitude
+) {
+
+    const box =
+        document
+            .getElementById(
+                "riderSosResult"
+            );
+
+
+    if (!box) {
+
+        return;
+
+    }
+
+
+    const mapUrl =
+
+        "https://www.google.com/maps?q=" +
+
+        encodeURIComponent(
+            latitude +
+            "," +
+            longitude
+        );
+
+
+    box.innerHTML = `
+
+        <div class="rider-sos-success">
+
+            <strong>
+
+                ðŸš¨ SOS SENT TO FARERIDE
+
+            </strong>
+
+
+            <br><br>
+
+
+            Your emergency GPS location
+            was recorded.
+
+
+            <br><br>
+
+
+            <strong>
+                Latitude:
+            </strong>
+
+            ${latitude.toFixed(6)}
+
+
+            <br>
+
+
+            <strong>
+                Longitude:
+            </strong>
+
+            ${longitude.toFixed(6)}
+
+
+            <br><br>
+
+
+            <a
+              class="rider-sos-map"
+              href="${mapUrl}"
+              target="_blank"
+              rel="noopener">
+
+                ðŸ“ View My Location
+
+            </a>
+
+
+            <br><br>
+
+
+            <a
+              class="rider-call-911"
+              href="tel:911">
+
+                ðŸ“ž CALL 911 NOW
+
+            </a>
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   SEND RIDER SOS
+========================================================= */
+
+async function sendRiderSOS() {
+
+    const confirmed =
+        window.confirm(
+
+            "EMERGENCY SOS\n\n" +
+
+            "FareRide will record your current GPS " +
+
+            "location and create an emergency alert.\n\n" +
+
+            "Continue?"
+
+        );
+
+
+    if (!confirmed) {
+
+        return;
+
+    }
+
+
+    const result =
+        document
+            .getElementById(
+                "riderSosResult"
+            );
+
+
+    if (result) {
+
+        result.textContent =
+
+            "Getting your emergency GPS location...";
+
+    }
+
+
+    if (
+        !navigator.geolocation
+    ) {
+
+        if (result) {
+
+            result.textContent =
+
+                "GPS location is not supported on this device.";
+
+        }
+
+
+        return;
+
+    }
+
+
+    navigator
+        .geolocation
+        .getCurrentPosition(
+
+
+            async position => {
+
+
+                const {
+
+                    latitude,
+
+                    longitude,
+
+                    accuracy
+
+                } = position.coords;
+
+
+                const rideId =
+                    getActiveRideId();
+
+
+                try {
+
+
+                    /* ========================================
+                       CREATE EMERGENCY RECORD
+                    ======================================== */
+
+                    const emergency =
+
+                        await addDoc(
+
+                            collection(
+                                db,
+                                "emergencies"
+                            ),
+
+                            {
+
+                                type:
+                                    "SOS",
+
+                                source:
+                                    "rider",
+
+                                rideId:
+                                    rideId || null,
+
+                                status:
+                                    "active",
+
+                                latitude:
+                                    latitude,
+
+                                longitude:
+                                    longitude,
+
+                                accuracy:
+                                    Number(
+                                        accuracy || 0
+                                    ),
+
+                                mapUrl:
+
+                                    "https://www.google.com/maps?q=" +
+
+                                    latitude +
+
+                                    "," +
+
+                                    longitude,
+
+                                createdAt:
+                                    serverTimestamp()
+
+                            }
+
+                        );
+
+
+                    /* ========================================
+                       MARK ACTIVE RIDE
+                    ======================================== */
+
+                    if (rideId) {
+
+
+                        await updateDoc(
+
+                            doc(
+                                db,
+                                "rides",
+                                rideId
+                            ),
+
+                            {
+
+                                emergencyActive:
+                                    true,
+
+                                emergencyId:
+                                    emergency.id,
+
+                                emergencySource:
+                                    "rider",
+
+                                emergencyLocation: {
+
+                                    lat:
+                                        latitude,
+
+                                    lng:
+                                        longitude,
+
+                                    accuracy:
+                                        Number(
+                                            accuracy || 0
+                                        )
+
+                                },
+
+                                emergencyAt:
+                                    serverTimestamp()
+
+                            }
+
+                        );
+
+                    }
+
+
+                    console.log(
+                        "FareRide Rider SOS sent:",
+                        emergency.id
+                    );
+
+
+                    showRiderSOSResult(
+                        latitude,
+                        longitude
+                    );
+
+
+                } catch (error) {
+
+
+                    console.error(
+
+                        "Rider SOS failed:",
+
+                        error
+
+                    );
+
+
+                    if (result) {
+
+                        result.textContent =
+
+                            "âš ï¸ SOS could not be sent to FareRide. " +
+
+                            "Call 911 immediately if you are in danger.";
+
+                    }
+
+                }
+
+            },
+
+
+            error => {
+
+
+                console.error(
+
+                    "Rider emergency GPS failed:",
+
+                    error
+
+                );
+
+
+                if (result) {
+
+                    result.textContent =
+
+                        "âš ï¸ FareRide could not get your GPS location. " +
+
+                        "Call 911 immediately if you are in danger.";
+
+                }
+
+            },
+
+
+            {
+
+                enableHighAccuracy:
+                    true,
+
+                maximumAge: 10000,
+
+                timeout: 60000
+
+            }
+
+        );
+
+}
+
+
+/* =========================================================
+   PUBLIC SOS BUTTON API
+========================================================= */
+
+window.FareRideRiderSOS = {
+
+    send:
+        sendRiderSOS
+
+};
+
+</script>
+
+
+</body>
+
+</html>
+

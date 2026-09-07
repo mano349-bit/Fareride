@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+ name="viewport"
+ content="width=device-width, initial-scale=1.0">
+
+<title>FareRide - Driver Login</title>
+
+<style>
+
+* {
+ box-sizing: border-box;
+}
+
+body {
+ margin: 0;
+ min-height: 100vh;
+ font-family: Arial, sans-serif;
+ background:
+   linear-gradient(
+     135deg,
+     #07111f,
+     #102846
+   );
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ padding: 20px;
+}
+
+.login-card {
+ width: 100%;
+ max-width: 430px;
+ background: white;
+ border-radius: 22px;
+ padding: 32px;
+ box-shadow:
+   0 20px 60px
+   rgba(0,0,0,.35);
+}
+
+.logo {
+ text-align: center;
+ font-size: 34px;
+ font-weight: 800;
+ color: #1473e6;
+ margin-bottom: 8px;
+}
+
+h1 {
+ text-align: center;
+ margin: 8px 0 24px;
+}
+
+label {
+ display: block;
+ font-weight: 700;
+ margin-top: 16px;
+ margin-bottom: 7px;
+}
+
+input {
+ width: 100%;
+ font-size: 17px;
+ padding: 14px;
+ border-radius: 10px;
+ border: 1px solid #bbb;
+}
+
+button {
+ width: 100%;
+ border: 0;
+ border-radius: 10px;
+ padding: 14px;
+ font-size: 17px;
+ font-weight: 700;
+ cursor: pointer;
+ margin-top: 14px;
+}
+
+.primary {
+ background: #1473e6;
+ color: white;
+}
+
+.secondary {
+ background: #edf3fb;
+ color: #1473e6;
+}
+
+.verify {
+ display: none;
+ background: #fff4d6;
+ color: #9b6900;
+}
+
+#message {
+ min-height: 40px;
+ margin-top: 18px;
+ font-weight: 700;
+ text-align: center;
+}
+
+.links {
+ text-align: center;
+ margin-top: 20px;
+ line-height: 2;
+}
+
+.links a {
+ color: #1473e6;
+ font-weight: 700;
+ text-decoration: none;
+}
+
+</style>
+
+</head>
+
+<body data-role="driver">
+
+<div class="login-card">
+
+<div class="logo">
+FareRide
+</div>
+
+<h1>
+Driver Login
+</h1>
+
+<label>
+Email
+</label>
+
+<input
+ id="email"
+ type="email"
+ autocomplete="email"
+ placeholder="Email address">
+
+
+<label>
+Password
+</label>
+
+<input
+ id="password"
+ type="password"
+ autocomplete="current-password"
+ placeholder="Password">
+
+
+<button
+ id="loginButton"
+ class="primary">
+Driver Login
+</button>
+
+
+<button
+ id="forgotButton"
+ class="secondary">
+Forgot Password
+</button>
+
+
+<button
+ id="resendButton"
+ class="verify" hidden>
+Resend Verification Email
+</button>
+
+
+<div id="message"></div>
+
+
+<div class="links">
+
+<a href="./registration.html">
+Create New Account
+</a>
+
+<br>
+
+<a href="./rider-login.html">
+Rider Login
+</a>
+
+<br>
+
+<a href="./index.html">
+Back to FareRide
+</a>
+
+</div>
+
+</div>
+
+<script
+ type="module"
+ src="./fare-login.js">
+</script>
+
+</body>
+</html>

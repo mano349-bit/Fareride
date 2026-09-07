@@ -1,1 +1,363 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FareRide</title><link rel="stylesheet" href="styles.css"></head><body><header><h1>FareRide</h1></header><main><h2>Choose your account</h2><div class="cards"><a class="card" href="rider.html"><h3>Rider</h3><p>Book rides</p></a><a class="card" href="driver.html"><h3>Driver</h3><p>Accept rides</p></a><a class="card" href="admin.html"><h3>Admin</h3><p>Manage FareRide</p></a></div></main></body></html>
+﻿<!doctype html>
+<html lang="en">
+
+<head>
+
+<meta charset="utf-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1">
+
+<title>FareRide</title>
+
+<link
+  rel="stylesheet"
+  href="styles.css">
+
+<style>
+
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  background:#f4f7fb;
+  color:#17202a;
+  font-family:Arial,sans-serif;
+}
+
+.home-header{
+  background:#ffffff;
+  border-bottom:1px solid #dce3ec;
+  padding:22px 5%;
+  text-align:center;
+}
+
+.home-header h1{
+  margin:0;
+  font-size:36px;
+  color:#075fd8;
+}
+
+.home-header p{
+  margin:8px 0 0;
+  color:#667085;
+  font-weight:700;
+}
+
+.home-main{
+  max-width:1100px;
+  margin:auto;
+  padding:40px 20px;
+}
+
+.home-main h2{
+  text-align:center;
+  margin-bottom:28px;
+  font-size:28px;
+}
+
+.cards{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:20px;
+}
+
+.card{
+  display:block;
+  padding:28px;
+  background:#ffffff;
+  border:2px solid #dfe5ec;
+  border-radius:18px;
+  text-decoration:none;
+  color:#17202a;
+  box-shadow:0 6px 20px rgba(0,0,0,.06);
+  transition:
+    transform .15s ease,
+    box-shadow .15s ease,
+    border-color .15s ease;
+}
+
+.card:hover{
+  transform:translateY(-3px);
+  box-shadow:0 10px 28px rgba(0,0,0,.10);
+  border-color:#1677ff;
+}
+
+.card h3{
+  margin:0 0 8px;
+  font-size:26px;
+  color:#075fd8;
+}
+
+.card p{
+  margin:0;
+  color:#667085;
+  font-size:16px;
+  line-height:1.5;
+}
+
+.registration-card{
+  border-color:#16a34a;
+  background:#f4fff8;
+}
+
+.registration-card h3{
+  color:#08783d;
+}
+
+.admin-card{
+  border-color:#333;
+}
+
+.about-box{
+  margin-top:35px;
+  padding:24px;
+  background:#eef6ff;
+  border:2px solid #1677ff;
+  border-radius:18px;
+  text-align:center;
+}
+
+.about-box h2{
+  margin-top:0;
+  color:#075fd8;
+}
+
+.driver-share{
+  margin:18px auto;
+  max-width:650px;
+  padding:16px;
+  background:#ffffff;
+  border:3px solid #16a34a;
+  border-radius:14px;
+  color:#08783d;
+  font-size:24px;
+  font-weight:900;
+}
+
+.contact-links{
+  margin-top:18px;
+}
+
+.contact-links a{
+  display:inline-block;
+  margin:6px;
+  padding:10px 14px;
+  background:#1677ff;
+  color:#ffffff;
+  text-decoration:none;
+  border-radius:9px;
+  font-weight:900;
+}
+
+.contact-links a.email{
+  background:#16a34a;
+}
+
+@media(max-width:700px){
+
+  .cards{
+    grid-template-columns:1fr;
+  }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header class="home-header">
+
+  <h1>
+    FareRide
+  </h1>
+
+  <p>
+    Better for Riders â€¢ Better for Drivers
+  </p>
+
+</header>
+
+
+<main class="home-main">
+
+  <h2>
+    Choose Where You Want to Go
+  </h2>
+
+
+  <div class="cards">
+
+
+    <a
+      class="card"
+      href="rider.html">
+
+      <h3>
+        Rider
+      </h3>
+
+      <p>
+        Request a ride, see your fare,
+        track your driver and view your ETA.
+      </p>
+
+    </a>
+
+
+    <a
+      class="card"
+      href="driver.html">
+
+      <h3>
+        Driver
+      </h3>
+
+      <p>
+        View ride requests, accept jobs,
+        manage trips and share live location.
+      </p>
+
+    </a>
+
+
+    <a
+      class="card registration-card"
+      href="registration.html">
+
+      <h3>
+        Driver Registration
+      </h3>
+
+      <p>
+        Apply to join Fare-Ride,
+        submit your information and upload required documents.
+      </p>
+
+    </a>
+
+
+    <a
+      class="card admin-card"
+      href="admin.html">
+
+      <h3>
+        Admin
+      </h3>
+
+      <p>
+        Manage rides, drivers,
+        applications and FareRide rates.
+      </p>
+
+    </a>
+
+
+  </div>
+
+
+  <section class="about-box">
+
+    <h2>
+      About Fare-Ride
+    </h2>
+
+    <p>
+      Created by Emmanuel Hileah to help riders save money
+      while helping drivers earn a better share of each ride.
+    </p>
+
+    <div class="driver-share">
+      Drivers Keep 75% of the Ride Fare
+    </div>
+
+    <p>
+      Riders Save More $$$ &nbsp; â€¢ &nbsp;
+      Drivers Earn More $$$
+    </p>
+
+    <p>
+      Please share Fare-Ride with your family,
+      friends, drivers and riders.
+    </p>
+
+    <div class="contact-links">
+
+      <a href="tel:+15163764118">
+        Call or Text: +1 (516) 376-4118
+      </a>
+
+      <a
+        class="email"
+        href="mailto:fairride2all@gmail.com">
+        Email: fairride2all@gmail.com
+      </a>
+
+    </div>
+
+  </section>
+
+</main>
+
+
+
+<div style="
+ text-align:center;
+ padding:18px;
+ font-family:Arial,sans-serif;
+">
+
+<a
+ href="./rider-login.html"
+ style="
+ display:inline-block;
+ padding:12px 20px;
+ margin:5px;
+ background:#1473e6;
+ color:white;
+ border-radius:10px;
+ text-decoration:none;
+ font-weight:bold;">
+Rider Login
+</a>
+
+<a
+ href="./driver-login.html"
+ style="
+ display:inline-block;
+ padding:12px 20px;
+ margin:5px;
+ background:#111827;
+ color:white;
+ border-radius:10px;
+ text-decoration:none;
+ font-weight:bold;">
+Driver Login
+</a>
+
+<a
+ href="./registration.html"
+ style="
+ display:inline-block;
+ padding:12px 20px;
+ margin:5px;
+ background:#18a558;
+ color:white;
+ border-radius:10px;
+ text-decoration:none;
+ font-weight:bold;">
+Register
+</a>
+
+</div>
+
+</body>
+
+</html>

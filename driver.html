@@ -1,1 +1,540 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FareRide Driver</title><link rel="stylesheet" href="styles.css"></head><body><header><h1>FareRide Driver</h1><a href="index.html">Home</a></header><main><h2>Ride requests</h2><div class="card"><b>Sarah M.</b><p>Times Square → JFK Airport</p><button>Accept</button></div></main></body></html>
+﻿<!doctype html>
+<html lang="en">
+
+<head>
+
+<meta charset="utf-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1">
+
+<title>FareRide Driver</title>
+
+<link
+  rel="stylesheet"
+  href="styles.css">
+
+<style>
+
+.driver-container{
+    max-width:900px;
+    margin:0 auto;
+    padding:30px 20px;
+}
+
+#driverMsg{
+    margin:20px 0;
+    padding:16px 22px;
+    border:3px solid #1677ff;
+    border-radius:12px;
+    background:#eef6ff;
+    color:#075fd8;
+    font-size:28px;
+    font-weight:900;
+    text-align:center;
+    box-shadow:0 4px 12px rgba(22,119,255,.15);
+}
+
+#driverMsg:empty{
+    display:none;
+}
+
+#requestList{
+    margin-top:15px;
+}
+
+#requestList .card{
+    margin-bottom:18px;
+    padding:20px;
+    background:white;
+    border:1px solid #dfe5ec;
+    border-radius:14px;
+    box-shadow:0 4px 14px rgba(0,0,0,.06);
+}
+
+.rideAction{
+    margin-top:10px;
+    padding:13px 20px;
+    border:none;
+    border-radius:9px;
+    background:#1677ff;
+    color:white;
+    font-size:16px;
+    font-weight:900;
+    cursor:pointer;
+}
+
+.location-card{
+    margin-top:28px;
+    padding:20px;
+    background:white;
+    border:1px solid #dfe5ec;
+    border-radius:14px;
+    box-shadow:0 4px 14px rgba(0,0,0,.06);
+}
+
+#locationStatus{
+    margin:15px 0;
+    padding:13px 16px;
+    background:#eefaf3;
+    border:2px solid #16a34a;
+    border-radius:10px;
+    font-weight:800;
+}
+
+.location-buttons{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+}
+
+.start-location,
+.stop-location{
+    padding:13px 20px;
+    color:white;
+    border:none;
+    border-radius:9px;
+    font-size:15px;
+    font-weight:900;
+    cursor:pointer;
+}
+
+.start-location{
+    background:#1677ff;
+}
+
+.stop-location{
+    background:#444;
+}
+
+
+/* =========================================================
+   EMERGENCY SOS
+========================================================= */
+
+.emergency-card{
+    margin-top:28px;
+    padding:26px;
+    background:#fff4f4;
+    border:4px solid #d92d20;
+    border-radius:18px;
+    box-shadow:0 8px 24px rgba(217,45,32,.18);
+    text-align:center;
+}
+
+.emergency-card h2{
+    margin-top:0;
+    margin-bottom:12px;
+    color:#b42318;
+    font-size:32px;
+}
+
+.emergency-warning{
+    max-width:720px;
+    margin:0 auto 18px;
+    color:#7a271a;
+    font-size:17px;
+    line-height:1.6;
+    font-weight:700;
+}
+
+.sos-button{
+    width:100%;
+    max-width:600px;
+    padding:22px 26px;
+    border:none;
+    border-radius:16px;
+    background:#d92d20;
+    color:white;
+    font-size:28px;
+    font-weight:1000;
+    cursor:pointer;
+    box-shadow:0 8px 18px rgba(217,45,32,.28);
+}
+
+.sos-button:hover{
+    background:#b42318;
+}
+
+.sos-button:active{
+    transform:scale(.99);
+}
+
+#sosResult{
+    margin:20px auto 0;
+    max-width:680px;
+    padding:0;
+    font-size:17px;
+    line-height:1.6;
+}
+
+.sos-success{
+    padding:20px;
+    background:white;
+    border:3px solid #d92d20;
+    border-radius:14px;
+    color:#7a271a;
+}
+
+.sos-map-link,
+.call-911-button{
+    display:inline-block;
+    text-decoration:none;
+    font-weight:900;
+    border-radius:10px;
+}
+
+.sos-map-link{
+    padding:12px 18px;
+    background:#1677ff;
+    color:white;
+}
+
+.call-911-button{
+    padding:16px 26px;
+    background:#d92d20;
+    color:white;
+    font-size:24px;
+}
+
+.emergency-note{
+    margin-top:15px;
+    color:#667085;
+    font-size:14px;
+    line-height:1.5;
+}
+
+
+/* =========================================================
+   ABOUT FARE-RIDE
+========================================================= */
+
+.about-fareride{
+    margin-top:32px;
+    padding:26px;
+    background:linear-gradient(135deg,#f8fbff,#eef6ff);
+    border:2px solid #1677ff;
+    border-radius:18px;
+    box-shadow:0 6px 20px rgba(22,119,255,.12);
+    text-align:center;
+}
+
+.about-fareride h2{
+    margin-top:0;
+    color:#075fd8;
+    font-size:30px;
+}
+
+.creator{
+    font-size:18px;
+    font-weight:800;
+    color:#475467;
+}
+
+.mission{
+    max-width:760px;
+    margin:16px auto;
+    line-height:1.7;
+    font-size:17px;
+}
+
+.driver-share{
+    margin:22px auto;
+    padding:18px;
+    max-width:650px;
+    background:#ffffff;
+    border:3px solid #16a34a;
+    border-radius:14px;
+    color:#08783d;
+    font-size:28px;
+    font-weight:900;
+}
+
+.savings-line{
+    margin:16px 0;
+    color:#075fd8;
+    font-size:22px;
+    font-weight:900;
+}
+
+.join-box{
+    margin:24px auto 0;
+    padding:20px;
+    max-width:650px;
+    background:#ffffff;
+    border:1px solid #cbd5e1;
+    border-radius:14px;
+}
+
+.join-box a{
+    display:inline-block;
+    margin:6px 8px;
+    padding:11px 16px;
+    background:#1677ff;
+    color:#ffffff;
+    text-decoration:none;
+    border-radius:9px;
+    font-weight:900;
+}
+
+.join-box a.email{
+    background:#16a34a;
+}
+
+.tagline{
+    margin-top:20px;
+    font-size:18px;
+    font-weight:900;
+}
+
+@media(max-width:650px){
+
+    .driver-container{
+        padding:20px 12px;
+    }
+
+    #driverMsg{
+        font-size:22px;
+    }
+
+    .location-buttons{
+        flex-direction:column;
+    }
+
+    .location-buttons button{
+        width:100%;
+    }
+
+    .driver-share{
+        font-size:22px;
+    }
+
+    .emergency-card{
+        padding:20px 14px;
+    }
+
+    .emergency-card h2{
+        font-size:27px;
+    }
+
+    .sos-button{
+        font-size:24px;
+        padding:20px 16px;
+    }
+
+    .call-911-button{
+        width:100%;
+        font-size:22px;
+    }
+}
+
+</style>
+
+
+<script
+ type="module"
+ src="./fare-auth-guard.js">
+</script>
+
+</head>
+
+
+<body>
+
+<header>
+
+    <h1>
+        FareRide Driver
+    </h1>
+
+    <a href="index.html">
+        Home
+    </a>
+
+</header>
+
+
+<main class="driver-container">
+
+
+<section>
+
+    <h2>
+        Ride Requests
+    </h2>
+
+    <div id="requestList">
+
+        <div class="card">
+
+            <p>
+                Loading ride requests...
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<div id="driverMsg"></div>
+
+
+<section class="location-card">
+
+    <h3>
+        Live Location Sharing
+    </h3>
+
+    <div id="locationStatus">
+        Location sharing is off.
+    </div>
+
+    <div class="location-buttons">
+
+        <button
+          class="start-location"
+          type="button"
+          onclick="FareRideDriverLocation.start()">
+
+            📍 Start Live Location
+
+        </button>
+
+        <button
+          class="stop-location"
+          type="button"
+          onclick="FareRideDriverLocation.stop()">
+
+            Stop Location
+
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- ======================================================
+     EMERGENCY SOS
+======================================================= -->
+
+<section class="emergency-card">
+
+    <h2>
+        🚨 Emergency SOS
+    </h2>
+
+    <p class="emergency-warning">
+        If you are in immediate danger, use this button to
+        record your current GPS location with FareRide.
+        After the SOS is recorded, you can call 911 directly
+        from your phone.
+    </p>
+
+    <button
+      class="sos-button"
+      type="button"
+      onclick="FareRideDriverLocation.sos()">
+
+        🚨 SOS — EMERGENCY
+
+    </button>
+
+    <div id="sosResult"></div>
+
+    <p class="emergency-note">
+        FareRide records the SOS and GPS location for the
+        FareRide emergency/admin system. The 911 call itself
+        is placed through your phone.
+    </p>
+
+</section>
+
+
+<section class="about-fareride">
+
+    <h2>
+        About Fare-Ride
+    </h2>
+
+    <div class="creator">
+        Created by Emmanuel Hileah
+    </div>
+
+    <h3>
+        A Better Deal for Riders & Drivers
+    </h3>
+
+    <p class="mission">
+        Fare-Ride was created with a simple mission:
+        help riders save money while giving drivers
+        a better share of the fare they work hard to earn.
+    </p>
+
+    <div class="driver-share">
+        DRIVERS KEEP 75% OF THE RIDE FARE
+    </div>
+
+    <p class="mission">
+        More earnings for drivers. More savings for riders.
+        A fairer ride for everyone.
+    </p>
+
+    <div class="savings-line">
+        Riders Save More $$$ &nbsp; • &nbsp;
+        Drivers Earn More $$$
+    </div>
+
+    <p class="mission">
+        Please share Fare-Ride with your family,
+        friends, drivers and riders.
+        The more people who join, the better
+        Fare-Ride becomes for everyone.
+    </p>
+
+    <div class="join-box">
+
+        <h3>
+            Want to Drive or Join Fare-Ride?
+        </h3>
+
+        <a href="tel:+15163764118">
+            📞 Call or Text: +1 (516) 376-4118
+        </a>
+
+        <a
+          class="email"
+          href="mailto:fairride2all@gmail.com">
+
+            ✉ Email: fairride2all@gmail.com
+
+        </a>
+
+    </div>
+
+    <div class="tagline">
+        Better for Riders • Better for Drivers • Fare-Ride
+    </div>
+
+</section>
+
+
+</main>
+
+
+<script
+  type="module"
+  src="driver.js">
+</script>
+
+<script
+  type="module"
+  src="driver-location.js">
+</script>
+
+</body>
+
+</html>
