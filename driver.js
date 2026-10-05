@@ -175,6 +175,12 @@ function renderRequests() {
     );
 
 
+  const selectedJob = visibleRides.find(ride => ride.driverId === DRIVER_ID && ride.status !== 'requested') || visibleRides[0];
+  $('driverControls').innerHTML = actionButtons(selectedJob || { id: '', status: 'unavailable' }, DRIVER_ID);
+  $('driverControlsStatus').textContent = selectedJob
+    ? `Controls for ${selectedJob.riderName || 'Rider'}: ${selectedJob.pickup || 'Pickup'}. Current stage: ${selectedJob.status}.`
+    : 'No available job has loaded. Sign in as an approved driver; Firebase ride permissions must also be enabled.';
+
   if (!visibleRides.length) {
 
     list.innerHTML = `
