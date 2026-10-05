@@ -98,6 +98,10 @@ service cloud.firestore {
           || (resource.data.status == 'arrived' && request.resource.data.status == 'started')
           || (resource.data.status == 'started' && request.resource.data.status == 'completed'))
       );
+      allow update: if approved('rider') && resource.data.riderId == request.auth.uid
+        && resource.data.status in ['requested', 'accepted', 'arrived']
+        && request.resource.data.status == 'cancelled'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'cancelledAt']);
       allow delete: if false;
     }
     match /config/{docId} {

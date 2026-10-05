@@ -63,6 +63,6 @@ test('edited details invalidate estimates and failed submissions leave no saved 
   await h.el('rideForm').onsubmit({ preventDefault() {} });
   assert.equal(h.storage.has('fareride_last_ride_id'), false);
   assert.equal(h.storage.has('fareride_rides_v2'), false);
-  assert.equal(h.el('msg').textContent, 'Request was not sent. Please try again.');
+  assert.equal(h.el('msg').textContent, 'Request was not sent. Check your connection and try again.');
   assert.equal(h.el('requestBtn').disabled, false);
 });

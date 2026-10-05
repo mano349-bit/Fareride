@@ -174,50 +174,23 @@ function showSummary(ride) {
 
 
 function showRideStatus(ride) {
-  if (!ride) return;
-
+  if (!ride || (ride.riderId && ride.riderId !== auth.currentUser?.uid)) return;
   showSummary(ride);
-
-  if (ride.pricingStatus === 'quote_required') {
-    $('msg').textContent = 'Quote requested. FareRide must confirm the price and available provider.';
-  } else if (ride.status === 'accepted') {
-
-    $('msg').textContent =
-      'âœ… Ride accepted â€” ' +
-      (ride.driverName || 'Driver');
-
-  } else if (ride.status === 'arrived') {
-
-    $('msg').textContent =
-      'ðŸš— Driver has arrived â€” ' +
-      (ride.driverName || 'Driver');
-
-  } else if (ride.status === 'started') {
-
-    $('msg').textContent =
-      'ðŸš™ Trip in progress â€” ' +
-      (ride.driverName || 'Driver');
-
-  } else if (ride.status === 'completed') {
-
-    $('msg').textContent =
-      'âœ… Ride completed';
-
-  } else if (ride.status === 'cancelled') {
-
-    $('msg').textContent =
-      'âŒ Ride cancelled';
-
-  } else {
-
-    $('msg').textContent =
-      'â³ Ride requested â€” waiting for a driver';
-
-  }
-
-  $('requestBtn').disabled = true;
+  const messages = {
+    requested: 'Ride requested. Waiting for a driver.',
+    accepted: 'Ride accepted. Your driver is on the way.',
+    arrived: 'Your driver has arrived at pickup.',
+    started: 'Your ride is in progress.',
+    completed: 'Ride completed. You can request another ride.',
+    cancelled: 'Ride cancelled. You can request another ride.'
+  };
+  $('msg').textContent = ride.pricingStatus === 'quote_required' && ride.status === 'requested'
+    ? 'Quote requested. Waiting for dispatch to confirm pricing.'
+    : (messages[ride.status] || 'Waiting for ride information.');
+  const finished = ['completed', 'cancelled'].includes(ride.status);
+  $('requestBtn').disabled = !finished;
+  if (finished && localStorage.getItem(LAST) === ride.id) localStorage.removeItem(LAST);
 }
-
 
 function updateLocalRideFromFirestore(
   rideId,
@@ -677,7 +650,7 @@ async event => {
     );
 
     $('msg').textContent =
-      'Request was not sent. Please try again.';
+      error.code === 'permission-denied' ? 'Request blocked: your rider account must be approved and Firebase ride permissions must be enabled.' : 'Request was not sent. Check your connection and try again.';
     submitting = false;
     $('requestBtn').disabled = false;
 
