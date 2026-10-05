@@ -16,7 +16,7 @@ export function registrationErrorMessage(error, stage = 'registration') {
     'storage/bucket-not-found': 'The configured Firebase upload bucket was not found. The administrator must check Storage setup.',
     'storage/project-not-found': 'Firebase Storage could not find the configured project. Contact the administrator.',
     'storage/quota-exceeded': 'Firebase document storage has reached its quota. Contact the administrator.',
-    'storage/retry-limit-exceeded': 'The document upload timed out. Check your connection and try again.',
+    'storage/retry-limit-exceeded': 'The document upload timed out. Your account may already exist, but your application has not been submitted. Check your connection; the administrator must also verify that Firebase Storage and billing are enabled for fareride-app-0907-349. Retry using the same email and password.',
     'unavailable': 'Firebase is temporarily unavailable. Please try again.'
   };
   if (messages[code]) return messages[code] + ` (Step: ${stage}; code: ${code})`;

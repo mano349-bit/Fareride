@@ -50,6 +50,8 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
+// Report unavailable uploads promptly instead of retrying for many minutes.
+storage.maxUploadRetryTime = 30000;
 
 export {
   app,
