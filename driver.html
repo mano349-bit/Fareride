@@ -337,6 +337,7 @@
  src="./fare-auth-guard.js">
 </script>
 
+<link rel="stylesheet" href="service-ui.css">
 </head>
 
 
@@ -364,7 +365,7 @@
         Ride Requests
     </h2>
 
-    <div id="requestList">
+    <label>Service queue<select id="providerService"><option value="ride">Passenger rides</option><option value="tow">Tow truck jobs</option><option value="messenger">Bike messenger jobs</option></select></label><p class="service-note">Quote requests stay with dispatch until pricing and provider eligibility are confirmed.</p><div id="requestList">
 
         <div class="card">
 

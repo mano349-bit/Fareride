@@ -332,6 +332,7 @@
  src="./fare-auth-guard.js">
 </script>
 
+<link rel="stylesheet" href="service-ui.css">
 </head>
 
 
@@ -360,6 +361,20 @@
 
 
 <form id="rideForm">
+<fieldset class="service-picker"><legend>What do you need?</legend>
+<label><input type="radio" name="serviceType" value="ride" checked>Passenger ride<small>Economy, Comfort or XL</small></label>
+<label><input type="radio" name="serviceType" value="tow">Tow truck<small>Vehicle pickup and transport</small></label>
+<label><input type="radio" name="serviceType" value="messenger">Bike messenger<small>Small package delivery</small></label>
+</fieldset>
+<div id="towDetails" class="service-details" hidden>
+<label>Vehicle make, model and size<input id="towVehicle" maxlength="500" placeholder="Honda Civic, sedan"></label>
+<label>Reason for towing<input id="towIssue" maxlength="500" placeholder="Flat tire, vehicle will not start..."></label>
+</div>
+<div id="messengerDetails" class="service-details" hidden>
+<label>Package description and size<input id="packageDescription" maxlength="500" placeholder="Documents in a small envelope"></label>
+<label>Recipient name<input id="recipientName" maxlength="500" autocomplete="off"></label>
+</div>
+<p id="serviceNote" class="service-note" aria-live="polite">Choose your ride and calculate an estimate.</p>
 
 <label>
 

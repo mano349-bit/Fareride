@@ -1,3 +1,4 @@
+import { serviceName, priceLabel } from './services.js';
 ﻿import {
   db,
   auth,
@@ -461,7 +462,9 @@ function updateStats() {
             'arrived',
             'started'
           ].includes(
-            ride.status
+            ride.status,
+          serviceName(ride.serviceType),
+          ...Object.values(ride.serviceDetails || {})
           )
       ).length;
 
@@ -617,7 +620,7 @@ function renderRides() {
 
             <td>
               <strong>
-                ${escapeHtml(ride.id)}
+                ${escapeHtml(ride.id)}<br><span class="service-badge">${serviceName(ride.serviceType)}</span>
               </strong>
             </td>
 
@@ -667,7 +670,7 @@ function renderRides() {
 
             <td>
 
-              ${money(fare)}
+              ${priceLabel(ride, money)}
 
               ${
                 tip
@@ -795,6 +798,8 @@ function renderRides() {
                 <br><br>
 
 
+                <strong>Service:</strong> ${serviceName(ride.serviceType)}<br>
+                ${Object.entries(ride.serviceDetails || {}).map(([key, value]) => '<strong>' + escapeHtml(key) + ':</strong> ' + escapeHtml(value)).join('<br>')}<br>
                 <strong>
                   Pickup:
                 </strong>

@@ -1,3 +1,4 @@
+import { serviceName, matchesService, priceLabel } from './services.js';
 import {
   db,
   doc,
@@ -18,6 +19,7 @@ const $ = id =>
   document.getElementById(id);
 
 let rides = [];
+$('providerService').addEventListener('change', renderRequests);
 
 
 /* ========================================
@@ -140,7 +142,7 @@ function renderRequests() {
           ride.status ===
           'requested'
         ) {
-          return true;
+          return ride.pricingStatus !== 'quote_required' && matchesService(ride, $('providerService').value);
         }
 
 
@@ -272,6 +274,7 @@ function renderRequests() {
 
           <div class="card">
 
+            <p class="service-badge">${serviceName(ride.serviceType)}</p>
             <h3>
               ${ride.riderName || 'Rider'}
             </h3>
@@ -433,6 +436,11 @@ function renderRequests() {
 ======================================== */
 
 async function acceptRide(id) {
+  const job = rides.find(ride => ride.id === id);
+  if (!job || job.status !== 'requested' || job.pricingStatus === 'quote_required' || !matchesService(job, $('providerService').value)) {
+    setDriverMessage('This job is not available in your service queue.');
+    return;
+  }
 
   const now =
     new Date()

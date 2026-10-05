@@ -1,0 +1,10 @@
+.service-picker { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:16px 0; }
+.service-picker label { border:1px solid #cbd5e1; border-radius:12px; padding:14px; cursor:pointer; background:#fff; }
+.service-picker label:has(input:checked) { border:2px solid #075fd8; background:#eff6ff; }
+.service-picker input { width:auto; margin-right:6px; }
+.service-picker small { display:block; margin-top:6px; color:#475569; }
+.service-details { padding:16px; border:1px solid #cbd5e1; border-radius:12px; margin:12px 0; }
+.service-details[hidden] { display:none; }
+.service-note { color:#475569; line-height:1.5; }
+.service-badge { display:inline-block; background:#eff6ff; color:#075fd8; padding:5px 10px; border-radius:20px; font-weight:700; }
+@media(max-width:600px) { .service-picker { grid-template-columns:1fr; } }

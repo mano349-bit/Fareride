@@ -1,3 +1,4 @@
+import { SERVICES, validateServiceDetails, priceLabel } from './services.js';
 ﻿/* =========================================================
    FARERIDE MOBILE NETWORK HELPER
    Helps when cellular data briefly drops or changes towers.
@@ -46,6 +47,7 @@ window.addEventListener("offline", () => {
 
 import {
   db,
+  auth,
   doc,
   setDoc,
   onSnapshot
@@ -67,6 +69,37 @@ const $ = id =>
 
 let estimate = null;
 let unsubscribeRide = null;
+let estimateVersion = 0;
+let submitting = false;
+const selectedService = () => document.querySelector('[name="serviceType"]:checked').value;
+function details() {
+  return validateServiceDetails(selectedService(), {
+    vehicle: $('towVehicle').value, issue: $('towIssue').value,
+    packageDescription: $('packageDescription').value, recipientName: $('recipientName').value
+  });
+}
+function invalidateEstimate() {
+  estimateVersion++;
+  estimate = null;
+  $('summary').hidden = true;
+  $('requestBtn').disabled = true;
+}
+function updateService() {
+  const type = selectedService();
+  $('towDetails').hidden = type !== 'tow';
+  $('messengerDetails').hidden = type !== 'messenger';
+  $('rideType').closest('label').hidden = type !== 'ride';
+  for (const id of ['towVehicle', 'towIssue']) $(id).required = type === 'tow';
+  for (const id of ['packageDescription', 'recipientName']) $(id).required = type === 'messenger';
+  $('estimateBtn').textContent = type === 'ride' ? 'Calculate mileage & fare' : 'Review quote request';
+  $('requestBtn').textContent = SERVICES[type].action;
+  $('serviceNote').textContent = type === 'ride' ? 'Choose your ride and calculate an estimate.'
+    : 'Request a quote. Price and provider availability must be confirmed before dispatch.';
+  invalidateEstimate();
+}
+$('rideForm').addEventListener('input', invalidateEstimate);
+document.querySelectorAll('[name="serviceType"]').forEach(input => input.addEventListener('change', updateService));
+updateService();
 
 
 function getSettings() {
@@ -118,13 +151,20 @@ function showSummary(ride) {
 
   $('summary').hidden = false;
 
+  if (ride.pricingStatus === 'quote_required') {
+    $('mileage').textContent = 'Confirmed by provider';
+    $('duration').textContent = 'Confirmed by provider';
+    $('fare').textContent = 'Quote required';
+    return;
+  }
+
   $('mileage').textContent =
     Number(
       ride.miles || 0
     ).toFixed(2) + ' miles';
 
   $('fare').textContent =
-    money(ride.fare);
+    priceLabel(ride, money);
 
   $('duration').textContent =
     Number(
@@ -138,7 +178,9 @@ function showRideStatus(ride) {
 
   showSummary(ride);
 
-  if (ride.status === 'accepted') {
+  if (ride.pricingStatus === 'quote_required') {
+    $('msg').textContent = 'Quote requested. FareRide must confirm the price and available provider.';
+  } else if (ride.status === 'accepted') {
 
     $('msg').textContent =
       'âœ… Ride accepted â€” ' +
@@ -352,7 +394,24 @@ function calculateFare(
 
 async function calculateEstimate() {
 
-  localStorage.removeItem(LAST);
+  invalidateEstimate();
+  const version = estimateVersion;
+  const serviceType = selectedService();
+  if (serviceType !== 'ride') {
+    try {
+      const serviceDetails = details();
+      const pickup = $('pickup').value.trim(), dropoff = $('dropoff').value.trim();
+      if (!pickup || !dropoff) throw new Error('Enter pickup and destination.');
+      estimate = { pickup, dropoff, serviceType, serviceDetails, pricingStatus: 'quote_required', fare: null, miles: null, durationMinutes: null, rideType: serviceType, pickupLocation: null, dropoffLocation: null };
+      $('summary').hidden = false;
+      $('fare').textContent = 'Quote required';
+      $('mileage').textContent = 'Confirmed by provider';
+      $('duration').textContent = 'Confirmed by provider';
+      $('msg').textContent = 'Details ready. Send your quote request.';
+      $('requestBtn').disabled = false;
+    } catch (error) { $('msg').textContent = error.message; }
+    return;
+  }
 
   $('msg').textContent = '';
 
@@ -410,7 +469,9 @@ async function calculateEstimate() {
         $('rideType').value
       );
 
+    if (version !== estimateVersion) return;
     estimate = {
+      serviceType: 'ride', serviceDetails: {}, pricingStatus: 'estimated',
       pickup,
       dropoff,
 
@@ -451,6 +512,7 @@ async function calculateEstimate() {
 
   } catch (error) {
 
+    if (version !== estimateVersion) return;
     console.error(error);
 
     $('msg').textContent =
@@ -479,6 +541,8 @@ $('rideForm').onsubmit =
 async event => {
 
   event.preventDefault();
+  if (submitting) return;
+  if (!auth.currentUser) { $('msg').textContent = 'Sign in before requesting a service.'; return; }
 
   if (!estimate) {
 
@@ -492,8 +556,7 @@ async event => {
   const requestedAt =
     new Date();
 
-  const estimatedArrivalMinutes =
-    10;
+  const estimatedArrivalMinutes = estimate.serviceType === 'ride' ? 10 : null;
 
   const estimatedArrivalAt =
     new Date(
@@ -514,14 +577,17 @@ async event => {
   const ride = {
 
     id:
-      'ride_' +
-      Date.now(),
+      'job_' + crypto.randomUUID(),
+
+    serviceType: estimate.serviceType,
+    serviceDetails: estimate.serviceDetails,
+    pricingStatus: estimate.pricingStatus,
 
     riderName:
-      'Rider',
+      auth.currentUser.displayName || 'Rider',
 
     riderId:
-      'local-rider',
+      auth.currentUser.uid,
 
     pickup:
       estimate.pickup,
@@ -562,10 +628,10 @@ async event => {
     estimatedArrivalMinutes,
 
     estimatedArrivalAt:
-      estimatedArrivalAt.toISOString(),
+      estimate.serviceType === 'ride' ? estimatedArrivalAt.toISOString() : null,
 
     estimatedFinishAt:
-      estimatedFinishAt.toISOString(),
+      estimate.serviceType === 'ride' ? estimatedFinishAt.toISOString() : null,
 
     driverId: null,
     driverName: null,
@@ -580,24 +646,8 @@ async event => {
   };
 
 
-  /*
-    Keep localStorage working
-    during the transition.
-  */
-
-  const rides =
-    getRides();
-
-  rides.unshift(ride);
-
-  saveRides(rides);
-
-  localStorage.setItem(
-    LAST,
-    ride.id
-  );
-
-
+  submitting = true;
+  $('requestBtn').disabled = true;
   /*
     Create the matching
     Firestore ride document.
@@ -627,19 +677,26 @@ async event => {
     );
 
     $('msg').textContent =
-      'Ride saved locally, but Firebase connection failed.';
+      'Request was not sent. Please try again.';
+    submitting = false;
+    $('requestBtn').disabled = false;
 
     return;
   }
 
 
+  submitting = false;
+  const saved = getRides();
+  saved.unshift(ride);
+  saveRides(saved);
+  localStorage.setItem(LAST, ride.id);
   $('msg').textContent =
     'â³ Ride requested â€” waiting for a driver';
 
   $('requestBtn').disabled =
     true;
 
-  showSummary(ride);
+  showRideStatus(ride);
 
   watchRide(ride.id);
 };
