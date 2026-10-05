@@ -3,10 +3,16 @@
   db,
   storage,
   doc,
+  getDoc,
   setDoc,
   ref,
   uploadBytes
 } from "./firebase-config.js";
+
+import { registrationErrorMessage } from './registration-errors.js';
+
+let registrationStage = 'registration';
+let verificationWarning = '';
 
 
 
@@ -237,6 +243,9 @@ async function registerFareRideAccount(
 
   let credential;
 
+  registrationStage = 'creating or signing in to your account';
+  verificationWarning = '';
+
 
   try {
 
@@ -276,6 +285,16 @@ async function registerFareRideAccount(
   const user =
     credential.user;
 
+  registrationStage = 'saving your account profile';
+  const profileRef = doc(db, 'users', user.uid);
+  const existingProfile = await getDoc(profileRef);
+  if (existingProfile.exists()) {
+    const profile = existingProfile.data();
+    if (profile.role !== role) {
+      throw new Error('This email belongs to a ' + profile.role + ' account. Use that account login or a different email for this application.');
+    }
+  }
+
 
   await setDoc(
     doc(
@@ -299,8 +318,7 @@ async function registerFareRideAccount(
       phone:
         phone,
 
-      accountStatus:
-        "active",
+      ...(!existingProfile.exists() ? { accountStatus: "pending" } : {}),
 
       updatedAt:
         new Date()
@@ -318,7 +336,7 @@ async function registerFareRideAccount(
   ) {
 
     const actionCodeSettings = {
-      url: "https://fareride-8b2d1.web.app/rider-login.html",
+      url: new URL(role === 'driver' ? './driver-login.html' : './rider-login.html', window.location.href).href,
       handleCodeInApp: false
     };
 
@@ -341,10 +359,7 @@ async function registerFareRideAccount(
         emailError
       );
 
-      throw new Error(
-        "Your FareRide account was created, but the verification email could not be sent. Firebase error: " +
-        (emailError.code || emailError.message)
-      );
+      verificationWarning = ' Your application was saved, but verification email delivery failed. ' + registrationErrorMessage(emailError, 'sending verification email');
 
     }
 
@@ -364,6 +379,8 @@ async function uploadDocument(
   category,
   file
 ) {
+
+  registrationStage = 'uploading ' + category;
 
   const fileName =
     cleanFileName(
@@ -484,9 +501,13 @@ async function submitRider(
 
 
     const applicationId =
-      makeId(
-        "rider"
-      );
+      'rider_' + riderAuthUser.uid;
+
+    registrationStage = 'checking rider application';
+    const existingApplication = await getDoc(doc(db, 'riderApplications', applicationId));
+    if (existingApplication.exists()) {
+      throw new Error('A rider application is already on file for this account. Use Rider Login or contact the administrator.');
+    }
 
 
     const licenseDocument =
@@ -582,6 +603,7 @@ async function submitRider(
     };
 
 
+    registrationStage = 'saving rider application';
     await setDoc(
       doc(
         db,
@@ -594,7 +616,7 @@ async function submitRider(
 
     showMessage(
       "riderApplicationMessage",
-      "Rider account created successfully. Check your email to verify your FareRide account, then use Rider Login.",
+      "Rider registration submitted for review." + (riderAuthUser.emailVerified ? ' Your email is already verified.' : verificationWarning || ' Check your email to verify your account.') + ' Use Rider Login after approval.',
       "success"
     );
 
@@ -613,7 +635,7 @@ async function submitRider(
 
     showMessage(
       "riderApplicationMessage",
-      "Unable to submit Rider registration. Please try again.",
+      registrationErrorMessage(error, registrationStage),
       "error"
     );
 
@@ -745,9 +767,13 @@ async function submitDriver(
 
 
     const applicationId =
-      makeId(
-        "driver"
-      );
+      'driver_' + driverAuthUser.uid;
+
+    registrationStage = 'checking driver application';
+    const existingApplication = await getDoc(doc(db, 'driverApplications', applicationId));
+    if (existingApplication.exists()) {
+      throw new Error('A driver application is already on file for this account. Use Driver Login or contact the administrator.');
+    }
 
 
     const documents = {};
@@ -917,6 +943,7 @@ async function submitDriver(
     };
 
 
+    registrationStage = 'saving driver application';
     await setDoc(
       doc(
         db,
@@ -929,7 +956,7 @@ async function submitDriver(
 
     showMessage(
       "applicationMessage",
-      "Driver account and application created successfully. Check your email to verify your FareRide account.",
+      "Driver application submitted for review." + (driverAuthUser.emailVerified ? ' Your email is already verified.' : verificationWarning || ' Check your email to verify your account.') + ' Use Driver Login after approval.',
       "success"
     );
 
@@ -948,7 +975,7 @@ async function submitDriver(
 
     showMessage(
       "applicationMessage",
-      "Unable to submit Driver application. Please try again.",
+      registrationErrorMessage(error, registrationStage),
       "error"
     );
 
