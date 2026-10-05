@@ -1,3 +1,4 @@
+import { actionButtons } from './driver-actions.js';
 import { auth, getDoc, onAuthStateChanged } from './firebase-config.js';
 import { query, where, or, runTransaction } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 import { driverDetails } from './ride-details.js';
@@ -192,86 +193,7 @@ function renderRequests() {
     visibleRides.map(
       ride => {
 
-        let button = '';
-
-
-        /* REQUESTED */
-
-        if (
-          ride.status ===
-          'requested'
-        ) {
-
-          button = `
-            <button
-              class="rideAction acceptRide"
-              data-id="${ride.id}">
-              Accept Ride
-            </button>
-          `;
-
-        }
-
-
-        /* ACCEPTED */
-
-        if (
-          ride.status ===
-            'accepted' &&
-          ride.driverId ===
-            DRIVER_ID
-        ) {
-
-          button = `
-            <button
-              class="rideAction arrivedRide"
-              data-id="${ride.id}">
-              Arrived at Pickup
-            </button>
-          `;
-
-        }
-
-
-        /* ARRIVED */
-
-        if (
-          ride.status ===
-            'arrived' &&
-          ride.driverId ===
-            DRIVER_ID
-        ) {
-
-          button = `
-            <button
-              class="rideAction startRide"
-              data-id="${ride.id}">
-              Start Ride
-            </button>
-          `;
-
-        }
-
-
-        /* STARTED */
-
-        if (
-          ride.status ===
-            'started' &&
-          ride.driverId ===
-            DRIVER_ID
-        ) {
-
-          button = `
-            <button
-              class="rideAction completeRide"
-              data-id="${ride.id}">
-              Complete Ride
-            </button>
-          `;
-
-        }
-
+        const button = actionButtons(ride, DRIVER_ID);
 
         return `
 
@@ -848,11 +770,12 @@ let stopRides = null;
 onAuthStateChanged(auth, async user => {
   stopRides?.(); stopRides = null; rides = []; DRIVER_ID = null;
   clearActiveDriverRide(); renderRequests();
-  if (!user) return;
+  if (!user) { setDriverMessage('Sign in using Driver Login to see jobs.'); return; }
   const profile = await getDoc(doc(db, 'users', user.uid)).catch(() => null);
   if (auth.currentUser?.uid !== user.uid || !profile?.exists()) return;
   const data = profile.data();
-  if (data.role !== 'driver' || !['approved', 'active'].includes(data.accountStatus)) return;
+  if (data.role !== 'driver' || !['approved', 'active'].includes(data.accountStatus)) { setDriverMessage('An approved driver account is required to accept jobs.'); return; }
+  setDriverMessage('Job stages: Accept, Arrive at Pickup, Start Ride, Complete Ride.');
   DRIVER_ID = user.uid; DRIVER_NAME = data.fullName || 'Driver';
   stopRides = startRideListener();
 });
