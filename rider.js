@@ -288,10 +288,13 @@ async function geocode(address) {
     '1'
   );
 
-  url.searchParams.set(
-    'q',
-    address
-  );
+  const zip = address.trim().match(/^(\d{5})(?:-\d{4})?$/);
+  if (zip) {
+    url.searchParams.set('postalcode', zip[1]);
+    url.searchParams.set('countrycodes', 'us');
+  } else {
+    url.searchParams.set('q', address);
+  }
 
   const response =
     await fareRideFetchWithRetry(url);
@@ -478,7 +481,9 @@ async function calculateEstimate() {
     showSummary(estimate);
 
     $('msg').textContent =
-      'Estimate ready.';
+      (/^\d{5}(?:-\d{4})?$/.test(pickup) || /^\d{5}(?:-\d{4})?$/.test(dropoff))
+        ? 'ZIP-area estimate ready. Use street addresses for an exact pickup and destination.'
+        : 'Estimate ready.';
 
     $('requestBtn').disabled =
       false;

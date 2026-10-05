@@ -374,6 +374,7 @@
 <label>Package description and size<input id="packageDescription" maxlength="500" placeholder="Documents in a small envelope"></label>
 <label>Recipient name<input id="recipientName" maxlength="500" autocomplete="off"></label>
 </div>
+<p class="service-note">Enter an address or a US ZIP code in each field. ZIP-only routes estimate travel between ZIP areas; use street addresses for exact pickup and drop-off.</p>
 <p id="serviceNote" class="service-note" aria-live="polite">Choose your ride and calculate an estimate.</p>
 
 <label>
@@ -383,7 +384,7 @@
     <input
       id="pickup"
       required
-      placeholder="Times Square, New York, NY">
+      placeholder="Pickup address or US ZIP, e.g. 10001">
 
 </label>
 
@@ -395,7 +396,7 @@
     <input
       id="dropoff"
       required
-      placeholder="JFK Airport, Queens, NY">
+      placeholder="Destination address or US ZIP, e.g. 11201">
 
 </label>
 
