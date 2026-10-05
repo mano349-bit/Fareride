@@ -690,6 +690,7 @@ async event => {
   saved.unshift(ride);
   saveRides(saved);
   localStorage.setItem(LAST, ride.id);
+  window.dispatchEvent(new Event('fareride-new-ride'));
   $('msg').textContent =
     'â³ Ride requested â€” waiting for a driver';
 

@@ -48,7 +48,57 @@ service cloud.firestore {
       allow delete: if false;
     }
     match /rides/{rideId} {
-      allow read, write: if false;
+      function approved(role) {
+        return signedIn()
+          && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role
+          && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accountStatus in ['approved', 'active'];
+      }
+      function active() { return resource.data.status in ['accepted', 'arrived', 'started']; }
+      function point(location) {
+        return location is map && location.keys().hasOnly(['lat', 'lng', 'accuracy', 'heading', 'speed'])
+          && location.lat is number && location.lng is number
+          && location.lat >= -90 && location.lat <= 90
+          && location.lng >= -180 && location.lng <= 180;
+      }
+      function driverMatchesApplication() {
+        let application = get(/databases/$(database)/documents/driverApplications/$('driver_' + request.auth.uid)).data;
+        let next = request.resource.data;
+        return application.status == 'approved' && application.uid == request.auth.uid
+          && next.driverName == application.fullName && next.driverPhone == application.phone
+          && next.vehicleYear == application.vehicleYear && next.vehicleMake == application.vehicleMake
+          && next.vehicleModel == application.vehicleModel;
+      }
+      allow read: if admin()
+        || (approved('rider') && resource.data.riderId == request.auth.uid)
+        || (approved('driver') && (resource.data.status == 'requested' || resource.data.driverId == request.auth.uid));
+      allow create: if approved('rider')
+        && request.resource.data.keys().hasOnly(['id', 'serviceType', 'serviceDetails', 'pricingStatus', 'riderName', 'riderId', 'pickup', 'dropoff', 'pickupLocation', 'dropoffLocation', 'miles', 'durationMinutes', 'fare', 'rideType', 'tipPercent', 'tipAmount', 'totalFare', 'status', 'requestedAt', 'estimatedArrivalMinutes', 'estimatedArrivalAt', 'estimatedFinishAt', 'driverId', 'driverName', 'driverLocation', 'acceptedAt', 'arrivedAt', 'startedAt', 'completedAt', 'cancelledAt'])
+        && request.resource.data.id == rideId && request.resource.data.riderId == request.auth.uid
+        && request.resource.data.status == 'requested'
+        && request.resource.data.driverId == null && request.resource.data.driverName == null
+        && request.resource.data.driverLocation == null;
+      allow update: if admin() || (
+        approved('driver') && resource.data.status == 'requested' && resource.data.driverId == null
+        && resource.data.pricingStatus != 'quote_required'
+        && request.resource.data.status == 'accepted' && request.resource.data.driverId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'driverId', 'driverName', 'driverPhone', 'vehicleYear', 'vehicleMake', 'vehicleModel', 'acceptedAt'])
+        && driverMatchesApplication()
+      ) || (
+        approved('driver') && resource.data.driverId == request.auth.uid && active()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['driverLocation', 'driverLocationUpdatedAt'])
+        && point(request.resource.data.driverLocation) && request.resource.data.driverLocationUpdatedAt == request.time
+      ) || (
+        approved('rider') && resource.data.riderId == request.auth.uid && active()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['riderLocation', 'riderLocationUpdatedAt'])
+        && point(request.resource.data.riderLocation) && request.resource.data.riderLocationUpdatedAt == request.time
+      ) || (
+        approved('driver') && resource.data.driverId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'arrivedAt', 'startedAt', 'completedAt', 'estimatedFinishAt'])
+        && ((resource.data.status == 'accepted' && request.resource.data.status == 'arrived')
+          || (resource.data.status == 'arrived' && request.resource.data.status == 'started')
+          || (resource.data.status == 'started' && request.resource.data.status == 'completed'))
+      );
+      allow delete: if false;
     }
     match /config/{docId} {
       allow read, write: if false;

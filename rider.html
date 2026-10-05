@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 
 <head>
@@ -475,71 +475,6 @@
      DRIVER LOCATION
 ======================================================= -->
 
-<div class="driver-map-card">
-
-    <h2>
-        Driver Location
-    </h2>
-
-    <div id="driverEtaStatus">
-        Waiting for ride information...
-    </div>
-
-
-    <div class="eta-grid">
-
-        <div class="eta-box">
-
-            <span class="eta-label">
-                Distance to pickup
-            </span>
-
-            <span
-              id="driverDistance"
-              class="eta-value">
-                â€”
-            </span>
-
-        </div>
-
-
-        <div class="eta-box">
-
-            <span class="eta-label">
-                ETA
-            </span>
-
-            <span
-              id="driverEtaMinutes"
-              class="eta-value">
-                â€”
-            </span>
-
-        </div>
-
-
-        <div class="eta-box">
-
-            <span class="eta-label">
-                Estimated arrival
-            </span>
-
-            <span
-              id="driverEtaTime"
-              class="eta-value">
-                â€”
-            </span>
-
-        </div>
-
-    </div>
-
-
-    <div id="driverMap"></div>
-
-</div>
-
-
 <!-- ======================================================
      RIDER EMERGENCY SOS
 ======================================================= -->
@@ -702,10 +637,7 @@
 </script>
 
 
-<script
-  type="module"
-  src="rider-map.js">
-</script>
+
 
 
 <!-- ======================================================
@@ -1159,7 +1091,7 @@ window.FareRideRiderSOS = {
 </script>
 
 
-</body>
+<script type="module" src="ride-live.js"></script></body>
 
 </html>
 

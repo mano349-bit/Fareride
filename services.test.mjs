@@ -28,10 +28,10 @@ function riderHarness(fail = false) {
   el('rideType').value = 'economy';
   const context = vm.createContext({ ...services, crypto: { randomUUID: () => 'unique' }, console: { log() {}, error() {}, warn() {} },
     document: { getElementById: el, querySelector: () => ({ value: type }), querySelectorAll: () => [] },
-    window: { addEventListener() {} }, localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) },
+    window: { addEventListener() {}, dispatchEvent() {} }, localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) },
     auth: { currentUser: { uid: 'rider-uid', displayName: 'Test Rider' } }, db: {}, doc: (...args) => args,
     setDoc: async (_, job) => { if (fail) throw new Error('Offline'); writes.push(job); },
-    onSnapshot: () => () => {}, Date, Intl, URL, setTimeout, clearTimeout, AbortController });
+    onSnapshot: () => () => {}, Event: class Event { constructor(type) { this.type = type; } }, Date, Intl, URL, setTimeout, clearTimeout, AbortController });
   const source = fs.readFileSync(new URL('./rider.js', import.meta.url), 'utf8').replace(/^import[\s\S]*?from ['"][^'"]+['"];\s*/gm, '');
   vm.runInContext(source, context);
   return { el, context, writes, storage, select(value) { type = value; vm.runInContext('updateService()', context); } };

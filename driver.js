@@ -1,3 +1,6 @@
+import { auth, getDoc, onAuthStateChanged } from './firebase-config.js';
+import { query, where, or, runTransaction } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
+import { driverDetails } from './ride-details.js';
 import { serviceName, matchesService, priceLabel } from './services.js';
 import {
   db,
@@ -9,8 +12,8 @@ import {
 
 const RK = 'fareride_rides_v2';
 
-const DRIVER_ID = 'driver_1';
-const DRIVER_NAME = 'Driver 1';
+let DRIVER_ID = null;
+let DRIVER_NAME = '';
 
 const ACTIVE_RIDE_KEY =
   'fareride_active_driver_ride';
@@ -448,28 +451,19 @@ async function acceptRide(id) {
 
   try {
 
-    await updateDoc(
-      doc(
-        db,
-        'rides',
-        id
-      ),
-      {
-        status:
-          'accepted',
-
-        driverId:
-          DRIVER_ID,
-
-        driverName:
-          DRIVER_NAME,
-
-        acceptedAt:
-          now
+    const uid = auth.currentUser?.uid;
+    if (!uid) throw new Error('Sign in as an approved driver.');
+    const application = await getDoc(doc(db, 'driverApplications', 'driver_' + uid));
+    if (!application.exists()) throw new Error('Driver application is missing.');
+    const details = driverDetails(application.data(), uid);
+    await runTransaction(db, async transaction => {
+      const rideRef = doc(db, 'rides', id);
+      const current = await transaction.get(rideRef);
+      if (!current.exists() || current.data().status !== 'requested' || current.data().driverId) {
+        throw new Error('Another driver has already accepted this ride.');
       }
-    );
-
-
+      transaction.update(rideRef, { status: 'accepted', ...details, acceptedAt: now });
+    });
     /*
       This is important for
       live GPS on the phone.
@@ -479,7 +473,7 @@ async function acceptRide(id) {
 
 
     setDriverMessage(
-      'Ride accepted — Driver 1'
+      'Ride accepted — ' + DRIVER_NAME
     );
 
 
@@ -700,9 +694,9 @@ function startRideListener() {
     );
 
 
-  onSnapshot(
+  return onSnapshot(
 
-    ridesCollection,
+    query(ridesCollection, or(where('status', '==', 'requested'), where('driverId', '==', DRIVER_ID))),
 
 
     snapshot => {
@@ -803,6 +797,8 @@ function startRideListener() {
       }
 
 
+      if (activeRide) window.dispatchEvent(new Event('fareride-active-ride'));
+      else clearActiveDriverRide();
       renderRequests();
 
     },
@@ -848,4 +844,15 @@ function startRideListener() {
    START
 ======================================== */
 
-startRideListener();
+let stopRides = null;
+onAuthStateChanged(auth, async user => {
+  stopRides?.(); stopRides = null; rides = []; DRIVER_ID = null;
+  clearActiveDriverRide(); renderRequests();
+  if (!user) return;
+  const profile = await getDoc(doc(db, 'users', user.uid)).catch(() => null);
+  if (auth.currentUser?.uid !== user.uid || !profile?.exists()) return;
+  const data = profile.data();
+  if (data.role !== 'driver' || !['approved', 'active'].includes(data.accountStatus)) return;
+  DRIVER_ID = user.uid; DRIVER_NAME = data.fullName || 'Driver';
+  stopRides = startRideListener();
+});

@@ -1,4 +1,5 @@
-﻿/* FareRide mobile GPS tuning:
+import { auth, getDoc, onAuthStateChanged } from './firebase-config.js';
+/* FareRide mobile GPS tuning:
    - Longer timeout for cellular GPS acquisition
    - Allows a recent cached fix while a fresh GPS fix is obtained
 */
@@ -15,11 +16,9 @@ import {
 const ACTIVE_RIDE_KEY =
   "fareride_active_driver_ride";
 
-const DRIVER_ID =
-  "driver_1";
+const currentDriverId = () => auth.currentUser?.uid;
 
-const DRIVER_NAME =
-  "Driver 1";
+const currentDriverName = () => auth.currentUser?.displayName || 'Driver';
 
 
 let watchId = null;
@@ -103,6 +102,12 @@ async function saveDriverLocation(
   }
 
 
+  if (!auth.currentUser) return;
+  const active = await getDoc(doc(db, 'rides', rideId)).catch(() => null);
+  if (!active?.exists() || active.data().driverId !== auth.currentUser.uid
+      || !['accepted', 'arrived', 'started'].includes(active.data().status)) {
+    stopDriverLocationTracking(); return;
+  }
   lastSentAt = now;
 
 
@@ -511,10 +516,10 @@ async function sendEmergencySOS() {
                   "driver",
 
                 driverId:
-                  DRIVER_ID,
+                  currentDriverId(),
 
                 driverName:
-                  DRIVER_NAME,
+                  currentDriverName(),
 
                 rideId:
                   rideId || null,
@@ -700,3 +705,5 @@ window.FareRideDriverLocation = {
   }
 
 };
+
+onAuthStateChanged(auth, () => stopDriverLocationTracking());
