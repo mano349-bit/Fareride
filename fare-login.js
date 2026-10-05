@@ -162,10 +162,11 @@ async function login() {
       profileSnapshot.data();
 
 
-    if (
-      !user.emailVerified &&
-      profile.approved !== true
-    ) {
+    const profileRole = String(profile.role || "").trim().toLowerCase();
+    const status = String(profile.accountStatus || profile.status || "").trim().toLowerCase();
+    const approved = profile.approved === true || status === "approved" || status === "active";
+
+    if (!user.emailVerified && !approved) {
 
       showMessage(
         "Your FareRide account is waiting for approval. Verify your email, or wait for FareRide Admin to approve your application."
@@ -180,7 +181,7 @@ async function login() {
 
 
     if (
-      profile.role !== role
+      profileRole !== role
     ) {
 
       await signOut(auth);

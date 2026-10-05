@@ -4,8 +4,7 @@
 } from "./firebase-config.js";
 
 import {
-  onAuthStateChanged,
-  signOut
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
 import {
@@ -29,7 +28,9 @@ const loginPage =
     : "./rider-login.html";
 
 
+let authCheck = 0;
 onAuthStateChanged(auth, async user => {
+  const check = ++authCheck;
 
   if (!user) {
     window.location.replace(loginPage);
@@ -43,9 +44,10 @@ onAuthStateChanged(auth, async user => {
         doc(db, "users", user.uid)
       );
 
+    if (check !== authCheck || auth.currentUser?.uid !== user.uid) return;
+
     if (!snapshot.exists()) {
       console.error("FareRide user profile missing:", user.uid);
-      await signOut(auth);
       window.location.replace(loginPage);
       return;
     }
@@ -97,7 +99,6 @@ onAuthStateChanged(auth, async user => {
         "FareRide account is neither email verified nor admin approved."
       );
 
-      await signOut(auth);
       window.location.replace(loginPage);
       return;
     }
@@ -118,7 +119,6 @@ onAuthStateChanged(auth, async user => {
         requiredRole
       );
 
-      await signOut(auth);
       window.location.replace(loginPage);
       return;
     }
