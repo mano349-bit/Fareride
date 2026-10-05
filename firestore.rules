@@ -1,6 +1,52 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function owner(uid) { return signedIn() && request.auth.uid == uid; }
+    function admin() {
+      return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active == true;
+    }
+    match /admins/{uid} {
+      allow get: if owner(uid);
+      allow list, write: if false;
+    }
+    match /users/{uid} {
+      allow get: if owner(uid) || admin();
+      allow list: if admin();
+      allow create: if owner(uid)
+        && request.resource.data.keys().hasOnly(['uid', 'email', 'role', 'fullName', 'phone', 'accountStatus', 'updatedAt'])
+        && request.resource.data.uid == uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role in ['rider', 'driver']
+        && request.resource.data.accountStatus == 'pending';
+      allow update: if (owner(uid) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fullName', 'phone', 'email', 'updatedAt'])
+        && request.resource.data.email == request.auth.token.email)
+        || (admin() && request.resource.data.uid == resource.data.uid && request.resource.data.role == resource.data.role);
+      allow delete: if false;
+    }
+    match /{collection}/{applicationId} {
+      allow get: if collection in ['riderApplications', 'driverApplications']
+        && (admin() || (signedIn() && applicationId == (collection == 'riderApplications' ? 'rider_' : 'driver_') + request.auth.uid));
+      allow list: if collection in ['riderApplications', 'driverApplications'] && admin();
+      allow create: if collection in ['riderApplications', 'driverApplications']
+        && signedIn()
+        && request.resource.data.keys().hasOnly(['applicationId', 'role', 'uid', 'fullName', 'phone', 'email', 'dateOfBirth', 'address', 'city', 'state', 'zipCode', 'documents', 'status', 'adminNotes', 'submittedAt', 'approvedAt', 'suspendedAt', 'updatedAt', 'ssnLast4', 'vehicleYear', 'vehicleMake', 'vehicleModel', 'vehicleColor', 'plateNumber', 'insuranceCompany', 'insurancePolicyNumber', 'insuranceExpiration', 'applicantNotes', 'rating'])
+        && applicationId == (collection == 'riderApplications' ? 'rider_' : 'driver_') + request.auth.uid
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.applicationId == applicationId
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role == (collection == 'riderApplications' ? 'rider' : 'driver')
+        && request.resource.data.status == 'new'
+        && request.resource.data.adminNotes == ''
+        && request.resource.data.approvedAt == null
+        && request.resource.data.suspendedAt == null;
+      allow update: if collection in ['riderApplications', 'driverApplications'] && admin()
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.applicationId == resource.data.applicationId;
+      allow delete: if false;
+    }
     match /rides/{rideId} {
       allow read, write: if false;
     }
