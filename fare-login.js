@@ -16,7 +16,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 const fareRideVerificationSettings = {
-  url: "https://fareride-8b2d1.web.app/verify-email.html",
+  url: new URL('./rider-login.html', window.location.href).href,
   handleCodeInApp: false
 };
 const role =
@@ -314,8 +314,8 @@ async function resendVerification() {
     const actionCodeSettings = {
       url:
         role === "driver"
-          ? "https://fareride-8b2d1.web.app/driver-login.html"
-          : "https://fareride-8b2d1.web.app/rider-login.html",
+          ? new URL('./driver-login.html', window.location.href).href
+          : new URL('./rider-login.html', window.location.href).href,
 
       handleCodeInApp:
         false

@@ -1,5 +1,5 @@
 // FareRide Firebase connection
-// Project: fareride-8b2d1
+// Project: fareride-app-0907-349
 
 import {
   initializeApp
@@ -38,13 +38,12 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-storage.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCIqlfkTWWSWv7lG9OmHE0ppB86vBZiBKg",
-  authDomain: "fareride-8b2d1.firebaseapp.com",
-  projectId: "fareride-8b2d1",
-  storageBucket: "fareride-8b2d1.firebasestorage.app",
-  messagingSenderId: "607017232752",
-  appId: "1:607017232752:web:c054c1e47be30bff6d07b5",
-  measurementId: "G-PVPY1XZTXX"
+  apiKey: "AIzaSyD_ri9GaLTC6rOyNuCL8Q-kBDMnB75zlOg",
+  authDomain: "fareride-app-0907-349.firebaseapp.com",
+  projectId: "fareride-app-0907-349",
+  storageBucket: "fareride-app-0907-349.firebasestorage.app",
+  messagingSenderId: "615024272118",
+  appId: "1:615024272118:web:03d9c4325ec3daf78a02d7"
 };
 
 const app = initializeApp(firebaseConfig);
