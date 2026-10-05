@@ -1,16 +1,4 @@
 {
-  "functions": [
-    {
-      "source": "functions",
-      "codebase": "default",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log"
-      ]
-    }
-  ],
   "hosting": {
     "public": ".",
     "ignore": [
@@ -25,33 +13,20 @@
       "MULTI_SERVICE.md",
       "preview.cjs",
       "**/*.test.mjs",
+
       ".git/**",
       ".github/**",
+      ".firebase/**",
       "functions/**",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "/api/fare-estimate",
-        "function": {
-          "functionId": "fareEstimate",
-          "region": "us-east1"
-        }
-      },
-      {
-        "source": "/api/create-ride",
-        "function": {
-          "functionId": "createRide",
-          "region": "us-east1"
-        }
-      },
-      {
-        "source": "/api/pricing",
-        "function": {
-          "functionId": "pricing",
-          "region": "us-east1"
-        }
-      }
+      "**/node_modules/**",
+
+      "driver/**",
+      "rider/**",
+      "Fare-Ride-Customer-Web/**",
+      "public/**",
+
+      "*.backup",
+      "users.json"
     ],
     "headers": [
       {
