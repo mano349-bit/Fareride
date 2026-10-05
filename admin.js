@@ -293,6 +293,8 @@ async function handleLogout() {
 
 function showLogin() {
 
+  stopLiveListeners();
+
   $('loginSection')
     .classList
     .remove('hidden');
@@ -341,48 +343,11 @@ function showAdminApp() {
   We use Firebase Auth's direct listener here.
 */
 
-import(
-  "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js"
-)
-.then(module => {
-
-  module.onAuthStateChanged(
-    auth,
-    async user => {
-
-      if (!user) {
-
-        showLogin();
-
-        return;
-
-      }
-
-
-      const approved =
-        await isApprovedAdmin(
-          user
-        );
-
-
-      if (!approved) {
-
-        await signOut(auth);
-
-        showLogin();
-
-        return;
-
-      }
-
-
-      showAdminApp();
-
-    }
-  );
-
+import { observeAdmin } from './admin-session.js';
+observeAdmin(approved => {
+  if (approved) showAdminApp();
+  else showLogin();
 });
-
 
 /* =========================================================
    ADMIN TABS

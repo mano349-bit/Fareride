@@ -1,4 +1,5 @@
-﻿import {
+import { observeAdmin } from './admin-session.js';
+import {
   db,
   auth,
   collection,
@@ -623,11 +624,10 @@ function startEmergencyListener() {
    AUTH
 ========================================================= */
 
-onAuthStateChanged(
-  auth,
-  user => {
+observeAdmin(
+  approved => {
 
-    if (user) {
+    if (approved) {
 
       startEmergencyListener();
 

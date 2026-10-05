@@ -1,4 +1,5 @@
 import { db } from "./firebase-config.js";
+import { observeAdmin } from './admin-session.js';
 import { collection, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 const C={driver:"driverApplications",rider:"riderApplications"};
@@ -72,12 +73,23 @@ function render(){
  host.append(top,role("driver"),role("rider"));
 }
 let timer;
+let authorized = false;
+const stops = [];
 const schedule=()=>{clearTimeout(timer);timer=setTimeout(render,100)};
-for(const r of ["driver","rider"])onSnapshot(collection(db,C[r]),s=>{S[r]=s.docs.map(d=>({id:d.id,...d.data()}));schedule()},e=>console.error("FareRide manager listener:",r,e));
+observeAdmin(approved => {
+ authorized = approved;
+ stops.splice(0).forEach(stop => stop());
+ clearTimeout(timer);
+ S.driver = []; S.rider = [];
+ document.getElementById('fr7-fixed-host')?.remove();
+ if (!approved) return;
+ for(const r of ["driver","rider"])stops.push(onSnapshot(collection(db,C[r]),s=>{S[r]=s.docs.map(d=>({id:d.id,...d.data()}));schedule()},e=>console.error("FareRide manager listener:",r,e)));
+ schedule();
+});
 
 /* Persistence guard: old admin code may redraw body children. Reattach only if our host is actually removed.
    Do NOT continuously rebuild while users click checkboxes. */
 const guard=new MutationObserver(()=>{
- if(!document.getElementById("fr7-fixed-host")) schedule();
+ if(authorized && !document.getElementById("fr7-fixed-host")) schedule();
 });
 guard.observe(document.documentElement,{childList:true,subtree:true});

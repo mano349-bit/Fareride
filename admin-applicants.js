@@ -1,3 +1,4 @@
+import { observeAdmin } from './admin-session.js';
 import {
   db,
   auth,
@@ -2262,11 +2263,10 @@ function startListeners() {
    AUTH
 ========================================================= */
 
-onAuthStateChanged(
-  auth,
-  user => {
+observeAdmin(
+  approved => {
 
-    if (user) {
+    if (approved) {
 
       startListeners();
 
@@ -2277,6 +2277,8 @@ onAuthStateChanged(
       driverApplicants = [];
 
       riderApplicants = [];
+      renderDrivers();
+      renderRiders();
 
     }
 
