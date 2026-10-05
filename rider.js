@@ -1,5 +1,5 @@
 import { SERVICES, validateServiceDetails, priceLabel } from './services.js';
-﻿/* =========================================================
+/* =========================================================
    FARERIDE MOBILE NETWORK HELPER
    Helps when cellular data briefly drops or changes towers.
 ========================================================= */
@@ -665,7 +665,7 @@ async event => {
   localStorage.setItem(LAST, ride.id);
   window.dispatchEvent(new Event('fareride-new-ride'));
   $('msg').textContent =
-    'â³ Ride requested â€” waiting for a driver';
+    'Ride requested - waiting for a driver';
 
   $('requestBtn').disabled =
     true;
