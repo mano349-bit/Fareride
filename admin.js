@@ -54,7 +54,7 @@ function money(value) {
 function dateText(value) {
 
   if (!value) {
-    return 'â€”';
+    return '-';
   }
 
   /*
@@ -85,7 +85,7 @@ function dateText(value) {
     )
   ) {
 
-    return 'â€”';
+    return '-';
 
   }
 
@@ -169,7 +169,7 @@ async function isApprovedAdmin(user) {
 
 
     return (
-      admin.active !== false
+      admin.active === true
     );
 
 
@@ -657,7 +657,7 @@ function renderRides() {
 
               <br>
 
-              â†’
+              -
 
               ${
                 escapeHtml(
@@ -768,7 +768,7 @@ function renderRides() {
                 ${
                   escapeHtml(
                     ride.riderId ||
-                    'â€”'
+                    '-'
                   )
                 }
                 <br>
@@ -792,7 +792,7 @@ function renderRides() {
                 ${
                   escapeHtml(
                     ride.driverId ||
-                    'â€”'
+                    '-'
                   )
                 }
                 <br><br>
@@ -1178,7 +1178,7 @@ function applicantCard(
         ${
           escapeHtml(
             applicant.phone ||
-            'â€”'
+            '-'
           )
         }
 
@@ -1194,7 +1194,7 @@ function applicantCard(
         ${
           escapeHtml(
             applicant.email ||
-            'â€”'
+            '-'
           )
         }
 
@@ -1210,7 +1210,7 @@ function applicantCard(
         ${
           escapeHtml(
             applicant.address ||
-            'â€”'
+            '-'
           )
         }
 
@@ -1232,7 +1232,7 @@ function applicantCard(
             ]
             .filter(Boolean)
             .join(' ') ||
-            'â€”'
+            '-'
           )
         }
 
@@ -1248,7 +1248,7 @@ function applicantCard(
         ${
           escapeHtml(
             applicant.plateNumber ||
-            'â€”'
+            '-'
           )
         }
 
@@ -1264,7 +1264,7 @@ function applicantCard(
         ${
           escapeHtml(
             applicant.insuranceCompany ||
-            'â€”'
+            '-'
           )
         }
 
@@ -1280,7 +1280,7 @@ function applicantCard(
         ${
           escapeHtml(
             applicant.insuranceExpiration ||
-            'â€”'
+            '-'
           )
         }
 
@@ -1297,7 +1297,7 @@ function applicantCard(
         ${
           escapeHtml(
             applicant.ssnLast4 ||
-            'â€”'
+            '-'
           )
         }
 
