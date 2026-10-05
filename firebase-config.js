@@ -21,7 +21,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 import {
-  getAuth,
+  initializeAuth,
+  browserSessionPersistence,
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -48,7 +49,8 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const auth = getAuth(app);
+// Keep rider, driver and admin sessions independent across browser tabs.
+const auth = initializeAuth(app, { persistence: browserSessionPersistence });
 const storage = getStorage(app);
 // Report unavailable uploads promptly instead of retrying for many minutes.
 storage.maxUploadRetryTime = 30000;
