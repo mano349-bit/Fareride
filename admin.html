@@ -1013,6 +1013,7 @@ td{
     </section>
 
 
+    <section class="card"><h3>Past 360 days</h3><p id="financialSummary">Waiting for ride data...</p><p>Completed rides only, by completion date. Driver estimates use the saved share or 75% of fare plus tips when no payout is recorded. These are ride totals, not confirmed payments. Effective rate includes the base fare.</p><div class="table-wrap"><table><thead><tr><th>Account</th><th>Name / ID</th><th>Completed rides</th><th>Total</th></tr></thead><tbody id="financialPeople"></tbody></table></div></section>
     <div class="toolbar">
 
       <input
@@ -1025,6 +1026,7 @@ td{
           All statuses
         </option>
 
+        <option value="active">Active trips</option>
         <option value="requested">
           Requested
         </option>
@@ -1065,7 +1067,7 @@ td{
             <th>Rider</th>
             <th>Driver</th>
             <th>Trip</th>
-            <th>Fare</th>
+            <th>Fare</th><th>Effective fare / mile</th><th>Rider total</th><th>Driver earnings</th>
             <th>Status</th>
             <th>Requested</th>
             <th>Actions</th>

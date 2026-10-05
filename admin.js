@@ -1,3 +1,4 @@
+import { amounts, report360 } from './admin-financials.js';
 import { serviceName, priceLabel } from './services.js';
 ﻿import {
   db,
@@ -477,7 +478,7 @@ function getFilteredRides() {
 
       if (
         status !== 'all' &&
-        ride.status !== status
+        (status === 'active' ? !['accepted', 'arrived', 'started'].includes(ride.status) : ride.status !== status)
       ) {
 
         return false;
@@ -521,6 +522,7 @@ function getFilteredRides() {
 function renderRides() {
 
   updateStats();
+  renderFinancials();
 
 
   const filtered =
@@ -579,8 +581,8 @@ function renderRides() {
           );
 
 
+        const earnings = amounts(ride);
         return `
-
           <tr>
 
             <td>
@@ -656,9 +658,10 @@ function renderRides() {
             </td>
 
 
-            <td>
-              ${
-                statusBadge(
+            <td>${earnings?.rate != null ? money(earnings.rate) + "/mi" : "-"}</td>
+            <td>${earnings ? money(earnings.rider) : "Unpriced"}</td>
+            <td>${earnings ? money(earnings.driver) + (earnings.estimated ? " (estimate)" : "") : "Unpriced"}</td>
+            <td>${statusBadge(
                   ride.status
                 )
               }
@@ -2011,6 +2014,7 @@ function startLiveListeners() {
           'Admin rides listener failed:',
           error
         );
+        $('financialSummary').textContent = 'Ride data unavailable: Firebase permissions must allow administrator access. Totals cannot be calculated yet.';
 
       }
     );
@@ -2202,3 +2206,9 @@ document
     }
   );
 
+
+function renderFinancials() {
+ const summary = report360(rides);
+ $('financialSummary').textContent = 'Past 360 days: ' + summary.count + ' completed rides | Rider charges: ' + money(summary.rider) + ' | Driver earnings: ' + money(summary.driver) + (summary.excluded ? ' | Unpriced rides excluded: ' + summary.excluded : '');
+ $('financialPeople').innerHTML = summary.people.map(person => '<tr><td>' + escapeHtml(person.role) + '</td><td>' + escapeHtml(person.name) + '<br>' + escapeHtml(person.id) + '</td><td>' + person.count + '</td><td>' + money(person.total) + (person.estimated ? ' (estimate)' : '') + '</td></tr>').join('');
+}
