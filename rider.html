@@ -375,6 +375,7 @@
 <label>Recipient name<input id="recipientName" maxlength="500" autocomplete="off"></label>
 </div>
 <p class="service-note">Enter an address or a US ZIP code in each field. ZIP-only routes estimate travel between ZIP areas; use street addresses for exact pickup and drop-off.</p>
+<label>Driver tip <select id="tipChoice"><option value="0">No tip</option><option value="10">10%</option><option value="15">15%</option><option value="20">20%</option><option value="custom">Custom percentage</option></select></label><label id="customTipLabel" hidden>Custom tip (%)<input id="customTipPercent" type="number" min="0" max="100" step="0.1" value="0"></label><p id="tipPreview" aria-live="polite">Tips go to the driver.</p>
 <p id="serviceNote" class="service-note" aria-live="polite">Choose your ride and calculate an estimate.</p>
 
 <label>
@@ -1092,7 +1093,7 @@ window.FareRideRiderSOS = {
 </script>
 
 
-<script type="module" src="ride-live.js"></script><script type="module" src="rider-trip.js"></script></body>
+<script type="module" src="ride-live.js"></script><script type="module" src="rider-trip.js"></script><script type="module" src="ride-reviews.js"></script></body>
 
 </html>
 
