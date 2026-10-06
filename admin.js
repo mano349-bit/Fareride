@@ -1,4 +1,4 @@
-import { amounts, report360 } from './admin-financials.js';
+import { amounts, report360, dailyAccounts } from './admin-financials.js';
 import { serviceName, priceLabel } from './services.js';
 ﻿import {
   db,
@@ -478,7 +478,7 @@ function getFilteredRides() {
 
       if (
         status !== 'all' &&
-        (status === 'active' ? !['accepted', 'arrived', 'started'].includes(ride.status) : ride.status !== status)
+        (status === 'pending' ? !['requested', 'pending'].includes(ride.status) : status === 'active' ? !['accepted', 'arrived', 'started'].includes(ride.status) : status === 'cancelled' ? !['cancelled','canceled'].includes(ride.status) : ride.status !== status)
       ) {
 
         return false;
@@ -2208,7 +2208,14 @@ document
 
 
 function renderFinancials() {
+ const days = Number($('dailyReportDays').value);
+ if($('dailyReportDays').checkValidity()) {
+ const rows = dailyAccounts(rides, days);
+ $('dailyAccounts').innerHTML = rows.length ? rows.map(row => '<tr><td>'+row.day+'</td><td>'+escapeHtml(row.role)+'</td><td>'+escapeHtml(row.name)+'<br>'+escapeHtml(row.id)+'</td><td>'+row.pending+'</td><td>'+row.active+'</td><td>'+row.completed+'</td><td>'+row.cancelled+'</td><td>'+money(row.total)+(row.estimated?' (estimate)':'')+(row.unpriced?' / '+row.unpriced+' unpriced':'')+'</td></tr>').join('') : '<tr><td colspan="8">No jobs in this period.</td></tr>';
+ }
  const summary = report360(rides);
  $('financialSummary').textContent = 'Past 360 days: ' + summary.count + ' completed rides | Rider charges: ' + money(summary.rider) + ' | Driver earnings: ' + money(summary.driver) + (summary.excluded ? ' | Unpriced rides excluded: ' + summary.excluded : '');
  $('financialPeople').innerHTML = summary.people.map(person => '<tr><td>' + escapeHtml(person.role) + '</td><td>' + escapeHtml(person.name) + '<br>' + escapeHtml(person.id) + '</td><td>' + person.count + '</td><td>' + money(person.total) + (person.estimated ? ' (estimate)' : '') + '</td></tr>').join('');
 }
+
+$('dailyReportDays').addEventListener('change', () => { if ($('dailyReportDays').reportValidity()) renderFinancials(); });

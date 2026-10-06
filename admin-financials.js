@@ -26,3 +26,22 @@ export function report360(rides, now = Date.now()) {
   }
   return {count,rider,driver,excluded,people:[...people.values()]};
 }
+export function dailyAccounts(rides, days = 365, now = new Date()) {
+ const start = new Date(now);start.setHours(0,0,0,0);start.setDate(start.getDate()-days+1);
+ const end = new Date(now);end.setHours(23,59,59,999);const groups = new Map();
+ for(const ride of rides){
+  const status = ride.status === 'requested' ? 'pending' : ['accepted','arrived','started'].includes(ride.status) ? 'active' : ['cancelled','canceled'].includes(ride.status) ? 'cancelled' : ride.status;
+  if(!['pending','active','completed','cancelled'].includes(status))continue;
+  const value = status === 'completed' ? ride.completedAt : status === 'cancelled' ? (ride.cancelledAt || ride.requestedAt) : ride.requestedAt;
+  const date=value?.toDate?value.toDate():new Date(value);if(!Number.isFinite(date.getTime())||date<start||date>end)continue;
+  const day=[date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');
+  const money=amounts(ride);
+  for(const role of ['rider','driver']){
+   const id=ride[role+'Id'];if(!id)continue;
+   const key=day+':'+role+':'+id;
+   const row=groups.get(key)||{day,role,id,name:ride[role+'Name']||role,pending:0,active:0,completed:0,cancelled:0,total:0,estimated:false,unpriced:0};
+   row[status]++;if(status==='completed'){if(money){row.total+=money[role];row.estimated ||= role==='driver'&&money.estimated;}else row.unpriced++;}groups.set(key,row);
+  }
+ }
+ return [...groups.values()].sort((a,b)=>b.day.localeCompare(a.day)||a.role.localeCompare(b.role)||a.name.localeCompare(b.name));
+}

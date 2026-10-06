@@ -1014,6 +1014,7 @@ td{
 
 
     <section class="card"><h3>Past 360 days</h3><p id="financialSummary">Waiting for ride data...</p><p>Completed rides only, by completion date. Driver estimates use the saved share or 75% of fare plus tips when no payout is recorded. These are ride totals, not confirmed payments. Effective rate includes the base fare.</p><div class="table-wrap"><table><thead><tr><th>Account</th><th>Name / ID</th><th>Completed rides</th><th>Total</th></tr></thead><tbody id="financialPeople"></tbody></table></div></section>
+    <section class="card"><h3>Daily rider and driver jobs</h3><label>Past <input id="dailyReportDays" type="number" min="1" max="365" step="1" value="365" style="width:90px"> days (1-365)</label><p>Pending and active jobs use their request date. Completed jobs use completion date; cancellations use cancellation date. Financial totals include completed jobs only. Unassigned jobs appear under their rider until a driver accepts.</p><div class="table-wrap"><table><thead><tr><th>Date</th><th>Account</th><th>Name / ID</th><th>Pending</th><th>Active</th><th>Completed</th><th>Cancelled</th><th>Daily total</th></tr></thead><tbody id="dailyAccounts"></tbody></table></div></section>
     <div class="toolbar">
 
       <input
@@ -1027,6 +1028,7 @@ td{
         </option>
 
         <option value="active">Active trips</option>
+        <option value="pending">Pending requests</option>
         <option value="requested">
           Requested
         </option>
