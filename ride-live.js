@@ -6,19 +6,20 @@ const key = isDriver ? 'fareride_active_driver_ride' : 'fareride_last_ride_id';
 const section = document.createElement('section');
 section.style.cssText = 'max-width:900px;margin:20px auto;padding:20px;background:white;border:1px solid #ccc;border-radius:12px';
 section.hidden = true;
-section.innerHTML = `<h2>${isDriver ? 'Rider and driver live map' : 'Your driver'}</h2><p id="liveDriverDetails"></p><a id="liveDriverPhone" hidden></a><p id="liveMapStatus"></p><button type="button" id="shareRideLocation">Share my live location</button><div id="rideLiveMap" style="height:320px;margin-top:16px"></div>`;
+section.innerHTML = `<h2>${isDriver ? 'Rider and driver live map' : 'Your driver'}</h2><p id="liveDriverDetails"></p><a id="liveDriverPhone" hidden></a><p id="liveMapStatus"></p><p>Live location starts automatically for an accepted ride and stops when the ride ends. Allow location access when your browser asks.</p><button type="button" id="shareRideLocation" hidden>Retry location</button><div id="rideLiveMap" style="height:320px;margin-top:16px"></div>`;
 document.querySelector('main').append(section);
 const status = section.querySelector('#liveMapStatus');
 const button = section.querySelector('button');
 let user = null, ride = null, rideId = null, stop = null, gps = null, lastSent = 0;
 let map = null, riderMarker = null, driverMarker = null;
+let gpsAttempted = false;
 function stopGPS() {
   if (gps !== null) navigator.geolocation.clearWatch(gps);
   gps = null; button.disabled = false;
 }
 function reset() {
   stopGPS(); stop?.(); stop = null; ride = null; rideId = null;
-  section.hidden = true;
+  section.hidden = true; gpsAttempted = false; lastSent = 0; button.hidden = true;
   if (map) map.remove();
   map = riderMarker = driverMarker = null;
 }
@@ -57,6 +58,9 @@ function render() {
   const time = stamp?.toMillis?.() || 0;
   status.textContent = time ? `Other person last updated: ${new Date(time).toLocaleTimeString()}${Date.now() - time > 30000 ? ' (location may be stale)' : ''}` : 'Waiting for the other person to share GPS. Pickup is a fixed location.';
 }
+function ensureLocation() {
+  if (!gpsAttempted && user && ride && ACTIVE_STATUSES.includes(ride.status)) startLocation();
+}
 async function watch() {
   const id = localStorage.getItem(key);
   if (!user || !id || id === rideId) return;
@@ -66,7 +70,7 @@ async function watch() {
     if (auth.currentUser?.uid !== expected || !snapshot.exists()) { reset(); return; }
     const next = snapshot.data();
     if ((isDriver ? next.driverId : next.riderId) !== expected) { reset(); return; }
-    ride = next; render();
+    ride = next; render(); ensureLocation();
   }, () => { reset(); status.textContent = 'Unable to access this ride.'; });
 }
 onAuthStateChanged(auth, async next => {
@@ -78,10 +82,12 @@ onAuthStateChanged(auth, async next => {
   if (data.role !== (isDriver ? 'driver' : 'rider') || !['approved', 'active'].includes(data.accountStatus)) return;
   user = next; watch();
 });
-button.onclick = () => {
-  if (!user || !ride || !ACTIVE_STATUSES.includes(ride.status) || !navigator.geolocation) return;
+function startLocation() {
+  if (!user || !ride || !ACTIVE_STATUSES.includes(ride.status) || gps !== null) return;
+  gpsAttempted = true;
+  if (!navigator.geolocation) { status.textContent = 'Location is unavailable on this device.'; button.hidden = false; return; }
   const id = rideId, uid = user.uid;
-  button.disabled = true;
+  button.disabled = true; button.hidden = true;
   gps = navigator.geolocation.watchPosition(async position => {
     if (auth.currentUser?.uid !== uid || rideId !== id || !ACTIVE_STATUSES.includes(ride?.status)) { stopGPS(); return; }
     if (Date.now() - lastSent < 5000) return;
@@ -91,10 +97,11 @@ button.onclick = () => {
     try {
       await updateDoc(doc(db, 'rides', id), { [isDriver ? 'driverLocation' : 'riderLocation']: point,
         [isDriver ? 'driverLocationUpdatedAt' : 'riderLocationUpdatedAt']: serverTimestamp() });
-    } catch { status.textContent = 'Location could not be shared. Check ride access.'; stopGPS(); }
-  }, () => { status.textContent = 'Location unavailable. Allow location access and try again.'; stopGPS(); },
+    } catch { status.textContent = 'Location could not be shared. Check ride access.'; stopGPS(); button.hidden = false; }
+  }, () => { status.textContent = 'Location unavailable. Allow location access and retry.'; stopGPS(); button.hidden = false; },
   { enableHighAccuracy: true, maximumAge: 10000, timeout: 30000 });
-};
+}
+button.onclick = startLocation;
 window.addEventListener('fareride-new-ride', watch);
 window.addEventListener('fareride-active-ride', watch);
 window.addEventListener('storage', event => { if (event.key === key) { if (!event.newValue) reset(); else watch(); } });
