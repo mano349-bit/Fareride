@@ -22,11 +22,13 @@ function reset() {
   if (map) map.remove();
   map = riderMarker = driverMarker = null;
 }
-function marker(current, point, label) {
+function marker(current, point, label, permanent = false) {
   if (!validCoordinates(point)) return current;
-  if (current) { current.setLatLng([point.lat, point.lng]); return current; }
   const text = document.createElement('span'); text.textContent = label;
-  return L.marker([point.lat, point.lng]).addTo(map).bindPopup(text);
+  if (current) { current.setLatLng([point.lat, point.lng]); current.setPopupContent(text); if (permanent) current.setTooltipContent(text.cloneNode(true)); return current; }
+  const created = L.marker([point.lat, point.lng]).addTo(map).bindPopup(text);
+  if (permanent) created.bindTooltip(text.cloneNode(true), { permanent: true, direction: 'top' });
+  return created;
 }
 function render() {
   const active = ACTIVE_STATUSES.includes(ride.status);
@@ -48,7 +50,8 @@ function render() {
       L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
     }
     riderMarker = marker(riderMarker, riderPoint, ride.riderLocation ? 'Rider location' : 'Pickup (rider GPS not shared)');
-    driverMarker = marker(driverMarker, ride.driverLocation, 'Driver location');
+    const vehicle = [ride.vehicleYear, ride.vehicleMake, ride.vehicleModel].filter(Boolean).join(' ') || 'Vehicle details unavailable';
+    driverMarker = marker(driverMarker, ride.driverLocation, (ride.driverName || 'Driver') + ' - ' + vehicle, true);
   }
   const stamp = isDriver ? ride.riderLocationUpdatedAt : ride.driverLocationUpdatedAt;
   const time = stamp?.toMillis?.() || 0;
