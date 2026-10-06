@@ -18,7 +18,7 @@ function render(){
  list.replaceChildren();
  const wrap=document.createElement('div');wrap.className='earnings-table-wrap';
  const table=document.createElement('table');table.className='earnings-table';
- table.innerHTML='<caption>Completed jobs - past '+Number(selector.value)+' days</caption><thead><tr><th scope="col">Date / time</th><th scope="col">Job / route</th><th scope="col">Fare</th><th scope="col">My earnings</th><th scope="col">Costs ($)</th><th scope="col">Net profit</th></tr></thead>';
+ table.innerHTML='<caption>Completed jobs - past '+Number(selector.value)+' days</caption><thead><tr><th scope="col">Date / time</th><th scope="col">Job / route</th><th scope="col">Fare</th><th scope="col">Tip</th><th scope="col">Rider rating</th><th scope="col">Rider comment</th><th scope="col">My earnings</th><th scope="col">Costs ($)</th><th scope="col">Net profit</th></tr></thead>';
  const body=document.createElement('tbody');table.append(body);wrap.append(table);list.append(wrap);
  function cell(row,text,amount=false){const td=document.createElement('td');td.textContent=text;if(amount)td.className='amount';row.append(td);return td;}
  const days=[...new Set(report.jobs.map(job=>job.date.toLocaleDateString()))];
@@ -29,6 +29,9 @@ function render(){
   cell(card,job.date.toLocaleDateString()+' '+job.date.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}));
   const route=cell(card,(job.pickup||'Pickup')+' to '+(job.dropoff||'Destination'));const id=document.createElement('small');id.textContent=job.id;route.append(id);
   cell(card,job.fare!=null?money(Number(job.fare)):'Unpriced',true);
+  cell(card,money(Number(job.tipAmount)||0),true);
+  cell(card,job.driverRating ? job.driverRating+' / 5' : 'Not rated');
+  const commentCell=cell(card,job.driverComment || 'No comment');commentCell.style.cssText='min-width:200px;max-width:300px;white-space:pre-wrap;overflow-wrap:anywhere';
   const earned=cell(card,job.earnings?money(job.earnings.driver):'Unpriced',true);if(job.earnings?.estimated){const note=document.createElement('small');note.textContent='Estimate';earned.append(note);}
   const label=cell(card,'',true);
   const input=document.createElement('input');input.type='number';input.min='0';input.step='0.01';input.placeholder='Not recorded';input.value=job.cost??'';input.setAttribute('aria-label','Costs for job '+job.id);
@@ -36,10 +39,10 @@ function render(){
   label.append(input);cell(card,job.cost!==null&&job.earnings?money(job.earnings.driver-job.cost):"Pending costs",true);body.append(card);
  }
  const income=rows.reduce((sum,job)=>sum+(job.earnings?.driver||0),0), expense=rows.reduce((sum,job)=>sum+(job.cost||0),0);
- const subtotal=document.createElement('tr');subtotal.className='daily-total';const title=cell(subtotal,day+' total - '+rows.length+' jobs');title.colSpan=3;cell(subtotal,money(income),true);cell(subtotal,money(expense),true);cell(subtotal,money(income-expense)+(rows.some(job=>job.cost===null||!job.earnings)?' (provisional)':''),true);body.append(subtotal);
+ const subtotal=document.createElement('tr');subtotal.className='daily-total';const title=cell(subtotal,day+' total - '+rows.length+' jobs');title.colSpan=6;cell(subtotal,money(income),true);cell(subtotal,money(expense),true);cell(subtotal,money(income-expense)+(rows.some(job=>job.cost===null||!job.earnings)?' (provisional)':''),true);body.append(subtotal);
  }
- const foot=document.createElement('tfoot');const total=document.createElement('tr');const title=cell(total,'Period totals');title.colSpan=3;cell(total,money(report.income),true);cell(total,money(report.expenses),true);cell(total,money(report.net)+(report.missing||report.unpriced?' (provisional)':''),true);foot.append(total);table.append(foot);
- if(!report.jobs.length){const row=document.createElement('tr');const empty=cell(row,'No completed jobs in this period.');empty.colSpan=6;body.append(row);}
+ const foot=document.createElement('tfoot');const total=document.createElement('tr');const title=cell(total,'Period totals');title.colSpan=6;cell(total,money(report.income),true);cell(total,money(report.expenses),true);cell(total,money(report.net)+(report.missing||report.unpriced?' (provisional)':''),true);foot.append(total);table.append(foot);
+ if(!report.jobs.length){const row=document.createElement('tr');const empty=cell(row,'No completed jobs in this period.');empty.colSpan=9;body.append(row);}
 }
 selector.addEventListener('change',render);
 onAuthStateChanged(auth,async user=>{const current=++generation;stop?.();stop=null;uid=null;rides=[];costs={};list.replaceChildren();summary.textContent='Sign in as a driver to load history.';if(!user)return;try{const profile=await getDoc(doc(db,'users',user.uid));if(current!==generation)return;if(!profile.exists()||profile.data().role!=='driver')return;uid=user.uid;try{const saved=JSON.parse(localStorage.getItem('fareRide_driver_costs_'+uid)||'{}');if(saved&&typeof saved==='object'&&!Array.isArray(saved))costs=saved;}catch{}summary.textContent='Loading completed jobs...';stop=onSnapshot(query(collection(db,'rides'),where('driverId','==',uid)),snapshot=>{if(current!==generation)return;rides=snapshot.docs.map(d=>({...d.data(),id:d.id}));render();},()=>{summary.textContent='Unable to load job history. Check driver approval and Firebase ride permissions.';list.replaceChildren();});}catch{summary.textContent='Unable to verify your driver account.';}});

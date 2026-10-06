@@ -110,8 +110,9 @@ service cloud.firestore {
       allow update: if resource.data.status == 'completed' && (
         (reviewer('driver') && resource.data.driverId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['riderRating']) && validRating(request.resource.data.riderRating))
         || (reviewer('rider') && resource.data.riderId == request.auth.uid && validRating(request.resource.data.driverRating)
-          && (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['driverRating'])
-          || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['driverRating','tipPercent','tipAmount','totalFare'])
+          && (!('driverComment' in request.resource.data) || (request.resource.data.driverComment is string && request.resource.data.driverComment.size() <= 1000))
+          && (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['driverRating','driverComment'])
+          || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['driverRating','driverComment','tipPercent','tipAmount','totalFare'])
             && request.resource.data.tipPercent is number && request.resource.data.tipPercent >= 0 && request.resource.data.tipPercent <= 100
             && request.resource.data.tipAmount is number && request.resource.data.tipAmount >= 0
             && request.resource.data.tipAmount >= resource.data.fare * request.resource.data.tipPercent / 100 - 0.011
