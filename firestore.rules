@@ -121,6 +121,24 @@ service cloud.firestore {
             && request.resource.data.totalFare <= resource.data.fare + request.resource.data.tipAmount + 0.011)))
       );
     }
+    match /emergencies/{emergencyId} {
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['type','source','reporterId','riderId','riderName','driverId','driverName','rideId','status','latitude','longitude','accuracy','mapUrl','createdAt'])
+        && request.resource.data.type == 'SOS' && request.resource.data.status == 'active'
+        && request.resource.data.reporterId == request.auth.uid
+        && request.resource.data.source in ['rider','driver']
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == request.resource.data.source
+        && ((request.resource.data.source == 'driver' && request.resource.data.driverId == request.auth.uid && !('riderId' in request.resource.data)) || (request.resource.data.source == 'rider' && request.resource.data.riderId == request.auth.uid && !('driverId' in request.resource.data)))
+        && request.resource.data.latitude is number && request.resource.data.latitude >= -90 && request.resource.data.latitude <= 90
+        && request.resource.data.longitude is number && request.resource.data.longitude >= -180 && request.resource.data.longitude <= 180
+        && request.resource.data.accuracy is number && request.resource.data.accuracy >= 0
+        && request.resource.data.createdAt == request.time
+        && (request.resource.data.rideId == null || (request.resource.data.rideId is string && ((request.resource.data.source == 'driver' && get(/databases/$(database)/documents/rides/$(request.resource.data.rideId)).data.driverId == request.auth.uid) || (request.resource.data.source == 'rider' && get(/databases/$(database)/documents/rides/$(request.resource.data.rideId)).data.riderId == request.auth.uid))));
+      allow get: if admin() || (signedIn() && resource.data.reporterId == request.auth.uid);
+      allow list: if admin();
+      allow update: if admin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','acknowledgedAt','resolvedAt']) && request.resource.data.status in ['acknowledged','resolved'];
+      allow delete: if false;
+    }
     match /config/{docId} {
       allow read, write: if false;
     }
