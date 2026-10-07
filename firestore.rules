@@ -94,9 +94,9 @@ service cloud.firestore {
       ) || (
         approved('driver') && resource.data.driverId == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'arrivedAt', 'startedAt', 'completedAt', 'estimatedFinishAt'])
-        && ((resource.data.status == 'accepted' && request.resource.data.status == 'arrived')
-          || (resource.data.status == 'arrived' && request.resource.data.status == 'started')
-          || (resource.data.status == 'started' && request.resource.data.status == 'completed'))
+        && ((resource.data.status == 'accepted' && request.resource.data.status == 'started')
+          || (resource.data.status == 'started' && request.resource.data.status == 'arrived')
+          || (resource.data.status == 'arrived' && request.resource.data.status == 'completed'))
       );
       allow update: if approved('rider') && resource.data.riderId == request.auth.uid
         && resource.data.status in ['requested', 'accepted', 'arrived']
@@ -144,3 +144,4 @@ service cloud.firestore {
     }
   }
 }
+

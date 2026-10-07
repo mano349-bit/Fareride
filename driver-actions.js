@@ -1,8 +1,8 @@
 const steps = [
   { status: 'requested', label: '+ Accept Job', className: 'acceptRide' },
-  { status: 'accepted', label: 'Arrive at Pickup', className: 'arrivedRide' },
-  { status: 'arrived', label: 'Start Ride', className: 'startRide' },
-  { status: 'started', label: 'Complete Ride', className: 'completeRide' }
+  { status: 'accepted', label: 'Start Ride', className: 'startRide' },
+  { status: 'started', label: 'Arrive at Pickup', className: 'arrivedRide' },
+  { status: 'arrived', label: 'Complete Ride', className: 'completeRide' }
 ];
 const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 export function actionButtons(ride, uid) {
@@ -15,3 +15,4 @@ export function actionButtons(ride, uid) {
     return `<button type="button" class="rideAction ${step.className}" data-id="${escape(ride.id)}" ${enabled ? '' : 'disabled'}>${step.label}</button>`;
   }).join('') + '</div>';
 }
+

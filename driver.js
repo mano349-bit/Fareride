@@ -781,7 +781,8 @@ onAuthStateChanged(auth, async user => {
   if (auth.currentUser?.uid !== user.uid || !profile?.exists()) return;
   const data = profile.data();
   if (data.role !== 'driver' || !['approved', 'active'].includes(data.accountStatus)) { setDriverMessage('An approved driver account is required to accept jobs.'); return; }
-  setDriverMessage('Job stages: Accept, Arrive at Pickup, Start Ride, Complete Ride.');
+  setDriverMessage('Job stages: Accept Job, Start Ride, Arrive at Pickup, Complete Ride.');
   DRIVER_ID = user.uid; DRIVER_NAME = data.fullName || 'Driver';
   stopRides = startRideListener();
 });
+
