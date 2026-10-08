@@ -1,4 +1,4 @@
-import { auth, getDoc, onAuthStateChanged } from './firebase-config.js';
+import { auth, getDoc } from './firebase-config.js';
 /* FareRide mobile GPS tuning:
    - Longer timeout for cellular GPS acquisition
    - Allows a recent cached fix while a fresh GPS fix is obtained
@@ -622,4 +622,4 @@ window.FareRideDriverLocation = {
 
 };
 
-onAuthStateChanged(auth, () => stopDriverLocationTracking());
+// The shared live-map controller stops GPS when authentication changes.

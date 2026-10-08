@@ -1,3 +1,4 @@
+import {latestCurrentRide} from './ride-recovery.js';
 import {auth,db,collection,query,where,onSnapshot,onAuthStateChanged} from './firebase-config.js';
 import {ACTIVE_STATUSES} from './ride-details.js';
 import {navigationLinks} from './ride-navigation.js';
@@ -18,8 +19,8 @@ onAuthStateChanged(auth,user=>{
  const uid=user.uid;
  stop=onSnapshot(query(collection(db,'rides'),where('driverId','==',uid)),snapshot=>{
   if(currentUID!==uid)return;
-  const jobs=snapshot.docs.map(d=>({...d.data(),id:d.id})).filter(r=>ACTIVE_STATUSES.includes(r.status)).sort((a,b)=>String(b.requestedAt).localeCompare(String(a.requestedAt)));
-  ride=jobs[0]||null;const stage=ride?ride.id+':'+ride.status:null;
+  const job=latestCurrentRide(snapshot.docs.map(d=>({...d.data(),id:d.id})),uid,'driver');
+  ride=job;const stage=ride?ride.id+':'+ride.status:null;
   if(stage!==previousStage){selector.value=ride?.status==='arrived'?'dropoff':'pickup';previousStage=stage;}render();
  },()=>{ride=null;render();});
 });

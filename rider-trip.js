@@ -1,3 +1,4 @@
+import {latestCurrentRide} from './ride-recovery.js';
 import { riderProgress } from './rider-progress.js';
 import { auth, db, doc, getDoc, onSnapshot, onAuthStateChanged, collection, query, where } from './firebase-config.js';
 import { runTransaction } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
@@ -17,6 +18,7 @@ function watch(next) {
   clear(); id = next;
   const expected = uid;
   stop = onSnapshot(doc(db, 'rides', next), snapshot => {
+    if(id!==next)return;
     if (auth.currentUser?.uid !== expected || !snapshot.exists() || snapshot.data().riderId !== expected) { clear(); return; }
     currentRide = {...snapshot.data(),id:next};
     const state = riderTripState(currentRide);
@@ -31,8 +33,8 @@ function discover(){
  discovery?.();discovery=null;if(!uid)return;const expected=uid;
  discovery=onSnapshot(query(collection(db,'rides'),where('riderId','==',uid)),snapshot=>{
   if(auth.currentUser?.uid!==expected||uid!==expected)return;
-  const active=snapshot.docs.map(d=>({...d.data(),id:d.id})).filter(ride=>['requested','accepted','started','arrived'].includes(ride.status)).sort((a,b)=>String(b.requestedAt).localeCompare(String(a.requestedAt)));
-  if(active[0]){try{localStorage.setItem('fareride_last_ride_id',active[0].id);}catch{}watch(active[0].id);}
+  const active=latestCurrentRide(snapshot.docs.map(d=>({...d.data(),id:d.id})),uid,'rider');
+  if(active){try{localStorage.setItem('fareride_last_ride_id',active.id);}catch{}watch(active.id);}
  },()=>{panel.hidden=false;stage.textContent='Unable to restore your current job. Check your connection and retry.';cancel.hidden=true;});
 }
 onAuthStateChanged(auth, async user => {
