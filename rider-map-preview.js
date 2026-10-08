@@ -1,3 +1,4 @@
+import {vehicleIcon,escapeHTML} from './ride-ui.js';
 import './ride-live.js';
 // Keep a map available before acceptance and after the live trip ends.
 const liveMap=document.querySelector('#rideLiveMap');
@@ -25,9 +26,16 @@ function shareLocation(){
  share.disabled=false;
  if(!map)return;
  const point=[position.coords.latitude,position.coords.longitude];
+ window.dispatchEvent(new CustomEvent("fareride-rider-position",{detail:{lat:point[0],lng:point[1]}}));
  if(marker)marker.setLatLng(point);else marker=L.marker(point).addTo(map).bindTooltip('Your location');map.setView(point,13);message.textContent='Your GPS location is shown. It shares with your assigned driver automatically during an active ride.';
 },()=>{share.disabled=false;message.textContent='Allow location access to center the map on you. Your live ride map appears once a driver accepts.';},{enableHighAccuracy:true,maximumAge:0,timeout:15000});
 }
 share.onclick=shareLocation;
 shareLocation();
 window.addEventListener('pageshow',showMap);
+
+let nearbyMarkers=[];
+window.addEventListener('fareride-nearby-drivers',event=>{
+ nearbyMarkers.forEach(marker=>marker.remove());nearbyMarkers=[];if(!map)return;
+ event.detail.forEach((driver,index)=>{const label=(index+1)+'. '+driver.driverName+' — '+driver.miles.toFixed(1)+' mi';nearbyMarkers.push(L.marker([driver.lat,driver.lng],{icon:L.divIcon({html:vehicleIcon(driver.serviceType),className:'fareride-map-icon',iconSize:[40,36],iconAnchor:[20,18]})}).addTo(map).bindTooltip(escapeHTML(label)));});
+});

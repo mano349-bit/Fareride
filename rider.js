@@ -488,6 +488,7 @@ async function calculateEstimate() {
       rideType: serviceType === 'messenger' ? 'economy' : $('rideType').value
     };
 
+    window.dispatchEvent(new CustomEvent("fareride-pickup-location",{detail:estimate.pickupLocation}));
     showSummary(estimate);
     tipPreview();
 

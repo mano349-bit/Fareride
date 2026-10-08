@@ -143,6 +143,26 @@ service cloud.firestore {
       allow update: if admin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','acknowledgedAt','resolvedAt']) && request.resource.data.status in ['acknowledged','resolved'];
       allow delete: if false;
     }
+    match /driverPresence/{uid} {
+      function approvedRole(role) {
+        return signedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role
+          && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accountStatus in ['approved','active'];
+      }
+      function application() { return get(/databases/$(database)/documents/driverApplications/$('driver_' + uid)).data; }
+      allow read: if owner(uid) || admin() || approvedRole('rider');
+      allow create, update: if owner(uid) && approvedRole('driver') && application().status == 'approved'
+        && request.resource.data.keys().hasOnly(['uid','driverName','vehicleYear','vehicleMake','vehicleModel','serviceType','lat','lng','available','updatedAt'])
+        && request.resource.data.uid == uid
+        && request.resource.data.driverName == application().fullName
+        && request.resource.data.vehicleYear == application().vehicleYear
+        && request.resource.data.vehicleMake == application().vehicleMake
+        && request.resource.data.vehicleModel == application().vehicleModel
+        && request.resource.data.serviceType in ['ride','tow','messenger']
+        && request.resource.data.lat is number && request.resource.data.lat >= -90 && request.resource.data.lat <= 90
+        && request.resource.data.lng is number && request.resource.data.lng >= -180 && request.resource.data.lng <= 180
+        && request.resource.data.available is bool && request.resource.data.updatedAt == request.time;
+      allow delete: if owner(uid);
+    }
     match /config/{docId} {
       allow read, write: if false;
     }
