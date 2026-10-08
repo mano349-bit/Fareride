@@ -5,7 +5,7 @@ const isDriver = location.pathname.endsWith('/driver.html');
 const section = document.createElement('section');
 section.style.cssText = 'max-width:900px;margin:20px auto;padding:20px;background:white;border:1px solid #ccc;border-radius:12px';
 section.hidden = true;
-section.innerHTML = '<h2>Rider and driver live map</h2><p id="liveDriverDetails"></p><a id="liveDriverPhone" hidden></a><p id="liveMapStatus" role="status"></p><p>Location shares automatically while this page is open. Allow location access when asked.</p><button type="button" hidden>Retry location</button><div id="rideLiveMap" style="height:320px;margin-top:16px"></div>';
+section.innerHTML = '<h2>Rider and driver live map</h2><p id="liveDriverDetails"></p><a id="liveDriverPhone" hidden></a><p id="liveMapStatus" role="status"></p><p>Location shares automatically while this page is open. Allow location access when asked.</p><button type="button" hidden>Retry location</button><div style="position:relative;margin-top:16px"><div id="rideLiveMap" style="height:360px"></div><div id="rideMapPeople" aria-label="Rider and driver information" style="position:absolute;top:10px;right:10px;z-index:1000;max-width:75%;padding:10px 12px;background:white;border:1px solid #aac8e6;border-radius:8px;box-shadow:0 2px 8px #0002;white-space:pre-line;font-size:14px;pointer-events:none"></div></div>';
 document.querySelector('main').append(section);
 const status = section.querySelector('#liveMapStatus'), button = section.querySelector('button');
 let user=null, profile=null, ride=null, rideId=null, stop=null, discovery=null, gps=null, lastSent=0, attempted=false;
@@ -17,20 +17,24 @@ function marker(current,point,label,type){
  const text=document.createElement('span');text.textContent=label;
  if(current){current.setLatLng([point.lat,point.lng]);current.setPopupContent(text);current.setTooltipContent(text.cloneNode(true));return current;}
  const icon=L.divIcon({html: type==='rider' ? '<span style="font-size:25px;color:#0875e1;background:white;border-radius:50%;padding:4px" aria-hidden="true">&#9679;</span>' : vehicleIcon(type),className:'fareride-map-icon',iconSize:[40,36],iconAnchor:[20,18]});
- return L.marker([point.lat,point.lng],{icon}).addTo(map).bindPopup(text).bindTooltip(text.cloneNode(true),{permanent:true,direction:'top'});
+ return L.marker([point.lat,point.lng],{icon}).addTo(map).bindPopup(text).bindTooltip(text.cloneNode(true),{permanent:true,direction:type==='rider'?'bottom':'top',opacity:1});
 }
 function render(){
  const active=ACTIVE_STATUSES.includes(ride.status);section.hidden=!active;if(!active){stopGPS();return;}
  section.querySelector('#liveDriverDetails').textContent=isDriver ? `Rider: ${ride.riderName || 'Rider'}` : [ride.driverName || 'Driver',[ride.vehicleYear,ride.vehicleMake,ride.vehicleModel].filter(Boolean).join(' ')].join(' - ');
+ const riderName = (!isDriver && profile?.fullName) || ride.riderName || 'Rider';
+ const driverName = (isDriver && profile?.fullName) || ride.driverName || 'Driver';
+ const vehicle = [ride.vehicleYear,ride.vehicleMake,ride.vehicleModel].filter(Boolean).join(' ');
+ section.querySelector('#rideMapPeople').textContent = `Rider: ${riderName}\nDriver: ${driverName}${vehicle ? '\nVehicle: ' + vehicle : ''}`;
  const phone=section.querySelector('a'),raw=isDriver?ride.riderPhone:ride.driverPhone,number=phoneNumber(raw);
  phone.hidden=!number;phone.textContent=`Call ${isDriver?'rider':'driver'}: ${raw || ''}`;if(number)phone.href=`tel:${number}`;else phone.removeAttribute('href');
  const point=validCoordinates(ride.riderLocation)?ride.riderLocation:ride.pickupLocation;
  const center=validCoordinates(point)?point:ride.driverLocation;
  if(window.L&&validCoordinates(center)){
   if(!map){map=L.map('rideLiveMap').setView([center.lat,center.lng],13);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);}
-  riderMarker=marker(riderMarker,point,(ride.riderName||'Rider')+(ride.riderLocation?' - live location':' - pickup, waiting for GPS'),'rider');
-  driverMarker=marker(driverMarker,ride.driverLocation,[ride.driverName||'Driver',ride.vehicleYear,ride.vehicleMake,ride.vehicleModel].filter(Boolean).join(' - '),ride.serviceType||'ride');
-  if(riderMarker&&driverMarker)map.fitBounds(L.latLngBounds([riderMarker.getLatLng(),driverMarker.getLatLng()]),{padding:[45,45],maxZoom:16});
+  riderMarker=marker(riderMarker,point,riderName+(ride.riderLocation?' - live location':' - pickup, waiting for GPS'),'rider');
+  driverMarker=marker(driverMarker,ride.driverLocation,[driverName,ride.vehicleYear,ride.vehicleMake,ride.vehicleModel].filter(Boolean).join(' - '),ride.serviceType||'ride');
+  if(riderMarker&&driverMarker)map.fitBounds(L.latLngBounds([riderMarker.getLatLng(),driverMarker.getLatLng()]),{paddingTopLeft:[55,100],paddingBottomRight:[55,65],maxZoom:16});
  }
  const stamp=isDriver?ride.riderLocationUpdatedAt:ride.driverLocationUpdatedAt,time=stamp?.toMillis?.()||0;
  status.textContent=locationError||(time?`Other person last updated: ${new Date(time).toLocaleTimeString()}${Date.now()-time>30000?' (may be stale)':''}`:'Waiting for the other person’s GPS. Pickup is a fixed location.');
