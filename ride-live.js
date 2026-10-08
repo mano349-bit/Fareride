@@ -7,7 +7,7 @@ const section = document.createElement('section');
 section.style.cssText = 'max-width:900px;margin:20px auto;padding:20px;background:white;border:1px solid #ccc;border-radius:12px';
 section.hidden = true;
 section.innerHTML = '<h2>Rider and driver live map</h2><p id="liveDriverDetails"></p><a id="liveDriverPhone" hidden></a><p id="liveMapStatus" role="status"></p><p>Location shares automatically while this page is open. Allow location access when asked.</p><button type="button" hidden>Retry location</button><div style="position:relative;margin-top:16px"><div id="rideLiveMap" style="height:360px"></div><div id="rideMapPeople" aria-label="Rider and driver information" style="position:absolute;top:10px;right:10px;z-index:1000;max-width:75%;padding:10px 12px;background:white;border:1px solid #aac8e6;border-radius:8px;box-shadow:0 2px 8px #0002;white-space:pre-line;font-size:14px;pointer-events:none"></div></div>';
-document.querySelector('main').append(section);
+if(isDriver)document.querySelector('main').append(section);else document.querySelector('main').prepend(section);
 const status = section.querySelector('#liveMapStatus'), button = section.querySelector('button');
 if(!isDriver){button.textContent='Share my location';button.hidden=false;button.style.cssText='padding:12px 16px;background:#0875e1;color:white;border:0;border-radius:8px;font-weight:700';}
 let user=null, profile=null, ride=null, rideId=null, stop=null, discovery=null, gps=null, lastSent=0, attempted=false;
@@ -24,17 +24,19 @@ function marker(current,point,label,type){
 }
 function render(){
  const active=ACTIVE_STATUSES.includes(ride.status);section.hidden=!active;if(!active){stopGPS();return;}
- section.querySelector('#liveDriverDetails').textContent=isDriver ? `Rider: ${ride.riderName || 'Rider'}` : [ride.driverName || 'Driver',[ride.vehicleYear,ride.vehicleMake,ride.vehicleModel].filter(Boolean).join(' ')].join(' - ');
+ const details=section.querySelector('#liveDriverDetails');details.style.cssText='white-space:pre-line;padding:14px;background:#eff6ff;border:1px solid #aac8e6;border-radius:8px;font-weight:700';
+ details.textContent=isDriver ? 'Rider: '+(ride.riderName||'Rider') : 'Driver: '+(ride.driverName||'Waiting for driver details')+'\nVehicle: '+([ride.vehicleYear,ride.vehicleMake,ride.vehicleModel].filter(Boolean).join(' ')||'Waiting for vehicle details')+'\nTelephone: '+(ride.driverPhone||'Not provided')+'\nLocation: '+(validCoordinates(ride.driverLocation)?ride.driverLocation.lat.toFixed(5)+', '+ride.driverLocation.lng.toFixed(5):'Waiting for driver GPS — driver must allow location access and keep FareRide open.');
  const riderName = (!isDriver && profile?.fullName) || ride.riderName || 'Rider';
  const driverName = (isDriver && profile?.fullName) || ride.driverName || 'Driver';
  const vehicle = [ride.vehicleYear,ride.vehicleMake,ride.vehicleModel].filter(Boolean).join(' ');
  section.querySelector('#rideMapPeople').textContent = `Rider: ${riderName}\nDriver: ${driverName}${vehicle ? '\nVehicle: ' + vehicle : ''}`;
  const phone=section.querySelector('a'),raw=isDriver?ride.riderPhone:ride.driverPhone,number=phoneNumber(raw);
- phone.hidden=!number;phone.textContent=`Call ${isDriver?'rider':'driver'}: ${raw || ''}`;if(number)phone.href=`tel:${number}`;else phone.removeAttribute('href');
+ phone.hidden=!number;phone.textContent=`Call ${isDriver?'rider':'driver'}: ${raw || ''}`;phone.style.cssText='padding:12px 16px;margin:10px 0;background:#0875e1;color:white;border-radius:8px;font-weight:700;text-decoration:none';if(number)phone.href=`tel:${number}`;else phone.removeAttribute('href');
  const point=validCoordinates(ride.riderLocation)?ride.riderLocation:ride.pickupLocation;
  const center=validCoordinates(point)?point:ride.driverLocation;
- if(window.L&&validCoordinates(center)){
-  if(!map){map=L.map('rideLiveMap').setView([center.lat,center.lng],13);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);}
+ if(window.L){
+  if(!map){map=L.map('rideLiveMap').setView(validCoordinates(center)?[center.lat,center.lng]:[39.5,-98.35],validCoordinates(center)?13:4);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);}
+  map.invalidateSize?.();
   riderMarker=marker(riderMarker,point,riderName+(ride.riderLocation?' - live location':' - pickup, waiting for GPS'),'rider');
   driverMarker=marker(driverMarker,ride.driverLocation,[driverName,ride.vehicleYear,ride.vehicleMake,ride.vehicleModel].filter(Boolean).join(' - '),ride.serviceType||'ride');
   if(validCoordinates(ride.pickupLocation)){
