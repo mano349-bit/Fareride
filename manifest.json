@@ -1,0 +1,14 @@
+{
+  "name": "Synagogue Message Board",
+  "short_name": "Synagogue Board",
+  "description": "Digital synagogue message board for prayers, zmanim, lessons, announcements and members.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#101b43",
+  "theme_color": "#101b43",
+  "orientation": "any",
+  "lang": "he",
+  "dir": "rtl",
+  "icons": []
+}
