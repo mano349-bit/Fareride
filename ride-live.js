@@ -47,6 +47,7 @@ function render(){
  }
  const age=stamp=>{const time=stamp?.toMillis?.()||0;return !time?'waiting for GPS':Date.now()-time>30000?'location stale — waiting for an update':'live';};
  status.textContent=locationError||'Rider: '+age(ride.riderLocationUpdatedAt)+' | Driver: '+age(ride.driverLocationUpdatedAt);const notice=locationNotice(ride);if(notice)status.textContent+=' | '+notice;
+ if(isDriver){const message=document.getElementById('locationStatus');if(message)message.textContent=status.textContent;}
 }
 function watch(id){
  if(!user||!id||id===rideId)return;reset();rideId=id;const expected=user.uid;
@@ -94,3 +95,6 @@ window.addEventListener('pageshow',event=>{if(event.persisted&&user)discover();}
 window.addEventListener('pagehide',()=>{discovery?.();discovery=null;reset();});
 
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&user&&ride&&ACTIVE_STATUSES.includes(ride.status)){stopGPS();lastSent=0;startLocation();}});
+
+window.addEventListener('fareride-start-location',()=>{if(!isDriver)return;if(user&&ride&&ACTIVE_STATUSES.includes(ride.status)){stopGPS();lastSent=0;startLocation();render();section.scrollIntoView?.({behavior:'smooth',block:'start'});}else{const message=document.getElementById('locationStatus');if(message)message.textContent='Accept a job first. The live map will show you and the rider until completion.';if(user)discover();}});
+window.addEventListener('fareride-stop-location',()=>{if(isDriver){stopGPS();locationError='Driver location sharing stopped. Click Start Live Location to resume.';if(ride)render();}});

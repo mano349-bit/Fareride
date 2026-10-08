@@ -167,7 +167,7 @@ async function saveDriverLocation(
 
 
     setLocationMessage(
-      "â— Live location active"
+      "Live location active"
     );
 
 
@@ -253,97 +253,13 @@ function locationError(
 ========================================================= */
 
 function startDriverLocationTracking() {
-
-  if (
-    !navigator.geolocation
-  ) {
-
-    setLocationMessage(
-      "This device does not support GPS location.",
-      true
-    );
-
-    return;
-
-  }
-
-
-  if (
-    !getActiveRideId()
-  ) {
-
-    setLocationMessage(
-      "Accept a ride before starting location sharing.",
-      true
-    );
-
-    return;
-
-  }
-
-
-  if (
-    watchId !== null
-  ) {
-
-    return;
-
-  }
-
-
-  setLocationMessage(
-    "Starting live location..."
-  );
-
-
-  watchId =
-    navigator.geolocation
-      .watchPosition(
-
-        saveDriverLocation,
-
-        locationError,
-
-        {
-          enableHighAccuracy:
-            true,
-
-          maximumAge: 10000,
-
-          timeout: 60000
-        }
-
-      );
-
+ setLocationMessage('Starting live rider and driver map...');
+ window.dispatchEvent(new Event('fareride-start-location'));
 }
-
-
-/* =========================================================
-   STOP LIVE LOCATION
-========================================================= */
-
 function stopDriverLocationTracking() {
-
-  if (
-    watchId !== null
-  ) {
-
-    navigator.geolocation
-      .clearWatch(
-        watchId
-      );
-
-    watchId = null;
-
-  }
-
-
-  setLocationMessage(
-    "Location sharing stopped."
-  );
-
+ window.dispatchEvent(new Event('fareride-stop-location'));
+ setLocationMessage('Location sharing stopped.');
 }
-
 
 /* =========================================================
    SOS DISPLAY
