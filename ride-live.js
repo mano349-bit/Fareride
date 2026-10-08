@@ -1,3 +1,4 @@
+import {locationNotice} from './ride-location-notice.js';
 import { auth, db, doc, getDoc, updateDoc, onAuthStateChanged, onSnapshot, serverTimestamp, collection, query, where } from './firebase-config.js';
 import { ACTIVE_STATUSES, validCoordinates } from './ride-details.js';
 import { phoneNumber, vehicleIcon } from './ride-ui.js';
@@ -10,9 +11,9 @@ document.querySelector('main').append(section);
 const status = section.querySelector('#liveMapStatus'), button = section.querySelector('button');
 let user=null, profile=null, ride=null, rideId=null, stop=null, discovery=null, gps=null, lastSent=0, attempted=false;
 let heartbeat=null,positionHandler=null;
-let map=null, riderMarker=null, driverMarker=null, contactAttempted=false, locationError='';
+let map=null, riderMarker=null, driverMarker=null, pickupMarker=null, contactAttempted=false, locationError='';
 function stopGPS(){if(heartbeat!==null)clearInterval(heartbeat);heartbeat=null;positionHandler=null;if(gps!==null) navigator.geolocation.clearWatch(gps);gps=null;button.disabled=false;}
-function reset(){stopGPS();stop?.();stop=null;ride=null;rideId=null;section.hidden=true;attempted=false;contactAttempted=false;lastSent=0;locationError='';button.hidden=true;map?.remove();map=riderMarker=driverMarker=null;}
+function reset(){stopGPS();stop?.();stop=null;ride=null;rideId=null;section.hidden=true;attempted=false;contactAttempted=false;lastSent=0;locationError='';button.hidden=true;map?.remove();map=riderMarker=driverMarker=pickupMarker=null;}
 function marker(current,point,label,type){
  if(!validCoordinates(point))return current;
  const text=document.createElement('span');text.textContent=label;
@@ -35,10 +36,16 @@ function render(){
   if(!map){map=L.map('rideLiveMap').setView([center.lat,center.lng],13);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);}
   riderMarker=marker(riderMarker,point,riderName+(ride.riderLocation?' - live location':' - pickup, waiting for GPS'),'rider');
   driverMarker=marker(driverMarker,ride.driverLocation,[driverName,ride.vehicleYear,ride.vehicleMake,ride.vehicleModel].filter(Boolean).join(' - '),ride.serviceType||'ride');
-  if(riderMarker&&driverMarker)map.fitBounds(L.latLngBounds([riderMarker.getLatLng(),driverMarker.getLatLng()]),{paddingTopLeft:[55,100],paddingBottomRight:[55,65],maxZoom:16});
+  if(validCoordinates(ride.pickupLocation)){
+   const text=document.createElement('span');text.textContent='Booked pickup: '+(ride.pickup||'Pickup address');
+   if(!pickupMarker)pickupMarker=L.marker([ride.pickupLocation.lat,ride.pickupLocation.lng]).addTo(map).bindPopup(text).bindTooltip(text.cloneNode(true),{permanent:true,direction:'left',opacity:1});
+   else pickupMarker.setLatLng([ride.pickupLocation.lat,ride.pickupLocation.lng]);
+  }
+  const visible=[riderMarker,driverMarker,pickupMarker].filter(Boolean);
+  if(visible.length>1)map.fitBounds(L.latLngBounds(visible.map(marker=>marker.getLatLng())),{paddingTopLeft:[55,100],paddingBottomRight:[55,65],maxZoom:16});
  }
  const age=stamp=>{const time=stamp?.toMillis?.()||0;return !time?'waiting for GPS':Date.now()-time>30000?'location stale — waiting for an update':'live';};
- status.textContent=locationError||'Rider: '+age(ride.riderLocationUpdatedAt)+' | Driver: '+age(ride.driverLocationUpdatedAt);
+ status.textContent=locationError||'Rider: '+age(ride.riderLocationUpdatedAt)+' | Driver: '+age(ride.driverLocationUpdatedAt);const notice=locationNotice(ride);if(notice)status.textContent+=' | '+notice;
 }
 function watch(id){
  if(!user||!id||id===rideId)return;reset();rideId=id;const expected=user.uid;
