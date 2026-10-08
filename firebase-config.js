@@ -23,7 +23,7 @@ import {
 
 import {
   initializeAuth,
-  browserSessionPersistence, indexedDBLocalPersistence, browserLocalPersistence,
+  browserSessionPersistence, browserLocalPersistence,
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -50,8 +50,9 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig, 'FareRide-' + authScope(location.pathname));
 const db = getFirestore(app);
-// Persistent, separate rider/driver/admin sessions with browser storage fallbacks.
-const auth = initializeAuth(app, { persistence: [browserLocalPersistence, indexedDBLocalPersistence, browserSessionPersistence] });
+// Avoid IndexedDB probes: Safari can stall them even when local storage is first.
+// Rider/driver/admin sessions remain separate, with local and session storage.
+const auth = initializeAuth(app, { persistence: [browserLocalPersistence, browserSessionPersistence] });
 const storage = getStorage(app);
 // Report unavailable uploads promptly instead of retrying for many minutes.
 storage.maxUploadRetryTime = 30000;
