@@ -22,7 +22,7 @@ function render(){
  list.replaceChildren();
  const wrap=document.createElement('div');wrap.className='earnings-table-wrap';
  const table=document.createElement('table');table.className='earnings-table';
- table.innerHTML='<caption>Completed jobs - '+startDate.value+' to '+endDate.value+'</caption><thead><tr><th scope="col">Job #</th><th scope="col">Date / time</th><th scope="col">Job / route</th><th scope="col">Fare</th><th scope="col">Tip</th><th scope="col">Your rating from rider</th><th scope="col">Rider comment</th><th scope="col">My earnings</th><th scope="col">Daily expense share ($)</th><th scope="col">Net profit</th></tr></thead>';
+ table.innerHTML='<caption>Completed jobs - '+startDate.value+' to '+endDate.value+'</caption><thead><tr><th scope="col">Job #</th><th scope="col">Date / time</th><th scope="col">Job / route</th><th scope="col">Fare</th><th scope="col">Tip</th><th scope="col">Your rating from rider</th><th scope="col">Rider comment</th><th scope="col">My earnings</th><th scope="col">Driver expense ($)</th><th scope="col">Net profit</th></tr></thead>';
  const body=document.createElement('tbody');table.append(body);wrap.append(table);list.append(wrap);
  function cell(row,text,amount=false){const td=document.createElement('td');td.textContent=text;if(amount)td.className='amount';row.append(td);return td;}
  for(const dayTotal of daily.days){
@@ -41,9 +41,9 @@ function render(){
   cell(card,money(share),true);cell(card,job.earnings?money(job.earnings.driver-share):'Unpriced',true);body.append(card);
  }
  const subtotal=document.createElement('tr');subtotal.className='daily-total';const title=cell(subtotal,day+' total - '+rows.length+' jobs');title.colSpan=7;cell(subtotal,money(dayTotal.income),true);
- const expenseCell=cell(subtotal,'',true),input=document.createElement('input');input.type='number';input.min='0';input.step='0.01';input.value=dayTotal.expense.toFixed(2);input.setAttribute('aria-label','Daily expense for '+day);
+ const expenseCell=cell(subtotal,'',true),expenseLabel=document.createElement('label');expenseLabel.textContent='Daily driver expense';expenseLabel.style.cssText='display:flex;flex-direction:column;gap:6px;text-align:left';const input=document.createElement('input');input.type='number';input.min='0';input.step='0.01';input.value=dayTotal.expense.toFixed(2);input.setAttribute('aria-label','Daily expense for '+day);
  input.onchange=()=>{const value=Number(input.value);if(input.value!==''&&(!input.checkValidity()||!Number.isFinite(value)||value<0)){input.reportValidity();return;}const next={...dailyCosts};if(input.value==='')delete next[day];else next[day]=Math.round(value*100)/100;try{localStorage.setItem('fareRide_driver_daily_costs_'+uid,JSON.stringify(next));dailyCosts=next;render();}catch{summary.textContent='Unable to save daily expenses in this browser.';}};
- expenseCell.append(input);const note=document.createElement('small');note.textContent=dayTotal.estimated?'30% estimate':'Your daily expense';expenseCell.append(note);cell(subtotal,money(dayTotal.net),true);body.append(subtotal);
+ expenseLabel.append(input);expenseCell.append(expenseLabel);const note=document.createElement('small');note.textContent=dayTotal.estimated?'30% estimate':'Your daily expense';expenseCell.append(note);cell(subtotal,money(dayTotal.net),true);body.append(subtotal);
  }
  const foot=document.createElement('tfoot');const total=document.createElement('tr');const title=cell(total,'Period totals');title.colSpan=7;cell(total,money(report.income),true);cell(total,money(daily.expenses),true);cell(total,money(daily.net)+(daily.days.some(day=>day.estimated)||report.unpriced?' (provisional)':''),true);foot.append(total);table.append(foot);
  if(!report.jobs.length){const row=document.createElement('tr');const empty=cell(row,'No completed jobs in this period.');empty.colSpan=10;body.append(row);}
