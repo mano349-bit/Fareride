@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {saveLoginSession} from './login-persistence.js';
+function storage(){const data=new Map();return {setItem:(k,v)=>data.set(k,v),getItem:k=>data.get(k),removeItem:k=>data.delete(k)};}
+test('persistent local storage is explicitly selected before sign in',async()=>{let selected;await saveLoginSession({},async(_,p)=>selected=p,'local','session',{localStorage:storage()});assert.equal(selected,'local');});
+test('Safari local storage failure falls back to session storage',async()=>{let selected;const browser={get localStorage(){throw Error('blocked');},sessionStorage:storage()};assert.equal(await saveLoginSession({},async(_,p)=>selected=p,'local','session',browser),'sessionStorage');assert.equal(selected,'session');});
+test('blocked storage prevents a memory-only sign in and navigation loop',async()=>{let calls=0;await assert.rejects(saveLoginSession({},async()=>calls++,'local','session',{}),{code:'fareride/storage-blocked'});assert.equal(calls,0);});
+test('Firebase persistence write failure tries the next storage',async()=>{let calls=0;await saveLoginSession({},async(_,p)=>{calls++;if(p==='local')throw Error('denied');},'local','session',{localStorage:storage(),sessionStorage:storage()});assert.equal(calls,2);});

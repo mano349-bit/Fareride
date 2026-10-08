@@ -33,7 +33,7 @@ async function verify(user, check) {
     const status = String(profile.accountStatus || profile.status || '').trim().toLowerCase();
     const approved = profile.approved === true || ['approved', 'active'].includes(status);
     if (['suspended', 'deleted', 'rejected', 'disabled'].includes(status) || (!user.emailVerified && !approved) || role !== requiredRole) {
-      window.location.replace(loginPage); return;
+      window.location.replace(loginPage + '?reason=account-access'); return;
     }
     report('');
   } catch (error) {
@@ -47,7 +47,7 @@ onAuthStateChanged(auth, user => {
   const check = ++generation;
   clearTimeout(retryTimer);
   // Firebase delivers this after restoring its persisted authentication state.
-  if (!user) { window.location.replace(loginPage); return; }
+  if (!user) { window.location.replace(loginPage + '?reason=session-missing'); return; }
   return verify(user, check);
 });
 window.addEventListener('online', () => { if (auth.currentUser) { clearTimeout(retryTimer); verify(auth.currentUser, ++generation); } });

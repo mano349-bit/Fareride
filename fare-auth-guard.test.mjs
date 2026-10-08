@@ -40,3 +40,6 @@ test('offline page restore does not query server or redirect',async()=>{
 test('server-confirmed suspended account still cannot access protected page',async()=>{
  const h=harness();const run=h.change({uid:'rider',emailVerified:true});h.pending.shift()({exists:()=>true,data:()=>({role:'rider',accountStatus:'suspended'})});await run;assert.equal(h.redirects.length,1);
 });
+test('missing restored session reports a distinct reason',async()=>{
+ const h=harness();await h.change(null);assert.equal(h.redirects[0],'./rider-login.html?reason=session-missing');
+});

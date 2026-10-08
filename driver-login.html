@@ -209,7 +209,7 @@ const loading = setTimeout(() => { message.textContent = 'Login is taking longer
 try {
   await import('./fare-login.js');
   clearTimeout(loading);
-  message.textContent = '';
+  if (message.textContent.startsWith('Login is taking longer')) message.textContent = '';
   loginButton.disabled = false;
 } catch (error) {
   clearTimeout(loading);

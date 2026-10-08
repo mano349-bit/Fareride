@@ -1,3 +1,4 @@
+import { saveLoginSession } from './login-persistence.js';
 import { withDeadline } from './login-network.js';
 import {
   auth,
@@ -8,7 +9,7 @@ import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
   sendEmailVerification,
-  signOut
+  signOut, setPersistence, browserLocalPersistence, browserSessionPersistence
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
 import {
@@ -125,6 +126,7 @@ async function login() {
 
   try {
 
+    await saveLoginSession(auth, setPersistence, browserLocalPersistence, browserSessionPersistence);
     const credential =
       await signInWithEmailAndPassword(
         auth,
@@ -383,3 +385,7 @@ password.addEventListener(
 
   }
 );
+
+const loginReason = new URL(window.location.href).searchParams.get('reason');
+if (loginReason === 'session-missing') showMessage('Safari could not restore your saved login. Please sign in again. If this repeats, send us this exact message.');
+if (loginReason === 'account-access') showMessage('Your account is not approved for this page, or its role does not match. Please contact FareRide Admin.');
