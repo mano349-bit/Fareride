@@ -716,3 +716,5 @@ if (existingRideId) {
     existingRideId
   );
 }
+
+window.addEventListener('fareride-ride-restored',event=>showRideStatus(event.detail));
