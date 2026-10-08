@@ -5,13 +5,13 @@ import vm from 'node:vm';
 import { ACTIVE_STATUSES, validCoordinates } from './ride-details.js';
 import {phoneNumber,vehicleIcon} from './ride-ui.js';
 function harness(driver){
- const elements=new Map(),listeners=[],writes=[],events={},markers=[];let changed,gps,cleared=0;
+ const elements=new Map(),listeners=[],writes=[],events={},markers=[],ticks=[],pageEvents={},positions=[];let changed,gps,cleared=0;
  const el=key=>{if(!elements.has(key))elements.set(key,{textContent:'',hidden:false,style:{},append(){},removeAttribute(){this.href=undefined;},querySelector:el,cloneNode(){return {...this};}});return elements.get(key);};
  const auth={currentUser:{uid:driver?'driver':'rider'}};
  const L={map:()=>({setView(){return this;},remove(){},fitBounds(){}}),tileLayer:()=>({addTo(){}}),divIcon:options=>options,latLngBounds:x=>x,marker:(point,options)=>{const m={point,options,addTo(){return this;},bindPopup(text){this.popup=text.textContent;return this;},bindTooltip(text,options){this.tooltip=text.textContent;this.tooltipOptions=options;return this;},setPopupContent(text){this.popup=text.textContent;},setTooltipContent(text){this.tooltip=text.textContent;},setLatLng(p){this.point=p;},getLatLng(){return this.point;}};markers.push(m);return m;}};
- const context=vm.createContext({auth,db:{},ACTIVE_STATUSES,validCoordinates,phoneNumber,vehicleIcon,L,location:{pathname:driver?'/driver.html':'/rider.html'},window:{L,addEventListener:(name,cb)=>events[name]=cb},document:{createElement:()=>el('section'),querySelector:()=>el('main')},navigator:{geolocation:{watchPosition:cb=>{gps=cb;return 1;},clearWatch:()=>cleared++}},doc:(_,collection,id)=>({collection,id}),collection:(_,name)=>name,where:(...args)=>args,query:(...args)=>args,getDoc:async()=>({exists:()=>true,data:()=>({role:driver?'driver':'rider',accountStatus:'approved',fullName:'Sam Rider',phone:'(516) 376-4118'})}),onAuthStateChanged:(_,cb)=>changed=cb,onSnapshot:(ref,cb)=>{listeners.push({ref,cb});return()=>{};},updateDoc:async(ref,data)=>writes.push(data),serverTimestamp:()=>123,Date,console});
+ const context=vm.createContext({auth,db:{},ACTIVE_STATUSES,validCoordinates,phoneNumber,vehicleIcon,L,location:{pathname:driver?'/driver.html':'/rider.html'},window:{L,addEventListener:(name,cb)=>events[name]=cb},setInterval:cb=>{ticks.push(cb);return 1;},clearInterval:()=>{},setTimeout:()=>1,document:{addEventListener:(name,cb)=>pageEvents[name]=cb,createElement:()=>el('section'),querySelector:()=>el('main')},navigator:{geolocation:{getCurrentPosition:cb=>positions.push(cb),watchPosition:cb=>{gps=cb;return 1;},clearWatch:()=>cleared++}},doc:(_,collection,id)=>({collection,id}),collection:(_,name)=>name,where:(...args)=>args,query:(...args)=>args,getDoc:async()=>({exists:()=>true,data:()=>({role:driver?'driver':'rider',accountStatus:'approved',fullName:'Sam Rider',phone:'(516) 376-4118'})}),onAuthStateChanged:(_,cb)=>changed=cb,onSnapshot:(ref,cb)=>{listeners.push({ref,cb});return()=>{};},updateDoc:async(ref,data)=>writes.push(data),serverTimestamp:()=>123,Date,console});
  vm.runInContext(fs.readFileSync('ride-live.js','utf8').replace(/^import[^\n]+\n/gm,''),context);
- return {elements,listeners,writes,events,markers,auth,login:()=>changed(auth.currentUser),position:()=>gps({coords:{latitude:40,longitude:-73,accuracy:5}}),cleared:()=>cleared};
+ return {elements,listeners,writes,events,markers,auth,ticks,pageEvents,positions,login:()=>changed(auth.currentUser),position:()=>gps({coords:{latitude:40,longitude:-73,accuracy:5}}),cleared:()=>cleared};
 }
 test('driver discovers assigned ride without browser ride ID and sees rider name, GPS and full phone',async()=>{
  const h=harness(true);await h.login();const job={status:'accepted',riderName:'Sam Rider',riderPhone:'(516) 376-4118',driverId:'driver',riderId:'rider',riderLocation:{lat:40,lng:-73},driverLocation:{lat:40.01,lng:-73.01},serviceType:'messenger'};
@@ -32,4 +32,11 @@ test('both names stay visible through every active stage, even with missing GPS'
  for(const status of ['accepted','started','arrived']){h.listeners[1].cb({exists:()=>true,data:()=>({...job,status})});assert.equal(h.elements.get('section').hidden,false);const names=h.elements.get('#rideMapPeople').textContent;assert.match(names,/Jamie Rider/);assert.match(names,/Driver:/);assert.match(names,/2024 Toyota Corolla/);}
  assert.equal(h.markers[0].tooltipOptions.permanent,true);assert.equal(h.markers[0].tooltipOptions.direction,'bottom');assert.equal(h.markers[1].tooltipOptions.permanent,true);assert.equal(h.markers[1].tooltipOptions.direction,'top');
  h.listeners[1].cb({exists:()=>true,data:()=>({...job,status:'completed'})});assert.equal(h.elements.get('section').hidden,true);
+});
+
+test('both participants see their own immediate GPS updates and refresh after returning to the page',async()=>{
+ for(const driver of [true,false]){const h=harness(driver);await h.login();const job={status:'accepted',driverId:'driver',riderId:'rider',riderName:'Sam Rider',riderPhone:'(516) 376-4118',pickupLocation:{lat:39,lng:-72},driverLocation:{lat:39.5,lng:-72.5}};
+ h.listeners[0].cb({docs:[{id:'job',data:()=>job}]});h.listeners[1].cb({exists:()=>true,data:()=>job});await h.position();
+ assert.deepEqual(Array.from(h.markers[driver?1:0].point),[40,-73]);h.ticks[0]();assert.equal(h.positions.length,1);h.pageEvents.visibilitychange();assert.equal(h.ticks.length,2);
+ }
 });
