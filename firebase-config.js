@@ -1,3 +1,4 @@
+import { authScope } from './ride-ui.js';
 // FareRide Firebase connection
 // Project: fareride-app-0907-349
 
@@ -22,7 +23,7 @@ import {
 
 import {
   initializeAuth,
-  browserSessionPersistence,
+  browserSessionPersistence, indexedDBLocalPersistence, browserLocalPersistence,
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -47,10 +48,10 @@ const firebaseConfig = {
   appId: "1:615024272118:web:03d9c4325ec3daf78a02d7"
 };
 
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig, 'FareRide-' + authScope(location.pathname));
 const db = getFirestore(app);
-// Keep rider, driver and admin sessions independent across browser tabs.
-const auth = initializeAuth(app, { persistence: browserSessionPersistence });
+// Persistent, separate rider/driver/admin sessions with browser storage fallbacks.
+const auth = initializeAuth(app, { persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence] });
 const storage = getStorage(app);
 // Report unavailable uploads promptly instead of retrying for many minutes.
 storage.maxUploadRetryTime = 30000;

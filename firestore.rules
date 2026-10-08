@@ -72,7 +72,7 @@ service cloud.firestore {
         || (approved('rider') && resource.data.riderId == request.auth.uid)
         || (approved('driver') && (resource.data.status == 'requested' || resource.data.driverId == request.auth.uid));
       allow create: if approved('rider')
-        && request.resource.data.keys().hasOnly(['id', 'serviceType', 'serviceDetails', 'pricingStatus', 'riderName', 'riderId', 'pickup', 'dropoff', 'pickupLocation', 'dropoffLocation', 'miles', 'durationMinutes', 'fare', 'rideType', 'tipPercent', 'tipAmount', 'totalFare', 'status', 'requestedAt', 'estimatedArrivalMinutes', 'estimatedArrivalAt', 'estimatedFinishAt', 'driverId', 'driverName', 'driverLocation', 'acceptedAt', 'arrivedAt', 'startedAt', 'completedAt', 'cancelledAt'])
+        && request.resource.data.keys().hasOnly(['id', 'serviceType', 'serviceDetails', 'pricingStatus', 'riderName', 'riderPhone', 'riderId', 'pickup', 'dropoff', 'pickupLocation', 'dropoffLocation', 'miles', 'durationMinutes', 'fare', 'rideType', 'tipPercent', 'tipAmount', 'totalFare', 'status', 'requestedAt', 'estimatedArrivalMinutes', 'estimatedArrivalAt', 'estimatedFinishAt', 'driverId', 'driverName', 'driverLocation', 'acceptedAt', 'arrivedAt', 'startedAt', 'completedAt', 'cancelledAt'])
         && request.resource.data.id == rideId && request.resource.data.riderId == request.auth.uid
         && request.resource.data.status == 'requested'
         && request.resource.data.driverId == null && request.resource.data.driverName == null
@@ -98,6 +98,10 @@ service cloud.firestore {
           || (resource.data.status == 'started' && request.resource.data.status == 'arrived')
           || (resource.data.status == 'arrived' && request.resource.data.status == 'completed'))
       );
+      allow update: if approved('rider') && resource.data.riderId == request.auth.uid && active()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['riderName','riderPhone'])
+        && request.resource.data.riderName == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.fullName
+        && request.resource.data.riderPhone == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.phone;
       allow update: if approved('rider') && resource.data.riderId == request.auth.uid
         && resource.data.status in ['requested', 'accepted', 'arrived']
         && request.resource.data.status == 'cancelled'
@@ -144,4 +148,3 @@ service cloud.firestore {
     }
   }
 }
-

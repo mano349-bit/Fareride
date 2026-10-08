@@ -1,7 +1,7 @@
 export const SERVICES = Object.freeze({
   ride: { name: 'Passenger ride', action: 'Request ride' },
   tow: { name: 'Tow truck', action: 'Request towing quote' },
-  messenger: { name: 'Bike messenger', action: 'Request delivery quote' }
+  messenger: { name: 'Bike messenger', action: 'Request bike delivery' }
 });
 
 export function serviceName(type = 'ride') {

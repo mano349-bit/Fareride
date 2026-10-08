@@ -1,3 +1,4 @@
+import { escapeHTML } from './ride-ui.js';
 import { actionButtons } from './driver-actions.js';
 import { auth, getDoc, onAuthStateChanged } from './firebase-config.js';
 import { query, where, or, runTransaction } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
@@ -207,22 +208,22 @@ function renderRequests() {
 
             <p class="service-badge">${serviceName(ride.serviceType)}</p>
             <h3>
-              ${ride.riderName || 'Rider'}
+              ${escapeHTML(ride.riderName || 'Rider')}
             </h3>
 
             <p>
               <strong>Status:</strong>
-              ${ride.status || 'requested'}
+              ${escapeHTML(ride.status || 'requested')}
             </p>
 
             <p>
               <strong>Pickup:</strong>
-              ${ride.pickup || ''}
+              ${escapeHTML(ride.pickup || '')}
             </p>
 
             <p>
               <strong>Destination:</strong>
-              ${ride.dropoff || ''}
+              ${escapeHTML(ride.dropoff || '')}
             </p>
 
             <p>
@@ -785,4 +786,3 @@ onAuthStateChanged(auth, async user => {
   DRIVER_ID = user.uid; DRIVER_NAME = data.fullName || 'Driver';
   stopRides = startRideListener();
 });
-

@@ -29,7 +29,7 @@ function riderHarness(fail = false) {
   const context = vm.createContext({ ...services, crypto: { randomUUID: () => 'unique' }, console: { log() {}, error() {}, warn() {} },
     document: { getElementById: el, querySelector: () => ({ value: type }), querySelectorAll: () => [] },
     window: { addEventListener() {}, dispatchEvent() {} }, localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) },
-    auth: { currentUser: { uid: 'rider-uid', displayName: 'Test Rider' } }, db: {}, doc: (...args) => args,
+    auth: { currentUser: { uid: 'rider-uid', displayName: 'Test Rider' } }, db: {}, doc: (...args) => args, getDoc: async () => ({exists:()=>true,data:()=>({fullName:'Test Rider',phone:'(516) 376-4118'})}),
     setDoc: async (_, job) => { if (fail) throw new Error('Offline'); writes.push(job); },
     onSnapshot: () => () => {}, Event: class Event { constructor(type) { this.type = type; } }, Date, Intl, URL, setTimeout, clearTimeout, AbortController });
   const source = fs.readFileSync(new URL('./rider.js', import.meta.url), 'utf8').replace(/^import[\s\S]*?from ['"][^'"]+['"];\s*/gm, '');
@@ -53,9 +53,9 @@ test('towing quote stores authenticated identity and never invents a fare or arr
 });
 test('edited details invalidate estimates and failed submissions leave no saved request', async () => {
   const h = riderHarness(true);
-  h.select('messenger');
+  h.select('tow');
   h.el('pickup').value = 'Office'; h.el('dropoff').value = 'Recipient office';
-  h.el('packageDescription').value = 'Envelope'; h.el('recipientName').value = 'Recipient';
+  h.el('towVehicle').value = 'Sedan'; h.el('towIssue').value = 'Flat tire';
   await h.el('estimateBtn').onclick();
   h.el('rideForm').input();
   assert.equal(h.el('requestBtn').disabled, true);
@@ -65,4 +65,11 @@ test('edited details invalidate estimates and failed submissions leave no saved 
   assert.equal(h.storage.has('fareride_rides_v2'), false);
   assert.equal(h.el('msg').textContent, 'Request was not sent. Check your connection and try again.');
   assert.equal(h.el('requestBtn').disabled, false);
+});
+
+test('bike delivery uses economy pricing even after selecting XL', async()=>{
+ const h=riderHarness();h.select('messenger');h.el('rideType').value='xl';h.el('pickup').value='A';h.el('dropoff').value='B';h.el('packageDescription').value='Envelope';h.el('recipientName').value='Sam';
+ vm.runInContext('geocode=async()=>({lat:40,lon:-73});getRoute=async()=>({distance:1609.344*10,duration:600});',h.context);
+ await h.el('estimateBtn').onclick();await h.el('rideForm').onsubmit({preventDefault(){}});
+ assert.equal(h.writes[0].fare,26);assert.equal(h.writes[0].serviceType,'messenger');assert.equal(h.writes[0].pricingStatus,'estimated');assert.equal(h.writes[0].riderPhone,'(516) 376-4118');
 });

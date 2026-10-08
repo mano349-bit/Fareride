@@ -49,7 +49,7 @@ import {
   db,
   auth,
   doc,
-  setDoc,
+  setDoc, getDoc,
   onSnapshot
 } from "./firebase-config.js";
 
@@ -104,9 +104,9 @@ function updateService() {
   $('rideType').closest('label').hidden = type !== 'ride';
   for (const id of ['towVehicle', 'towIssue']) $(id).required = type === 'tow';
   for (const id of ['packageDescription', 'recipientName']) $(id).required = type === 'messenger';
-  $('estimateBtn').textContent = type === 'ride' ? 'Calculate mileage & fare' : 'Review quote request';
+  $('estimateBtn').textContent = type !== 'tow' ? 'Calculate mileage & fare' : 'Review quote request';
   $('requestBtn').textContent = SERVICES[type].action;
-  $('serviceNote').textContent = type === 'ride' ? 'Choose your ride and calculate an estimate.'
+  $('serviceNote').textContent = type !== 'tow' ? 'Choose your service and calculate an estimate. Bike delivery uses Economy sedan rates.'
     : 'Request a quote. Price and provider availability must be confirmed before dispatch.';
   invalidateEstimate();
 }
@@ -386,7 +386,7 @@ async function calculateEstimate() {
   invalidateEstimate();
   const version = estimateVersion;
   const serviceType = selectedService();
-  if (serviceType !== 'ride') {
+  if (serviceType === 'tow') {
     try {
       const serviceDetails = details();
       const pickup = $('pickup').value.trim(), dropoff = $('dropoff').value.trim();
@@ -453,14 +453,12 @@ async function calculateEstimate() {
       );
 
     const fare =
-      calculateFare(
-        miles,
-        $('rideType').value
+      calculateFare(miles, serviceType === 'messenger' ? 'economy' : $('rideType').value
       );
 
     if (version !== estimateVersion) return;
     estimate = {
-      serviceType: 'ride', serviceDetails: {}, pricingStatus: 'estimated',
+      serviceType, serviceDetails: details(), pricingStatus: 'estimated',
       pickup,
       dropoff,
 
@@ -487,8 +485,7 @@ async function calculateEstimate() {
           fare.toFixed(2)
         ),
 
-      rideType:
-        $('rideType').value
+      rideType: serviceType === 'messenger' ? 'economy' : $('rideType').value
     };
 
     showSummary(estimate);
@@ -569,6 +566,9 @@ async event => {
       60000
     );
 
+  const riderProfile = await getDoc(doc(db, 'users', auth.currentUser.uid)).catch(() => null);
+  if (!riderProfile?.exists()) { $('msg').textContent = 'Unable to load your rider profile. Retry before requesting.'; return; }
+  const profile = riderProfile.data();
   const ride = {
 
     id:
@@ -579,8 +579,9 @@ async event => {
     pricingStatus: estimate.pricingStatus,
 
     riderName:
-      auth.currentUser.displayName || 'Rider',
+      profile.fullName || auth.currentUser.displayName || 'Rider',
 
+    riderPhone: String(profile.phone || ''),
     riderId:
       auth.currentUser.uid,
 

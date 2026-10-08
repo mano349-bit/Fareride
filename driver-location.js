@@ -379,7 +379,7 @@ function showEmergencyResult(
     <div class="sos-success">
 
       <strong>
-        ðŸš¨ SOS SENT TO FARERIDE
+         SOS SENT TO FARERIDE
       </strong>
 
       <br><br>
@@ -408,7 +408,7 @@ function showEmergencyResult(
         target="_blank"
         rel="noopener">
 
-        ðŸ“ View My Location
+         View My Location
 
       </a>
 
@@ -418,7 +418,7 @@ function showEmergencyResult(
         class="call-911-button"
         href="tel:911">
 
-        ðŸ“ž CALL 911 NOW
+         CALL 911 NOW
 
       </a>
 
@@ -622,7 +622,7 @@ async function sendEmergencySOS() {
           if (resultBox) {
 
             resultBox.innerHTML =
-              "âš ï¸ SOS could not be sent to FareRide. " +
+              " SOS could not be sent to FareRide. " +
               "Call 911 immediately if you are in danger.";
 
           }
@@ -643,7 +643,7 @@ async function sendEmergencySOS() {
         if (resultBox) {
 
           resultBox.innerHTML =
-            "âš ï¸ FareRide could not get your GPS location. " +
+            " FareRide could not get your GPS location. " +
             "Call 911 immediately if you are in danger.";
 
         }

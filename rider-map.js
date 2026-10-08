@@ -1,3 +1,4 @@
+import { vehicleIcon } from './ride-ui.js';
 import {
   db,
   doc,
@@ -251,8 +252,7 @@ function updateDriverMap(
         [
           driverLat,
           driverLng
-        ]
-      )
+        ], {icon: L.divIcon({html: vehicleIcon(ride.serviceType), className: "fareride-map-icon", iconSize:[40,36], iconAnchor:[20,18]})})
       .addTo(map)
       .bindPopup(
         '🚗 ' +
