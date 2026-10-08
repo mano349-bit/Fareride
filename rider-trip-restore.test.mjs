@@ -1,11 +1,12 @@
+import {phoneNumber} from './ride-ui.js';
 import {latestCurrentRide} from './ride-recovery.js';
 import {test} from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';
 import {riderTripState} from './rider-trip-state.js';
 function harness(){
  const els=new Map(),listeners=[],events=[];let login;
- const el=key=>{if(!els.has(key))els.set(key,{hidden:false,style:{},querySelector:el,prepend(){}});return els.get(key);};
+ const el=key=>{if(!els.has(key))els.set(key,{hidden:false,style:{},querySelector:el,removeAttribute(name){delete this[name];},prepend(){}});return els.get(key);};
  const auth={currentUser:{uid:'rider'}};
- const context=vm.createContext({auth,db:{},document:{createElement:()=>el('panel'),querySelector:el},localStorage:{getItem:()=>null,setItem(){throw Error('Storage unavailable');}},window:{addEventListener(){},dispatchEvent:event=>events.push(event)},CustomEvent:class{constructor(type,options){this.type=type;this.detail=options.detail;}},doc:(_,collection,id)=>({collection,id}),collection:(_,name)=>name,query:(...args)=>args,where:(...args)=>args,onAuthStateChanged:(_,cb)=>login=cb,getDoc:async()=>({exists:()=>true,data:()=>({role:'rider'})}),onSnapshot:(ref,cb)=>{listeners.push({ref,cb});return()=>{};},latestCurrentRide,riderTripState,riderProgress:()=>'',String});
+ const context=vm.createContext({auth,db:{},document:{createElement:()=>el('panel'),querySelector:el},localStorage:{getItem:()=>null,setItem(){throw Error('Storage unavailable');}},window:{addEventListener(){},dispatchEvent:event=>events.push(event)},CustomEvent:class{constructor(type,options){this.type=type;this.detail=options.detail;}},doc:(_,collection,id)=>({collection,id}),collection:(_,name)=>name,query:(...args)=>args,where:(...args)=>args,onAuthStateChanged:(_,cb)=>login=cb,getDoc:async()=>({exists:()=>true,data:()=>({role:'rider'})}),onSnapshot:(ref,cb)=>{listeners.push({ref,cb});return()=>{};},phoneNumber,latestCurrentRide,riderTripState,riderProgress:()=>'',String});
  vm.runInContext(fs.readFileSync('rider-trip.js','utf8').replace(/^import[^\n]+\n/gm,''),context);
  return {auth,els,listeners,events,login:()=>login(auth.currentUser)};
 }
@@ -16,4 +17,8 @@ test('current rider job restores from Firebase with no local storage and survive
 });
 test('old snapshots cannot show a rider job after logout',async()=>{
  const h=harness();await h.login();h.auth.currentUser=null;await h.login();h.listeners[0].cb({docs:[{id:'job',data:()=>({status:'requested'})}]});assert.equal(h.listeners.length,1);assert.equal(h.els.get('panel').hidden,true);
+});
+
+test('rider call link preserves full phone and hides invalid or completed ride numbers',async()=>{
+ const h=harness();await h.login();const job={status:'accepted',riderId:'rider',driverPhone:'+1 (516) 555-0123'};h.listeners[0].cb({docs:[{id:'job',data:()=>job}]});h.listeners[1].cb({exists:()=>true,data:()=>job});const call=h.els.get('#tripCallDriver');assert.equal(call.href,'tel:+15165550123');assert.equal(call.hidden,false);h.listeners[1].cb({exists:()=>true,data:()=>({...job,driverPhone:'516'})});assert.equal(call.hidden,true);assert.equal(call.href,undefined);h.listeners[1].cb({exists:()=>true,data:()=>({...job,status:'completed'})});assert.equal(call.hidden,true);
 });
