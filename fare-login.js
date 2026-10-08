@@ -1,3 +1,4 @@
+import { withDeadline } from './login-network.js';
 import {
   auth,
   db
@@ -84,6 +85,8 @@ function friendlyError(error) {
     return "Internet connection problem. Check your connection and try again.";
   }
 
+  if (code === "auth/web-storage-unsupported") return "Safari could not save the login. Open FareRide in a regular Safari tab with website storage enabled.";
+  if (code === "unavailable" || code === "deadline-exceeded") return "Your sign-in is saved, but the account check could not connect. Please try again when connected.";
   return (
     error?.message ||
     "Unable to sign in."
@@ -93,6 +96,7 @@ function friendlyError(error) {
 
 
 async function login() {
+  if (loginButton.disabled) return;
 
   const userEmail =
     email.value.trim();
@@ -133,14 +137,15 @@ async function login() {
 
 
 
+    showMessage("Signed in. Checking your FareRide account…", true);
     const profileSnapshot =
-      await getDocFromServer(
+      await withDeadline(getDocFromServer(
         doc(
           db,
           "users",
           user.uid
         )
-      );
+      ));
 
 
     if (

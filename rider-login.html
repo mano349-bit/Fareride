@@ -201,9 +201,21 @@ Back to FareRide
 
 </div>
 
-<script
- type="module"
- src="./fare-login.js">
+<script type="module">
+const loginButton = document.getElementById('loginButton');
+const message = document.getElementById('message');
+loginButton.disabled = true;
+const loading = setTimeout(() => { message.textContent = 'Login is taking longer to load. Check your connection and reload this page.'; }, 15000);
+try {
+  await import('./fare-login.js');
+  clearTimeout(loading);
+  message.textContent = '';
+  loginButton.disabled = false;
+} catch (error) {
+  clearTimeout(loading);
+  message.textContent = 'Login could not load. Please reload. If this repeats, check whether a Safari content blocker is blocking Firebase.';
+  console.error('FareRide login module failed:', error);
+}
 </script>
 
 </body>
