@@ -61,3 +61,7 @@ test('manual Stop Location survives page return and reconnection until explicitl
 test('an old discovery callback cannot switch the map after sign-out',async()=>{
  const h=harness(true);await h.login();h.auth.currentUser=null;await h.login();h.listeners[0].cb({docs:[{id:'old',data:()=>({status:'accepted',driverId:'driver'})}]});assert.equal(h.listeners.length,1);assert.equal(h.elements.get('section').hidden,true);
 });
+
+test('delayed GPS from an older ride cannot stop sharing for the current ride',async()=>{
+ const h=harness(true);await h.login();const base={status:'accepted',driverId:'driver',riderId:'rider',pickupLocation:{lat:40,lng:-73}};h.listeners[0].cb({docs:[{id:'old',data:()=>base}]});h.listeners[1].cb({exists:()=>true,data:()=>base});h.ticks[0]();const oldGPS=h.positions[0];h.listeners[0].cb({docs:[{id:'new',data:()=>({...base,requestedAt:'2026-10-09T12:00:00Z'})}]});h.listeners[2].cb({exists:()=>true,data:()=>base});const before=h.cleared();await oldGPS({coords:{latitude:40,longitude:-73,accuracy:5}});assert.equal(h.cleared(),before);assert.equal(h.writes.length,0);
+});

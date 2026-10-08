@@ -86,13 +86,14 @@ function startLocation(){
  if(!navigator.geolocation){locationError='Location is unavailable on this device.';status.textContent=locationError;button.hidden=false;return;}
  const id=rideId,uid=user.uid;button.disabled=isDriver;button.hidden=isDriver;locationError='';
  positionHandler=async position=>{
-  if(auth.currentUser?.uid!==uid||rideId!==id||!ACTIVE_STATUSES.includes(ride?.status)){stopGPS();return;}
+  if(auth.currentUser?.uid!==uid||rideId!==id)return;
+  if(!ACTIVE_STATUSES.includes(ride?.status)){stopGPS();return;}
   if(Date.now()-lastSent<3000)return;lastSent=Date.now();const point={lat:position.coords.latitude,lng:position.coords.longitude,accuracy:position.coords.accuracy};if(!validCoordinates(point))return;
   ride[isDriver?'driverLocation':'riderLocation']=point;render();
   try{await updateDoc(doc(db,'rides',id),{[isDriver?'driverLocation':'riderLocation']:point,[isDriver?'driverLocationUpdatedAt':'riderLocationUpdatedAt']:serverTimestamp()});if(auth.currentUser?.uid!==uid||rideId!==id)return;locationError='';}
   catch{if(auth.currentUser?.uid!==uid||rideId!==id)return;locationError='Location could not be shared. Check ride access.';status.textContent=locationError;stopGPS();button.hidden=false;}
  };
- gps=navigator.geolocation.watchPosition(positionHandler,error=>{locationError=error.code===1?'Location permission denied. Allow location for this site, then retry.':'Location unavailable. Check device location settings and retry.';status.textContent=locationError;stopGPS();button.hidden=false;if(error.code!==1)setTimeout(()=>{if(auth.currentUser?.uid===uid&&rideId===id&&ACTIVE_STATUSES.includes(ride?.status)&&!document.hidden&&!sharingPaused)startLocation();},10000);},{enableHighAccuracy:true,maximumAge:0,timeout:15000});
+ gps=navigator.geolocation.watchPosition(positionHandler,error=>{if(auth.currentUser?.uid!==uid||rideId!==id)return;locationError=error.code===1?'Location permission denied. Allow location for this site, then retry.':'Location unavailable. Check device location settings and retry.';status.textContent=locationError;stopGPS();button.hidden=false;if(error.code!==1)setTimeout(()=>{if(auth.currentUser?.uid===uid&&rideId===id&&ACTIVE_STATUSES.includes(ride?.status)&&!document.hidden&&!sharingPaused)startLocation();},10000);},{enableHighAccuracy:true,maximumAge:0,timeout:15000});
  heartbeat=setInterval(()=>{if(!document.hidden&&positionHandler&&rideId===id){render();navigator.geolocation.getCurrentPosition?.(positionHandler,()=>{render();},{enableHighAccuracy:true,maximumAge:0,timeout:10000});}},10000);
 }
 button.onclick=()=>{sharingPaused=false;stopGPS();lastSent=0;startLocation();};
