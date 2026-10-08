@@ -18,7 +18,7 @@ function render(){
  list.replaceChildren();
  const wrap=document.createElement('div');wrap.className='earnings-table-wrap';
  const table=document.createElement('table');table.className='earnings-table';
- table.innerHTML='<caption>Completed jobs - past '+Number(selector.value)+' days</caption><thead><tr><th scope="col">Job #</th><th scope="col">Date / time</th><th scope="col">Job / route</th><th scope="col">Fare</th><th scope="col">Tip</th><th scope="col">Rider rating</th><th scope="col">Rider comment</th><th scope="col">My earnings</th><th scope="col">Costs ($)</th><th scope="col">Net profit</th></tr></thead>';
+ table.innerHTML='<caption>Completed jobs - past '+Number(selector.value)+' days</caption><thead><tr><th scope="col">Job #</th><th scope="col">Date / time</th><th scope="col">Job / route</th><th scope="col">Fare</th><th scope="col">Tip</th><th scope="col">Your rating from rider</th><th scope="col">Rider comment</th><th scope="col">My earnings</th><th scope="col">Costs ($)</th><th scope="col">Net profit</th></tr></thead>';
  const body=document.createElement('tbody');table.append(body);wrap.append(table);list.append(wrap);
  function cell(row,text,amount=false){const td=document.createElement('td');td.textContent=text;if(amount)td.className='amount';row.append(td);return td;}
  const days=[...new Set(report.jobs.map(job=>job.date.toLocaleDateString()))];

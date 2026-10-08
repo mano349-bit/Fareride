@@ -1,3 +1,4 @@
+import { riderProgress } from './rider-progress.js';
 import { auth, db, doc, getDoc, onSnapshot, onAuthStateChanged } from './firebase-config.js';
 import { runTransaction } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 import { riderTripState } from './rider-trip-state.js';
@@ -5,9 +6,9 @@ import { riderTripState } from './rider-trip-state.js';
 const panel = document.createElement('section');
 panel.style.cssText = 'padding:20px;margin:20px 0;border:1px solid #ccc;border-radius:12px;background:white';
 panel.hidden = true;
-panel.innerHTML = '<h2>Your Trip</h2><p id="tripStage"></p><p>Request → Accepted → Ride Started → Driver Arrived at Pickup → Completed</p><button type="button" id="cancelTrip">Cancel Ride</button><p id="tripActionMessage" role="status"></p>';
+panel.innerHTML = '<h2>Your Trip</h2><p id="tripStage"></p><div id="riderProgress"></div><button type="button" id="cancelTrip">Cancel Ride</button><p id="tripActionMessage" role="status"></p>';
 document.querySelector('main').prepend(panel);
-const stage = panel.querySelector('#tripStage'), cancel = panel.querySelector('button'), message = panel.querySelector('#tripActionMessage');
+const stage = panel.querySelector('#tripStage'), cancel = panel.querySelector('#cancelTrip'), message = panel.querySelector('#tripActionMessage');
 let stop = null, uid = null, id = null, currentRide = null;
 function clear() { stop?.(); stop = null; panel.hidden = true; currentRide = null; id = null; }
 function watch() {
@@ -20,6 +21,7 @@ function watch() {
     currentRide = snapshot.data();
     const state = riderTripState(currentRide);
     panel.hidden = false; stage.textContent = state.message;
+    panel.querySelector('#riderProgress').innerHTML = riderProgress(currentRide.status);
     cancel.hidden = !state.canCancel; cancel.disabled = false;
   }, () => { panel.hidden = false; stage.textContent = 'Unable to load your trip. Check account approval and ride permissions.'; cancel.hidden = true; });
 }
