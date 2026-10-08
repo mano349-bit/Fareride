@@ -1,3 +1,4 @@
+import {notifyNewRides, resetRideAlerts} from './driver-alerts.js';
 import { escapeHTML } from './ride-ui.js';
 import { actionButtons } from './driver-actions.js';
 import { auth, getDoc, onAuthStateChanged } from './firebase-session.js';
@@ -615,6 +616,7 @@ async function completeRide(id) {
 ======================================== */
 
 function startRideListener() {
+  const listenerDriverUID = DRIVER_ID;
 
   const ridesCollection =
     collection(
@@ -626,9 +628,11 @@ function startRideListener() {
   return onSnapshot(
 
     query(ridesCollection, or(where('status', '==', 'requested'), where('driverId', '==', DRIVER_ID))),
+    { includeMetadataChanges: true },
 
 
     snapshot => {
+      if (auth.currentUser?.uid !== listenerDriverUID || DRIVER_ID !== listenerDriverUID) return;
 
       rides =
         snapshot.docs.map(
@@ -671,6 +675,7 @@ function startRideListener() {
       );
 
 
+      notifyNewRides(rides, $('providerService').value, snapshot.metadata?.fromCache === true);
       saveLocalBackup();
 
 
@@ -775,6 +780,7 @@ function startRideListener() {
 
 let stopRides = null;
 onAuthStateChanged(auth, async user => {
+  resetRideAlerts();
   stopRides?.(); stopRides = null; rides = []; DRIVER_ID = null;
   clearActiveDriverRide(); renderRequests();
   if (!user) { setDriverMessage('Sign in using Driver Login to see jobs.'); return; }
