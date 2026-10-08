@@ -13,6 +13,6 @@ export function newRideTracker() {
 }
 export function rideAnnouncement(ride) {
  const pickup = String(ride.pickup || 'the pickup location').trim();
- const dropoff = String(ride.destination || 'the drop-off location').trim();
+ const dropoff = String(ride.dropoff || ride.destination || 'the drop-off location').trim();
  return `There is a new ride available from ${pickup} to ${dropoff}.`;
 }

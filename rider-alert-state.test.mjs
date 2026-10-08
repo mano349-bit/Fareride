@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {acceptanceTracker,acceptanceAnnouncement} from './rider-alert-state.js';
+const ride={id:'a',riderId:'r',status:'requested',pickup:'Hartford 06105',dropoff:'West Islip 11795'};
+test('rider is notified once when driver accepts and GPS updates do not repeat',()=>{const t=acceptanceTracker();assert.equal(t.update(ride),false);const accepted={...ride,status:'accepted',driverId:'d',driverName:'Dan'};assert.equal(t.update(accepted),true);assert.equal(t.update(accepted),false);assert.equal(t.update({...accepted,status:'started'}),false);assert.match(acceptanceAnnouncement(accepted),/Dan has accepted.*Hartford 06105 to West Islip 11795/);});
+test('restoring an already accepted ride does not produce a false new acceptance',()=>{const t=acceptanceTracker();assert.equal(t.update({...ride,status:'accepted',driverId:'d'}),false);});
+test('cancelled and unassigned rides do not notify and reconnect can catch acceptance',()=>{const t=acceptanceTracker();t.update(ride);assert.equal(t.update({...ride,status:'accepted'}),false);t.reset();t.update(ride);assert.equal(t.update({...ride,status:'started',driverId:'d'}),true);});
+test('sign out resets acceptance state',()=>{const t=acceptanceTracker();t.update(ride);t.reset();assert.equal(t.update({...ride,status:'accepted',driverId:'d'}),false);});
