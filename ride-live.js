@@ -9,11 +9,12 @@ section.hidden = true;
 section.innerHTML = '<h2>Rider and driver live map</h2><p id="liveDriverDetails"></p><a id="liveDriverPhone" hidden></a><p id="liveMapStatus" role="status"></p><p>Location shares automatically while this page is open. Allow location access when asked.</p><button type="button" hidden>Retry location</button><div style="position:relative;margin-top:16px"><div id="rideLiveMap" style="height:360px"></div><div id="rideMapPeople" aria-label="Rider and driver information" style="position:absolute;top:10px;right:10px;z-index:1000;max-width:75%;padding:10px 12px;background:white;border:1px solid #aac8e6;border-radius:8px;box-shadow:0 2px 8px #0002;white-space:pre-line;font-size:14px;pointer-events:none"></div></div>';
 document.querySelector('main').append(section);
 const status = section.querySelector('#liveMapStatus'), button = section.querySelector('button');
+if(!isDriver){button.textContent='Share my location';button.hidden=false;button.style.cssText='padding:12px 16px;background:#0875e1;color:white;border:0;border-radius:8px;font-weight:700';}
 let user=null, profile=null, ride=null, rideId=null, stop=null, discovery=null, gps=null, lastSent=0, attempted=false;
 let heartbeat=null,positionHandler=null;
 let map=null, riderMarker=null, driverMarker=null, pickupMarker=null, contactAttempted=false, locationError='';
 function stopGPS(){if(heartbeat!==null)clearInterval(heartbeat);heartbeat=null;positionHandler=null;if(gps!==null) navigator.geolocation.clearWatch(gps);gps=null;button.disabled=false;}
-function reset(){stopGPS();stop?.();stop=null;ride=null;rideId=null;section.hidden=true;attempted=false;contactAttempted=false;lastSent=0;locationError='';button.hidden=true;map?.remove();map=riderMarker=driverMarker=pickupMarker=null;}
+function reset(){stopGPS();stop?.();stop=null;ride=null;rideId=null;section.hidden=true;attempted=false;contactAttempted=false;lastSent=0;locationError='';button.hidden=isDriver;map?.remove();map=riderMarker=driverMarker=pickupMarker=null;}
 function marker(current,point,label,type){
  if(!validCoordinates(point))return current;
  const text=document.createElement('span');text.textContent=label;
@@ -77,7 +78,7 @@ onAuthStateChanged(auth,async next=>{
 function startLocation(){
  if(!user||!ride||!ACTIVE_STATUSES.includes(ride.status)||gps!==null)return;attempted=true;
  if(!navigator.geolocation){locationError='Location is unavailable on this device.';status.textContent=locationError;button.hidden=false;return;}
- const id=rideId,uid=user.uid;button.disabled=true;button.hidden=true;locationError='';
+ const id=rideId,uid=user.uid;button.disabled=isDriver;button.hidden=isDriver;locationError='';
  positionHandler=async position=>{
   if(auth.currentUser?.uid!==uid||rideId!==id||!ACTIVE_STATUSES.includes(ride?.status)){stopGPS();return;}
   if(Date.now()-lastSent<3000)return;lastSent=Date.now();const point={lat:position.coords.latitude,lng:position.coords.longitude,accuracy:position.coords.accuracy};if(!validCoordinates(point))return;
@@ -88,7 +89,7 @@ function startLocation(){
  gps=navigator.geolocation.watchPosition(positionHandler,error=>{locationError=error.code===1?'Location permission denied. Allow location for this site, then retry.':'Location unavailable. Check device location settings and retry.';status.textContent=locationError;stopGPS();button.hidden=false;if(error.code!==1)setTimeout(()=>{if(auth.currentUser?.uid===uid&&rideId===id&&ACTIVE_STATUSES.includes(ride?.status)&&!document.hidden)startLocation();},10000);},{enableHighAccuracy:true,maximumAge:0,timeout:15000});
  heartbeat=setInterval(()=>{if(!document.hidden&&positionHandler&&rideId===id){render();navigator.geolocation.getCurrentPosition?.(positionHandler,()=>{render();},{enableHighAccuracy:true,maximumAge:0,timeout:10000});}},10000);
 }
-button.onclick=startLocation;
+button.onclick=()=>{stopGPS();lastSent=0;startLocation();};
 window.addEventListener('pageshow',event=>{if(event.persisted&&user)discover();});
 window.addEventListener('pagehide',()=>{discovery?.();discovery=null;reset();});
 

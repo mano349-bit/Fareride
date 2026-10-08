@@ -4,7 +4,7 @@ const liveMap=document.querySelector('#rideLiveMap');
 const liveSection=liveMap?.closest('section');
 const panel=document.createElement('section');panel.className='card';
 panel.style.cssText='margin:20px auto;padding:20px;background:white;border:1px solid #cbd5e1;border-radius:12px';
-panel.innerHTML='<h2>Your rider map</h2><p role="status">Your live ride map appears here once a driver accepts your request.</p><div id="riderPreviewMap" style="height:360px;width:100%;border-radius:10px"></div>';
+panel.innerHTML='<h2>Your rider map</h2><p role="status">Your live ride map appears here once a driver accepts your request.</p><button type="button" style="padding:12px 16px;margin-bottom:12px;background:#0875e1;color:white;border:0;border-radius:8px;font-weight:700">Share my location</button><div id="riderPreviewMap" style="height:360px;width:100%;border-radius:10px"></div>';
 if(liveSection)liveSection.before(panel);else document.querySelector('main').append(panel);
 const message=panel.querySelector('p');
 let map=null,marker=null;
@@ -17,9 +17,17 @@ function showMap(){
 }
 showMap();
 if(liveSection)new MutationObserver(showMap).observe(liveSection,{attributes:true,attributeFilter:['hidden']});
-if(navigator.geolocation)navigator.geolocation.getCurrentPosition(position=>{
+const share=panel.querySelector('button');
+function shareLocation(){
+ if(!navigator.geolocation){message.textContent='Location is unavailable on this device.';return;}
+ share.disabled=true;message.textContent='Getting your GPS location...';
+ navigator.geolocation.getCurrentPosition(position=>{
+ share.disabled=false;
  if(!map)return;
  const point=[position.coords.latitude,position.coords.longitude];
- marker=L.marker(point).addTo(map).bindTooltip('Your location');map.setView(point,13);
-},()=>{message.textContent='Allow location access to center the map on you. Your live ride map appears once a driver accepts.';},{enableHighAccuracy:true,maximumAge:30000,timeout:15000});
+ if(marker)marker.setLatLng(point);else marker=L.marker(point).addTo(map).bindTooltip('Your location');map.setView(point,13);message.textContent='Your GPS location is shown. It shares with your assigned driver automatically during an active ride.';
+},()=>{share.disabled=false;message.textContent='Allow location access to center the map on you. Your live ride map appears once a driver accepts.';},{enableHighAccuracy:true,maximumAge:0,timeout:15000});
+}
+share.onclick=shareLocation;
+shareLocation();
 window.addEventListener('pageshow',showMap);
