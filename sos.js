@@ -1,4 +1,4 @@
-import {auth,db,doc,getDoc,addDoc,collection,serverTimestamp} from './firebase-config.js';
+import {auth,db,doc,getDoc,addDoc,collection,serverTimestamp} from './firebase-session.js';
 import {getSOSLocation,sosError} from './sos-state.js';
 const driver=location.pathname.endsWith('/driver.html');
 const button=document.querySelector(driver?'.sos-button':'.rider-sos-button')||document.querySelector('[onclick*="SOS.send"]');

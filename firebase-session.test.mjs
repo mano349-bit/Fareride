@@ -5,7 +5,7 @@ function initialize(localAvailable=true){
  const indexedDB={name:'indexedDB',available:()=>new Promise(()=>{})};
  const context=vm.createContext({console,location:{pathname:'/rider-login.html'},authScope:()=> 'rider',initializeApp:(_,name)=>({name}),getFirestore:()=>({}),getStorage:()=>({}),browserLocalPersistence:local,browserSessionPersistence:session,indexedDBLocalPersistence:indexedDB,
  initializeAuth:(_,options)=>({ready:Promise.all(options.persistence.map(async p=>{if(await p.available())selected.push(p.name);})),options})});
- let source=fs.readFileSync('firebase-config.js','utf8').replace(/import[\s\S]*?from\s*["'][^"']+["'];/g,'').replace(/export\s*\{[\s\S]*?\};/g,'');
+ let source=fs.readFileSync('firebase-session.js','utf8').replace(/import[\s\S]*?from\s*["'][^"']+["'];/g,'').replace(/export\s*\{[\s\S]*?\};/g,'');
  vm.runInContext(source+'\nglobalThis.testAuth = auth;',context);
  return {auth:context.testAuth,selected};
 }

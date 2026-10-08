@@ -7,7 +7,7 @@
   setDoc,
   ref,
   uploadBytes
-} from "./firebase-config.js";
+} from "./firebase-session.js";
 
 import { registrationErrorMessage } from './registration-errors.js';
 

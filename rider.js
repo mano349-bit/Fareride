@@ -51,7 +51,7 @@ import {
   doc,
   setDoc, getDoc,
   onSnapshot
-} from "./firebase-config.js";
+} from "./firebase-session.js";
 
 const RK = 'fareride_rides_v2';
 const SK = 'fareride_settings_v2';

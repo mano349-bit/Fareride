@@ -1,7 +1,7 @@
 import {phoneNumber} from './ride-ui.js';
 import {latestCurrentRide} from './ride-recovery.js';
 import { riderProgress } from './rider-progress.js';
-import { auth, db, doc, getDoc, onSnapshot, onAuthStateChanged, collection, query, where } from './firebase-config.js';
+import { auth, db, doc, getDoc, onSnapshot, onAuthStateChanged, collection, query, where } from './firebase-session.js';
 import { runTransaction } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 import { riderTripState } from './rider-trip-state.js';
 

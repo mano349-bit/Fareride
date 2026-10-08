@@ -1,6 +1,6 @@
 import {latestCurrentRide} from './ride-recovery.js';
 import {locationNotice} from './ride-location-notice.js';
-import { auth, db, doc, getDoc, updateDoc, onAuthStateChanged, onSnapshot, serverTimestamp, collection, query, where } from './firebase-config.js';
+import { auth, db, doc, getDoc, updateDoc, onAuthStateChanged, onSnapshot, serverTimestamp, collection, query, where } from './firebase-session.js';
 import { ACTIVE_STATUSES, validCoordinates } from './ride-details.js';
 import { phoneNumber, vehicleIcon } from './ride-ui.js';
 const isDriver = location.pathname.endsWith('/driver.html');

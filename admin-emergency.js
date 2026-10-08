@@ -8,7 +8,7 @@ import {
   onSnapshot,
   onAuthStateChanged,
   serverTimestamp
-} from "./firebase-config.js";
+} from "./firebase-session.js";
 
 
 let emergencies = [];

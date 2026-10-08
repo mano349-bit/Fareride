@@ -9,7 +9,7 @@ import { serviceName, priceLabel } from './services.js';
   updateDoc,
   collection,
   onSnapshot
-} from "./firebase-config.js";
+} from "./firebase-session.js";
 
 import {
   signInWithEmailAndPassword,

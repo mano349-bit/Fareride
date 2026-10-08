@@ -1,4 +1,4 @@
-import {auth,signOut,onAuthStateChanged} from './firebase-config.js';
+import {auth,signOut,onAuthStateChanged} from './firebase-session.js';
 const role=location.pathname.endsWith('/driver.html')?'driver':'rider';
 const header=document.querySelector('header');
 const button=document.createElement('button');button.type='button';button.textContent='Log out';button.hidden=true;

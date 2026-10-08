@@ -1,4 +1,4 @@
-import { db } from "./firebase-config.js";
+import { db } from "./firebase-session.js";
 import { observeAdmin } from './admin-session.js';
 import { collection, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 

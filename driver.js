@@ -1,6 +1,6 @@
 import { escapeHTML } from './ride-ui.js';
 import { actionButtons } from './driver-actions.js';
-import { auth, getDoc, onAuthStateChanged } from './firebase-config.js';
+import { auth, getDoc, onAuthStateChanged } from './firebase-session.js';
 import { query, where, or, runTransaction } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 import { driverDetails } from './ride-details.js';
 import { serviceName, matchesService, priceLabel } from './services.js';
@@ -10,7 +10,7 @@ import {
   collection,
   updateDoc,
   onSnapshot
-} from "./firebase-config.js";
+} from "./firebase-session.js";
 
 const RK = 'fareride_rides_v2';
 

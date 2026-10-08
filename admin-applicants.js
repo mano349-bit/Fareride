@@ -8,7 +8,7 @@ import {
   updateDoc,
   collection,
   onSnapshot
-} from "./firebase-config.js";
+} from "./firebase-session.js";
 
 import {
   onAuthStateChanged

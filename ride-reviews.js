@@ -1,5 +1,5 @@
 import {localDay, completedInRange} from './rider-history-dates.js';
-import {auth,db,doc,getDoc,collection,query,where,onSnapshot,onAuthStateChanged,updateDoc} from './firebase-config.js';
+import {auth,db,doc,getDoc,collection,query,where,onSnapshot,onAuthStateChanged,updateDoc} from './firebase-session.js';
 const role=location.pathname.includes('driver')?'driver':'rider';
 const section=document.createElement('section');section.className='card';section.style.cssText='background:white;padding:20px;margin:24px 0;border:1px solid #dbe3ee;border-radius:12px';
 const heading=document.createElement('h2');heading.textContent=role==='rider'?'My rides, ratings and tips':'Rate your riders';const message=document.createElement('p');message.setAttribute('role','status');const jobs=document.createElement('div');section.append(heading,message,jobs);document.querySelector('main').append(section);

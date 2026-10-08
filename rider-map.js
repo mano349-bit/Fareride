@@ -3,7 +3,7 @@ import {
   db,
   doc,
   onSnapshot
-} from "./firebase-config.js";
+} from "./firebase-session.js";
 
 const LAST = 'fareride_last_ride_id';
 

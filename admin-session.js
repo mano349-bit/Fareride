@@ -1,4 +1,4 @@
-import { auth, db, doc, getDoc, onAuthStateChanged } from './firebase-config.js';
+import { auth, db, doc, getDoc, onAuthStateChanged } from './firebase-session.js';
 
 // Registration in another tab changes the shared Firebase session.
 export function observeAdmin(callback) {

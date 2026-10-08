@@ -207,7 +207,7 @@ const message = document.getElementById('message');
 loginButton.disabled = true;
 const loading = setTimeout(() => { message.textContent = 'Login is taking longer to load. Check your connection and reload this page.'; }, 15000);
 try {
-  await import('./fare-login.js');
+  await import('./fare-login.js?v=20261008-session2');
   clearTimeout(loading);
   if (message.textContent.startsWith('Login is taking longer')) message.textContent = '';
   loginButton.disabled = false;

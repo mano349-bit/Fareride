@@ -1,6 +1,6 @@
 import './ride-live.js';
 import {latestCurrentRide} from './ride-recovery.js';
-import {auth,db,collection,query,where,onSnapshot,onAuthStateChanged} from './firebase-config.js';
+import {auth,db,collection,query,where,onSnapshot,onAuthStateChanged} from './firebase-session.js';
 import {ACTIVE_STATUSES} from './ride-details.js';
 import {navigationLinks} from './ride-navigation.js';
 const panel=document.createElement('section');panel.className='card';panel.hidden=true;

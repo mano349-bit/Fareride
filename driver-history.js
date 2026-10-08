@@ -1,6 +1,6 @@
 import {dailyExpenses} from './driver-daily-expenses.js';
 import {localDay} from './rider-history-dates.js';
-import { auth, db, doc, getDoc, collection, query, where, onSnapshot, onAuthStateChanged } from './firebase-config.js';
+import { auth, db, doc, getDoc, collection, query, where, onSnapshot, onAuthStateChanged } from './firebase-session.js';
 import { driverReport } from './driver-report.js';
 const panel = document.createElement('section'); panel.className='card';
 panel.innerHTML='<h2>My completed jobs and earnings</h2><div class="earnings-dates"><label>Start date <input id="earningsStart" type="date" required></label><label>End date <input id="earningsEnd" type="date" required></label><button id="earningsToday" type="button">Today</button></div><p id="earningsSummary" role="status">Sign in as a driver to load history.</p><p>Daily expenses default to 30% of your earnings, including tips. Edit each daily expense amount for fuel, tolls and other expenses; clear it to restore the estimate. Expenses are saved only in this browser under your account. Earnings use recorded payouts or an estimate of 75% of fare plus tips. Totals are not payment confirmations.</p><div id="earningsJobs"></div>';

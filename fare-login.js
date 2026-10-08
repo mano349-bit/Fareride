@@ -3,7 +3,7 @@ import { withDeadline } from './login-network.js';
 import {
   auth,
   db
-} from "./firebase-config.js";
+} from "./firebase-session.js";
 
 import {
   signInWithEmailAndPassword,

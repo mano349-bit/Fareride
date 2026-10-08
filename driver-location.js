@@ -1,4 +1,4 @@
-import { auth, getDoc } from './firebase-config.js';
+import { auth, getDoc } from './firebase-session.js';
 /* FareRide mobile GPS tuning:
    - Longer timeout for cellular GPS acquisition
    - Allows a recent cached fix while a fresh GPS fix is obtained
@@ -10,7 +10,7 @@ import {
   addDoc,
   collection,
   serverTimestamp
-} from "./firebase-config.js";
+} from "./firebase-session.js";
 
 
 const ACTIVE_RIDE_KEY =
