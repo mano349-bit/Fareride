@@ -1,144 +1,56 @@
-﻿import {
-  auth,
-  db
-} from "./firebase-config.js";
+import { auth, db } from "./firebase-config.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+import { doc, getDocFromServer } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-import {
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-
-import {
-  doc,
-  getDoc
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-
-
-const page = window.location.pathname.toLowerCase();
-
-const requiredRole =
-  page.includes("driver")
-    ? "driver"
-    : page.includes("rider")
-      ? "rider"
-      : "";
-
-const loginPage =
-  requiredRole === "driver"
-    ? "./driver-login.html"
-    : "./rider-login.html";
-
-
-let authCheck = 0;
-onAuthStateChanged(auth, async user => {
-  const check = ++authCheck;
-
-  if (!user) {
-    window.location.replace(loginPage);
-    return;
+const requiredRole = window.location.pathname.toLowerCase().includes('driver') ? 'driver' : 'rider';
+const loginPage = './' + requiredRole + '-login.html';
+let generation = 0, retryTimer;
+const notice = document.createElement('div');
+notice.setAttribute('role', 'status');
+notice.hidden = true;
+notice.style.cssText = 'padding:12px;background:#fff4d6;color:#553b00;text-align:center';
+document.body.prepend(notice);
+function report(text) { notice.textContent = text; notice.hidden = !text; }
+function retry(check) {
+  clearTimeout(retryTimer);
+  retryTimer = setTimeout(() => { if (check === generation && auth.currentUser) verify(auth.currentUser, check); }, 15000);
+}
+async function verify(user, check) {
+  if (navigator.onLine === false) {
+    report('You are offline. Your login is retained. Account access will be checked when you reconnect.');
+    retry(check); return;
   }
-
   try {
-
-    const snapshot =
-      await getDoc(
-        doc(db, "users", user.uid)
-      );
-
-    if (check !== authCheck || auth.currentUser?.uid !== user.uid) return;
-
+    // A cache-only missing document is not proof that the account was removed.
+    const snapshot = await getDocFromServer(doc(db, 'users', user.uid));
+    if (check !== generation || auth.currentUser?.uid !== user.uid) return;
     if (!snapshot.exists()) {
-      console.error("FareRide user profile missing:", user.uid);
-      window.location.replace(loginPage);
-      return;
+      report('Your login is retained, but your FareRide profile is unavailable. Please contact FareRide Admin.');
+      retry(check); return;
     }
-
     const profile = snapshot.data();
-
-    const profileRole =
-      String(profile.role || "")
-        .trim()
-        .toLowerCase();
-
-    const status =
-      String(
-        profile.accountStatus ||
-        profile.status ||
-        ""
-      )
-      .trim()
-      .toLowerCase();
-
-    const approved =
-      profile.approved === true ||
-      status === "approved" ||
-      status === "active";
-
-    console.log(
-      "FareRide auth check:",
-      {
-        email: user.email,
-        firebaseEmailVerified: user.emailVerified,
-        role: profileRole,
-        requiredRole: requiredRole,
-        approved: approved,
-        status: status
-      }
-    );
-
-    /*
-      IMPORTANT:
-      Admin-approved users may enter even when
-      Firebase emailVerified is false.
-    */
-
-    if (
-      !user.emailVerified &&
-      !approved
-    ) {
-      console.warn(
-        "FareRide account is neither email verified nor admin approved."
-      );
-
-      window.location.replace(loginPage);
-      return;
+    const role = String(profile.role || '').trim().toLowerCase();
+    const status = String(profile.accountStatus || profile.status || '').trim().toLowerCase();
+    const approved = profile.approved === true || ['approved', 'active'].includes(status);
+    if (['suspended', 'deleted', 'rejected', 'disabled'].includes(status) || (!user.emailVerified && !approved) || role !== requiredRole) {
+      window.location.replace(loginPage); return;
     }
-
-    /*
-      Make sure Driver goes only to Driver area
-      and Rider goes only to Rider area.
-    */
-
-    if (
-      requiredRole &&
-      profileRole &&
-      profileRole !== requiredRole
-    ) {
-      console.warn(
-        "Wrong FareRide role:",
-        profileRole,
-        requiredRole
-      );
-
-      window.location.replace(loginPage);
-      return;
-    }
-
-    console.log(
-      "FARE RIDE ACCESS GRANTED:",
-      user.email
-    );
-
+    report('');
   } catch (error) {
-
-    console.error(
-      "FareRide authentication guard error:",
-      error
-    );
-
-    /*
-      Do not log an authenticated driver out
-      merely because Firestore temporarily fails.
-    */
+    if (check !== generation || auth.currentUser?.uid !== user.uid) return;
+    console.warn('FareRide account check will retry:', error.code || error.message);
+    report('Connection interrupted. Your login is retained. Reconnecting to check account access…');
+    retry(check);
   }
-
+}
+onAuthStateChanged(auth, user => {
+  const check = ++generation;
+  clearTimeout(retryTimer);
+  // Firebase delivers this after restoring its persisted authentication state.
+  if (!user) { window.location.replace(loginPage); return; }
+  return verify(user, check);
+});
+window.addEventListener('online', () => { if (auth.currentUser) { clearTimeout(retryTimer); verify(auth.currentUser, ++generation); } });
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && auth.currentUser) { clearTimeout(retryTimer); verify(auth.currentUser, ++generation); }
 });

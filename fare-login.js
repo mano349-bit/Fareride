@@ -12,7 +12,7 @@ import {
 
 import {
   doc,
-  getDoc
+  getDocFromServer
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 const fareRideVerificationSettings = {
@@ -134,7 +134,7 @@ async function login() {
 
 
     const profileSnapshot =
-      await getDoc(
+      await getDocFromServer(
         doc(
           db,
           "users",
@@ -147,10 +147,8 @@ async function login() {
       !profileSnapshot.exists()
     ) {
 
-      await signOut(auth);
-
       showMessage(
-        "FareRide account profile was not found. Please register first."
+        "Your login is saved, but your FareRide profile was not found on the server. Please contact FareRide Admin."
       );
 
       return;

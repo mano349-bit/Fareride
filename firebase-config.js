@@ -51,7 +51,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig, 'FareRide-' + authScope(location.pathname));
 const db = getFirestore(app);
 // Persistent, separate rider/driver/admin sessions with browser storage fallbacks.
-const auth = initializeAuth(app, { persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence] });
+const auth = initializeAuth(app, { persistence: [browserLocalPersistence, indexedDBLocalPersistence, browserSessionPersistence] });
 const storage = getStorage(app);
 // Report unavailable uploads promptly instead of retrying for many minutes.
 storage.maxUploadRetryTime = 30000;
