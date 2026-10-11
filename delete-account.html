@@ -2,81 +2,333 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1">
-  <title>Delete Account | Fare-Ride</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f7fb;
-      color: #17233b;
-      margin: 0;
-      padding: 24px;
-    }
-    main {
-      max-width: 600px;
-      margin: 40px auto;
-      background: white;
-      padding: 28px;
-      border-radius: 14px;
-    }
-    h1 { color: #174a91; }
-    a { color: #174a91; }
-    li { margin-bottom: 12px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Delete Account | Fare-Ride</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  color: #17233b;
+  margin: 0;
+  padding: 20px;
+}
+
+main {
+  max-width: 600px;
+  margin: 30px auto;
+  background: white;
+  padding: 28px;
+  border-radius: 14px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+}
+
+h1 {
+  color: #174a91;
+  text-align: center;
+}
+
+h2 {
+  color: #174a91;
+  margin-top: 28px;
+}
+
+p {
+  line-height: 1.6;
+}
+
+li {
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+label {
+  display: block;
+  font-weight: bold;
+  margin-top: 18px;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 13px;
+  margin-top: 8px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+textarea {
+  min-height: 90px;
+}
+
+button {
+  width: 100%;
+  padding: 16px;
+  margin-top: 20px;
+  border: none;
+  border-radius: 9px;
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.delete-btn {
+  background: #c62828;
+  color: white;
+}
+
+.delete-btn:hover {
+  background: #a91e1e;
+}
+
+.cancel-btn {
+  background: #e5e9ef;
+  color: #17233b;
+}
+
+.notice {
+  background: #fff3e0;
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: 20px;
+  line-height: 1.6;
+}
+
+.hidden {
+  display: none;
+}
+
+a {
+  color: #174a91;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 30px;
+  font-size: 14px;
+  color: #666;
+}
+</style>
 </head>
+
 <body>
+
 <main>
-  <h1>Fare-Ride Account Deletion</h1>
-  <p>
-    Fare-Ride allows riders and drivers to
-    request deletion of their accounts
-    and associated personal data.
-  </p>
 
-  <h2>How to request deletion</h2>
-  <ol>
-    <li>
-      Contact Fare-Ride support through the
-      contact method provided in the app.
-    </li>
-    <li>
-      Use the subject "Delete My Fare-Ride Account".
-    </li>
-    <li>
-      Include the email address registered
-      with your Fare-Ride account.
-    </li>
-    <li>
-      Support will verify your request and
-      provide confirmation of deletion.
-    </li>
-  </ol>
+<h1>Fare-Ride Account Deletion</h1>
 
-  <h2>Data deletion</h2>
-  <p>
-    You may request deletion of your account,
-    profile information, and associated
-    personal data.
-  </p>
-  <p>
-    Certain transaction or legal records may
-    need to be retained when required by law.
-    Fare-Ride will explain any applicable
-    retention periods.
-  </p>
+<p>
+Fare-Ride allows riders and drivers to request
+permanent deletion of their accounts and
+associated personal information.
+</p>
 
-  <h2>Contact</h2>
-  <p>
-    Use the support contact information
-    provided in the Fare-Ride app.
-  </p>
+<h2>How to Delete Your Account</h2>
 
-  <p>
-    <a href="./">Return to Fare-Ride</a>
-  </p>
+<ol>
+<li>Enter your registered Fare-Ride email address.</li>
+<li>Click the red Delete My Account button.</li>
+<li>Confirm your deletion request.</li>
+<li>Send the prepared request using your email app.</li>
+<li>Fare-Ride support will verify your identity and process your request.</li>
+</ol>
+
+<h2>Request Account Deletion</h2>
+
+<form id="deleteForm">
+
+<label for="email">
+Registered Email Address
+</label>
+
+<input
+type="email"
+id="email"
+placeholder="Enter your registered email"
+autocomplete="email"
+required
+>
+
+<label for="reason">
+Reason for Deletion (Optional)
+</label>
+
+<textarea
+id="reason"
+placeholder="Tell us why you want to delete your account"
+></textarea>
+
+<button
+type="submit"
+class="delete-btn">
+Delete My Account
+</button>
+
+</form>
+
+<div id="confirmation" class="hidden">
+
+<h2>Confirm Account Deletion Request</h2>
+
+<div class="notice">
+<strong>Warning:</strong>
+You are requesting permanent deletion of your
+Fare-Ride account and associated personal data.
+
+Certain records may be retained when required
+by applicable law.
+</div>
+
+<button
+type="button"
+id="confirmButton"
+class="delete-btn">
+Confirm Deletion Request
+</button>
+
+<button
+type="button"
+id="cancelButton"
+class="cancel-btn">
+Cancel
+</button>
+
+</div>
+
+<p id="status" role="status" aria-live="polite"></p>
+
+<h2>What Data Will Be Deleted?</h2>
+
+<p>
+You may request deletion of:
+</p>
+
+<ul>
+<li>Your Fare-Ride account</li>
+<li>Your rider or driver profile</li>
+<li>Personal contact information</li>
+<li>Associated account data not required to be retained</li>
+</ul>
+
+<h2>Data Retention</h2>
+
+<p>
+Certain payment, transaction, safety,
+or legal records may need to be retained
+when required by applicable law.
+</p>
+
+<p>
+Fare-Ride will explain any applicable
+retention periods when processing your request.
+</p>
+
+<h2>Delete Your Account Inside the App</h2>
+
+<p>
+You may also sign in to Fare-Ride and use
+the Delete Account option in your account settings.
+</p>
+
+<h2>Contact Fare-Ride</h2>
+
+<p>
+For assistance, use the support contact
+information provided in the Fare-Ride app.
+</p>
+
+<p>
+<a href="./">Return to Fare-Ride Home</a>
+</p>
+
+<div class="footer">
+Fare-Ride © 2026
+<br>
+Account Privacy and Deletion
+</div>
+
 </main>
+
+<script>
+
+const form = document.getElementById("deleteForm");
+const confirmation = document.getElementById("confirmation");
+const status = document.getElementById("status");
+
+form.addEventListener("submit", function(event) {
+  event.preventDefault();
+
+  status.textContent = "";
+
+  if (!form.reportValidity()) {
+    return;
+  }
+
+  form.classList.add("hidden");
+  confirmation.classList.remove("hidden");
+});
+
+document.getElementById("cancelButton")
+.addEventListener("click", function() {
+
+  confirmation.classList.add("hidden");
+  form.classList.remove("hidden");
+
+});
+
+document.getElementById("confirmButton")
+.addEventListener("click", function() {
+
+  const email = document.getElementById("email").value.trim();
+  const reason = document.getElementById("reason").value.trim();
+
+  const subject = "Delete My Fare-Ride Account";
+
+  const body =
+    "I request deletion of my Fare-Ride account.\n\n" +
+    "Registered Email: " + email + "\n\n" +
+    "Reason: " + (reason || "Not provided") + "\n\n" +
+    "Please provide confirmation when my account " +
+    "and eligible personal data have been deleted.";
+
+  // IMPORTANT:
+  // Replace this placeholder with your actual
+  // Fare-Ride support email address.
+  const supportEmail = "REPLACE_WITH_SUPPORT_EMAIL";
+
+  if (supportEmail === "REPLACE_WITH_SUPPORT_EMAIL") {
+    status.textContent =
+      "Deletion requests are not configured yet. " +
+      "Please contact Fare-Ride support through the app.";
+    confirmation.classList.add("hidden");
+    form.classList.remove("hidden");
+    return;
+  }
+
+  const mailtoLink =
+    "mailto:" + supportEmail +
+    "?subject=" + encodeURIComponent(subject) +
+    "&body=" + encodeURIComponent(body);
+
+  window.location.href = mailtoLink;
+
+  status.textContent =
+    "Your email app should open with the deletion " +
+    "request. You must send the email to submit it. " +
+    "Your account has not been deleted yet.";
+
+  confirmation.classList.add("hidden");
+  form.classList.remove("hidden");
+
+});
+
+</script>
+
 </body>
 </html>
-
