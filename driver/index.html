@@ -1,32 +1,309 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fare-Ride | Rider</title>
 
-    <title>FareRide Driver</title>
-
-    <link rel="stylesheet" href="../styles.css">
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#f3f6fc;
+  color:#17233b;
+}
+header{
+  background:#174a91;
+  color:white;
+  text-align:center;
+  padding:22px;
+}
+header h1{margin:0 0 10px}
+header a{color:white}
+main{
+  max-width:700px;
+  margin:25px auto;
+  padding:0 15px;
+}
+.card{
+  background:white;
+  padding:22px;
+  margin-bottom:20px;
+  border-radius:16px;
+  box-shadow:0 3px 12px #0001;
+}
+label{
+  display:block;
+  margin:15px 0;
+  font-weight:bold;
+}
+input{
+  width:100%;
+  padding:14px;
+  margin-top:7px;
+  border:1px solid #bbb;
+  border-radius:9px;
+  font-size:16px;
+}
+.request-btn{
+  width:100%;
+  padding:16px;
+  background:#174a91;
+  color:white;
+  border:0;
+  border-radius:10px;
+  font-size:17px;
+  font-weight:bold;
+  cursor:pointer;
+}
+.sos-area{
+  background:#fff5f5;
+  border:2px solid #efbfc4;
+  text-align:center;
+}
+.sos-area h2{color:#a0152b}
+.sos-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;
+  margin:20px 0;
+}
+.sos-btn{
+  min-height:105px;
+  border:0;
+  border-radius:12px;
+  color:white;
+  font-size:13px;
+  font-weight:bold;
+  cursor:pointer;
+  padding:10px 4px;
+}
+.sos-btn span{
+  display:block;
+  font-size:30px;
+  margin-bottom:8px;
+}
+.police{background:#1751ac}
+.ambulance{background:#bb1938}
+.fire{background:#b64d07}
+.sos-btn:focus-visible,
+.close-btn:focus-visible,
+.call-btn:focus-visible{
+  outline:3px solid black;
+  outline-offset:3px;
+}
+.sos-note{
+  font-size:13px;
+  color:#62565a;
+  line-height:1.5;
+}
+dialog{
+  width:calc(100% - 30px);
+  max-width:440px;
+  border:0;
+  border-radius:18px;
+  padding:25px;
+  text-align:center;
+  color:#17233b;
+}
+dialog::backdrop{
+  background:rgba(0,0,0,.75);
+}
+dialog img{
+  width:100%;
+  height:auto;
+  border-radius:12px;
+  background:#10131b;
+}
+.call-btn{
+  display:block;
+  background:#b91c1c;
+  color:white;
+  text-decoration:none;
+  padding:17px;
+  margin:18px 0 12px;
+  border-radius:10px;
+  font-size:20px;
+  font-weight:bold;
+}
+.close-btn{
+  padding:13px 25px;
+  border:1px solid #777;
+  background:white;
+  border-radius:9px;
+  cursor:pointer;
+  font-size:16px;
+}
+#msg{line-height:1.5}
+</style>
 </head>
 
 <body>
 
 <header>
-    <h1>FareRide Driver</h1>
-    <a href="../index.html">Home</a>
+  <h1>🚘 Fare-Ride Rider</h1>
+  <a href="index.html">Home</a>
 </header>
 
 <main>
 
-    <h2>Driver Portal</h2>
+<section class="card">
+  <h2>Request a Ride</h2>
 
-    <p>Welcome to FareRide Driver.</p>
+  <form id="rideForm">
+    <label for="pickup">Pickup Location</label>
+    <input
+      id="pickup"
+      placeholder="Enter pickup address"
+      required>
 
-    <button type="button" onclick="location.href='../driver.html'">
-        Open Driver App
+    <label for="dropoff">Destination</label>
+    <input
+      id="dropoff"
+      placeholder="Enter destination"
+      required>
+
+    <button class="request-btn" type="submit">
+      Request Fare-Ride
+    </button>
+  </form>
+
+  <p id="msg" role="status"></p>
+</section>
+
+<section class="card sos-area">
+  <h2>🚨 Emergency SOS</h2>
+  <p>Select the emergency service you need.</p>
+
+  <div class="sos-grid">
+
+    <button class="sos-btn police"
+            type="button"
+            onclick="openSOS('police')">
+      <span>🚓</span>
+      Police Alert
     </button>
 
+    <button class="sos-btn ambulance"
+            type="button"
+            onclick="openSOS('ambulance')">
+      <span>🚑</span>
+      Ambulance Alert
+    </button>
+
+    <button class="sos-btn fire"
+            type="button"
+            onclick="openSOS('fire')">
+      <span>🚒</span>
+      Fire Alert
+    </button>
+
+  </div>
+
+  <p class="sos-note">
+    Emergency services in the United States
+    can be reached by calling 911.
+    These buttons do not automatically
+    dispatch emergency responders.
+  </p>
+</section>
+
+<dialog id="emergencyDialog"
+        aria-labelledby="emergencyTitle">
+
+  <h2 id="emergencyTitle">
+    Emergency Alert
+  </h2>
+
+  <img id="sirenImage"
+       alt="Animated emergency siren"
+       width="400"
+       height="180">
+
+  <p id="emergencyMessage"></p>
+
+  <a href="tel:911" class="call-btn">
+    📞 CALL 911 NOW
+  </a>
+
+  <button
+    class="close-btn"
+    type="button"
+    onclick="closeSOS()">
+    Close
+  </button>
+
+  <p class="sos-note">
+    Your location is not automatically
+    sent to emergency responders.
+  </p>
+</dialog>
+
 </main>
+
+<script>
+const emergencyTypes = {
+  police: {
+    title: "🚓 Police Alert",
+    image: "police-siren.gif",
+    message:
+      "For crime, threats, or immediate danger, " +
+      "call 911 and request police assistance."
+  },
+  ambulance: {
+    title: "🚑 Ambulance Alert",
+    image: "ambulance-siren.gif",
+    message:
+      "For medical emergencies, call 911 " +
+      "and request an ambulance."
+  },
+  fire: {
+    title: "🚒 Fire Alert",
+    image: "fire-siren.gif",
+    message:
+      "For fire, smoke, or rescue emergencies, " +
+      "call 911 and request the fire department."
+  }
+};
+
+function openSOS(type) {
+  const service = emergencyTypes[type];
+  if (!service) return;
+
+  document.getElementById(
+    "emergencyTitle"
+  ).textContent = service.title;
+
+  const image = document.getElementById(
+    "sirenImage"
+  );
+
+  image.src = service.image;
+  image.alt = service.title + " flashing siren";
+
+  document.getElementById(
+    "emergencyMessage"
+  ).textContent = service.message;
+
+  const dialog = document.getElementById(
+    "emergencyDialog"
+  );
+
+  if (!dialog.open) {
+    dialog.showModal();
+  }
+}
+
+function closeSOS() {
+  document.getElementById(
+    "emergencyDialog"
+  ).close();
+}
+</script>
+
+<!-- Existing rider ride-request logic -->
+<script src="rider.js"></script>
 
 </body>
 </html>
