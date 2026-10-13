@@ -39,3 +39,6 @@
 .tow-job-filters select { width:100%; }
 .tow-job-filters button { margin:0; padding:10px 14px; }
 @media(max-width:600px) { .tow-job-filters label { flex:1 1 130px; } .tow-job-filters label:last-of-type { flex-basis:100%; } }
+
+.tow-offer-chat .tow-message-driver { color:#087443; }
+.tow-offer-chat .tow-message-rider { color:#175cd3; }
