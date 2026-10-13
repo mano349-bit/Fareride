@@ -1,5 +1,5 @@
 import {phoneNumber} from './ride-ui.js';
-import {latestCurrentRide} from './ride-recovery.js';
+import {latestCurrentRide} from './ride-recovery.js?v=20261013-live-acceptance';
 import { riderProgress } from './rider-progress.js';
 import { auth, db, doc, getDoc, onSnapshot, onAuthStateChanged, collection, query, where } from './firebase-session.js';
 import { runTransaction } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
@@ -8,7 +8,7 @@ import { riderTripState } from './rider-trip-state.js';
 const panel = document.createElement('section');
 panel.style.cssText = 'padding:20px;margin:20px 0;border:1px solid #ccc;border-radius:12px;background:white';
 panel.hidden = true;
-panel.innerHTML = '<h2>Your Trip</h2><p id="tripStage"></p><p id="tripDetails" style="white-space:pre-line"></p><a id="tripCallDriver" hidden style="padding:12px 16px;margin:12px 0;background:#0875e1;color:white;border-radius:8px;font-weight:700;text-decoration:none">Call driver</a><div id="riderProgress"></div><button type="button" id="cancelTrip">Cancel Ride</button><p id="tripActionMessage" role="status"></p>';
+panel.innerHTML = '<h2>Your Trip</h2><p id="tripStage" role="status" aria-live="polite"></p><p id="tripDetails" style="white-space:pre-line"></p><a id="tripCallDriver" hidden style="padding:12px 16px;margin:12px 0;background:#0875e1;color:white;border-radius:8px;font-weight:700;text-decoration:none">Call driver</a><div id="riderProgress"></div><button type="button" id="cancelTrip">Cancel Ride</button><p id="tripActionMessage" role="status"></p>';
 document.querySelector('main').prepend(panel);
 const stage = panel.querySelector('#tripStage'), cancel = panel.querySelector('#cancelTrip'), message = panel.querySelector('#tripActionMessage');
 let stop = null, discovery=null, uid = null, id = null, currentRide = null, generation=0;
@@ -21,22 +21,26 @@ function watch(next) {
   stop = onSnapshot(doc(db, 'rides', next), snapshot => {
     if(id!==next)return;
     if (auth.currentUser?.uid !== expected || !snapshot.exists() || snapshot.data().riderId !== expected) { clear(); return; }
-    currentRide = {...snapshot.data(),id:next};
+    applyRide({...snapshot.data(),id:next});
+  }, () => { panel.hidden = false; stage.textContent = 'Unable to load your trip. Check account approval and ride permissions.'; cancel.hidden = true; });
+}
+function applyRide(nextRide){
+ if(!uid||auth.currentUser?.uid!==uid||nextRide.riderId!==uid||nextRide.id!==id)return;
+  currentRide = nextRide;
     const state = riderTripState(currentRide);
     panel.hidden = false; stage.textContent = state.message;
-    panel.querySelector('#tripDetails').textContent='Job ID: '+next+'\nPickup: '+(currentRide.pickup||'')+'\nDestination: '+(currentRide.dropoff||'')+'\nDriver: '+(currentRide.driverName||'Waiting for assignment');
+    panel.querySelector('#tripDetails').textContent='Job ID: '+nextRide.id+'\nPickup: '+(currentRide.pickup||'')+'\nDestination: '+(currentRide.dropoff||'')+'\nDriver: '+(currentRide.driverName||'Waiting for assignment')+'\nVehicle: '+([currentRide.vehicleYear,currentRide.vehicleMake,currentRide.vehicleModel].filter(Boolean).join(' ')||'Waiting for vehicle details')+'\nTelephone: '+(currentRide.driverPhone||'Not provided');
     const call=panel.querySelector('#tripCallDriver'),number=phoneNumber(currentRide.driverPhone);call.hidden=!number||state.finished;call.textContent='Call driver: '+(currentRide.driverPhone||'');if(number&&!state.finished)call.href='tel:'+number;else call.removeAttribute('href');
     window.dispatchEvent(new CustomEvent('fareride-ride-restored',{detail:currentRide}));
     panel.querySelector('#riderProgress').innerHTML = riderProgress(currentRide.status);
     cancel.hidden = !state.canCancel; cancel.disabled = false;
-  }, () => { panel.hidden = false; stage.textContent = 'Unable to load your trip. Check account approval and ride permissions.'; cancel.hidden = true; });
 }
 function discover(){
  discovery?.();discovery=null;if(!uid)return;const expected=uid;
  discovery=onSnapshot(query(collection(db,'rides'),where('riderId','==',uid)),snapshot=>{
   if(auth.currentUser?.uid!==expected||uid!==expected)return;
   const active=latestCurrentRide(snapshot.docs.map(d=>({...d.data(),id:d.id})),uid,'rider');
-  if(active){try{localStorage.setItem('fareride_last_ride_id',active.id);}catch{}watch(active.id);}
+  if(active){try{localStorage.setItem('fareride_last_ride_id',active.id);}catch{}watch(active.id);applyRide(active);}
  },()=>{panel.hidden=false;stage.textContent='Unable to restore your current job. Check your connection and retry.';cancel.hidden=true;});
 }
 onAuthStateChanged(auth, async user => {
