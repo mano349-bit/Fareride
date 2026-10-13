@@ -1,0 +1,7 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {selectRiderReviews} from './rider-review-filter.js';import {reviewWindow} from './driver-review-dates.js';
+const now=new Date(2026,9,13,12),window=reviewWindow(365,now);
+const jobs=[{id:'old',status:'completed',completedAt:new Date(2026,9,12,10)},{id:'new',status:'completed',completedAt:new Date(2026,9,13,10)},{id:'active',status:'accepted',completedAt:new Date(2026,9,13,11)},{id:'too-old',status:'completed',completedAt:new Date(2025,8,1)}];
+test('default shows only the latest completed job within the past year',()=>{const result=selectRiderReviews(jobs,window.start,window.end,'1',now);assert.deepEqual(result.rides.map(r=>r.id),['new']);assert.equal(result.total,2);});
+test('count choices and all apply within selected dates',()=>{assert.deepEqual(selectRiderReviews(jobs,window.start,window.end,'all',now).rides.map(r=>r.id),['new','old']);const today=reviewWindow(1,now);assert.equal(selectRiderReviews(jobs,today.start,today.end,'all',now).rides.length,1);});
+test('old/future dates and invalid limits are rejected',()=>{assert.equal(selectRiderReviews(jobs,'2025-01-01',window.end,'1',now),null);assert.equal(selectRiderReviews(jobs,window.start,'2026-10-14','1',now),null);assert.equal(selectRiderReviews(jobs,window.start,window.end,'0',now),null);assert.equal(selectRiderReviews(jobs,window.start,window.end,'1.5',now),null);});
