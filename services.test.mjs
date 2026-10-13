@@ -98,5 +98,5 @@ test('long-distance passenger routes retain full mileage duration and fare witho
  const h=riderHarness();h.el('pickup').value='10022';h.el('dropoff').value='33160';
  vm.runInContext('getRoute=async()=>({distance:2080000,duration:75600})',h.context);
  await h.el('estimateBtn').onclick();assert.equal(h.el('requestBtn').disabled,false);
- await h.el('requestBtn').onclick();const ride=h.writes[0];assert.equal(ride.durationMinutes,1260);assert.equal(ride.miles,Number((2080000/1609.344).toFixed(2)));assert.equal(ride.fare,Number((3.5+2080000/1609.344*2.25).toFixed(2)));assert.equal(ride.pickup,'10022');assert.equal(ride.dropoff,'33160');
+ await h.el('rideForm').onsubmit({preventDefault(){}});const ride=h.writes[0];assert.equal(ride.durationMinutes,1260);assert.equal(ride.miles,Number((2080000/1609.344).toFixed(2)));assert.equal(ride.fare,Number((3.5+2080000/1609.344*2.25).toFixed(2)));assert.equal(ride.pickup,'10022');assert.equal(ride.dropoff,'33160');
 });
