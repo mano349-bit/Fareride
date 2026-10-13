@@ -1,4 +1,5 @@
 import { observeAdmin } from './admin-session.js';
+import { sosServiceLabel } from './sos-services.js';
 import {
   db,
   auth,
@@ -169,6 +170,9 @@ function renderEmergencyBanner() {
     "hidden"
   );
 
+  const service = $("emergencyBannerService");
+  if (service) service.textContent = sosServiceLabel(newest.emergencyService);
+
 
   $("emergencyBannerSource")
     .textContent =
@@ -276,7 +280,7 @@ function renderEmergencyList() {
                 <div>
 
                   <div class="emergency-source">
-                    🚨 ${safe(source)} SOS
+                    🚨 ${safe(sosServiceLabel(item.emergencyService))} — ${safe(source)} SOS
                   </div>
 
                   <div class="emergency-status">
@@ -297,6 +301,11 @@ function renderEmergencyList() {
 
 
               <div class="emergency-info-grid">
+
+                <div>
+                  <strong>Requested service</strong>
+                  <span>${safe(sosServiceLabel(item.emergencyService))}</span>
+                </div>
 
                 <div>
                   <strong>Emergency ID</strong>

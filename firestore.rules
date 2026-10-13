@@ -127,8 +127,9 @@ service cloud.firestore {
     }
     match /emergencies/{emergencyId} {
       allow create: if signedIn()
-        && request.resource.data.keys().hasOnly(['type','source','reporterId','riderId','riderName','driverId','driverName','rideId','status','latitude','longitude','accuracy','mapUrl','createdAt'])
+        && request.resource.data.keys().hasOnly(['type','emergencyService','source','reporterId','riderId','riderName','driverId','driverName','rideId','status','latitude','longitude','accuracy','mapUrl','createdAt'])
         && request.resource.data.type == 'SOS' && request.resource.data.status == 'active'
+        && (!('emergencyService' in request.resource.data) || request.resource.data.emergencyService in ['police','ambulance','fire'])
         && request.resource.data.reporterId == request.auth.uid
         && request.resource.data.source in ['rider','driver']
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == request.resource.data.source
