@@ -1,4 +1,4 @@
-import './rider-map-preview.js';
+import './rider-map-preview.js?v=20261013-single-map';
 import {auth,db,collection,query,where,onSnapshot,onAuthStateChanged} from './firebase-session.js';
 import {nearestDrivers} from './nearby-drivers-state.js';
 import {validCoordinates} from './ride-details.js';
