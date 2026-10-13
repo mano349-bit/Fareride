@@ -93,3 +93,10 @@ test('a failed tow route or missing vehicle details cannot submit an estimate',a
  h.el('towVehicle').value='Sedan';h.el('towIssue').value='No start';vm.runInContext("getRoute=async()=>{throw new Error('No route found')}",h.context);
  await h.el('estimateBtn').onclick();assert.equal(h.el('requestBtn').disabled,true);assert.equal(h.writes.length,0);assert.equal(h.el('msg').textContent,'No route found');
 });
+
+test('long-distance passenger routes retain full mileage duration and fare without a distance cap',async()=>{
+ const h=riderHarness();h.el('pickup').value='10022';h.el('dropoff').value='33160';
+ vm.runInContext('getRoute=async()=>({distance:2080000,duration:75600})',h.context);
+ await h.el('estimateBtn').onclick();assert.equal(h.el('requestBtn').disabled,false);
+ await h.el('requestBtn').onclick();const ride=h.writes[0];assert.equal(ride.durationMinutes,1260);assert.equal(ride.miles,Number((2080000/1609.344).toFixed(2)));assert.equal(ride.fare,Number((3.5+2080000/1609.344*2.25).toFixed(2)));assert.equal(ride.pickup,'10022');assert.equal(ride.dropoff,'33160');
+});
