@@ -6,12 +6,12 @@ import { SERVICES, validateServiceDetails, priceLabel } from './services.js';
    FARERIDE MOBILE NETWORK HELPER
    Helps when cellular data briefly drops or changes towers.
 ========================================================= */
-async function fareRideFetchWithRetry(resource, options = {}, attempts = 3) {
+async function fareRideFetchWithRetry(resource, options = {}, attempts = 3, timeoutMs = 30000) {
   let lastError;
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 30000);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       const response = await fetch(resource, {
@@ -303,6 +303,18 @@ function checkLocalRideStatus() {
 
 
 async function geocode(address) {
+  const zipCode = address.trim().match(/^(\d{5})(?:-\d{4})?$/)?.[1];
+  if (zipCode) {
+    try {
+      // Dedicated US ZIP lookup avoids ambiguous or missing postal-area searches.
+      const response = await fareRideFetchWithRetry('https://api.zippopotam.us/us/' + zipCode, {}, 1, 10000);
+      const data = await response.json();
+      const place = data.places?.[0];
+      const lat = Number(place?.latitude), lon = Number(place?.longitude);
+      if (place && Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat)<=90 && Math.abs(lon)<=180) return {lat,lon};
+    } catch { /* Keep the existing postal-area lookup as a fallback. */ }
+  }
+
 
   const url = new URL(
     'https://nominatim.openstreetmap.org/search'
@@ -332,42 +344,36 @@ async function geocode(address) {
   const data =
     await response.json();
 
-  if (!data.length) {
+  if (!Array.isArray(data) || !data.length) {
     throw new Error(
       'Address not found: ' +
       address
     );
   }
 
-  return {
-    lat: Number(data[0].lat),
-    lon: Number(data[0].lon)
-  };
+  const lat=Number(data[0].lat),lon=Number(data[0].lon);
+  if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)throw new Error('Location lookup returned invalid coordinates. Retry or use a street address.');
+  return {lat,lon};
 }
 
 
-async function getRoute(
-  from,
-  to
-) {
-
-  const response =
-    await fareRideFetchWithRetry(`https://router.project-osrm.org/route/v1/driving/${from.lon},${from.lat};${to.lon},${to.lat}?overview=false`);
-
-  const data =
-    await response.json();
-
-  if (
-    data.code !== 'Ok' ||
-    !data.routes ||
-    !data.routes.length
-  ) {
-    throw new Error(
-      'No route found'
-    );
+async function getRoute(from, to) {
+  for (const point of [from,to]) {
+    if(!Number.isFinite(point.lat)||!Number.isFinite(point.lon)||Math.abs(point.lat)>90||Math.abs(point.lon)>180)throw new Error('Invalid pickup or destination coordinates.');
   }
-
-  return data.routes[0];
+  const coordinates=`${from.lon},${from.lat};${to.lon},${to.lat}`;
+  const providers=['https://router.project-osrm.org/route/v1/driving/','https://routing.openstreetmap.de/routed-car/route/v1/driving/'];
+  let noRoute=false;
+  for(let index=0;index<providers.length;index++){
+    try {
+      const response=await fareRideFetchWithRetry(providers[index]+coordinates+'?overview=false&steps=false&alternatives=false',{},1,20000);
+      const data=await response.json(),route=data.routes?.[0];
+      if(data.code==='NoRoute'){noRoute=true;continue;}
+      if(data.code!=='Ok'||!route||!Number.isFinite(route.distance)||!Number.isFinite(route.duration)||route.distance<0||route.duration<0)continue;
+      return route;
+    } catch { /* A busy public route service must not prevent a second real route lookup. */ }
+  }
+  throw new Error(noRoute?'No driving route found. Check the pickup and destination addresses.':'Route services are busy or unreachable. Retry shortly; no fare or mileage has been invented.');
 }
 
 
