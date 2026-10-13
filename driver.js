@@ -1,10 +1,11 @@
-import {notifyNewRides, resetRideAlerts} from './driver-alerts.js';
+import {visibleDriverJobs, jobMatchesFilter} from './driver-jobs.js';
+import {notifyNewRides, resetRideAlerts} from './driver-alerts.js?v=20261013-all-jobs';
 import { escapeHTML } from './ride-ui.js';
 import { actionButtons } from './driver-actions.js';
 import { auth, getDoc, onAuthStateChanged } from './firebase-session.js';
-import { query, where, or, runTransaction } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
+import { query, where, runTransaction } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 import { driverDetails } from './ride-details.js';
-import { serviceName, matchesService, priceLabel } from './services.js';
+import { serviceName, priceLabel } from './services.js';
 import {
   db,
   doc,
@@ -25,7 +26,8 @@ const $ = id =>
   document.getElementById(id);
 
 let rides = [];
-$('providerService').addEventListener('change', renderRequests);
+const jobFilter=()=> $('jobServiceFilter')?.value || 'all';
+$('jobServiceFilter')?.addEventListener('change', renderRequests);
 
 
 /* ========================================
@@ -135,47 +137,7 @@ function renderRequests() {
   }
 
 
-  const visibleRides =
-    rides.filter(
-      ride => {
-
-        /*
-          Any driver can see
-          a new requested ride.
-        */
-
-        if (
-          ride.status ===
-          'requested'
-        ) {
-          return (ride.serviceType === 'tow' || ride.pricingStatus !== 'quote_required') && matchesService(ride, $('providerService').value);
-        }
-
-
-        /*
-          Driver 1 can see
-          their active ride.
-        */
-
-        if (
-          ride.driverId ===
-            DRIVER_ID &&
-          [
-            'accepted',
-            'arrived',
-            'started'
-          ].includes(
-            ride.status
-          )
-        ) {
-          return true;
-        }
-
-
-        return false;
-      }
-    );
-
+  const visibleRides = visibleDriverJobs(rides,DRIVER_ID,jobFilter());
 
   const selectedJob = visibleRides.find(ride => ride.driverId === DRIVER_ID && ride.status !== 'requested') || visibleRides[0];
   $('driverControls').innerHTML = actionButtons(selectedJob || { id: '', status: 'unavailable' }, DRIVER_ID);
@@ -188,7 +150,7 @@ function renderRequests() {
     list.innerHTML = `
       <div class="card">
         <p>
-          No ride requests right now.
+          No job requests match this filter right now.
         </p>
       </div>
     `;
@@ -237,9 +199,7 @@ function renderRequests() {
 
             <p>
               <strong>Fare:</strong>
-              ${money(
-                ride.fare
-              )}
+              ${priceLabel(ride,money)}
             </p>
 
             ${
@@ -268,6 +228,7 @@ function renderRequests() {
                 : ''
             }
 
+            ${ride.serviceType === 'tow' ? '<p>Enter your price and message the rider in Tow offers &amp; rider issues.</p>' : ''}
             ${button}
 
           </div>
@@ -370,7 +331,7 @@ function renderRequests() {
 
 async function acceptRide(id) {
   const job = rides.find(ride => ride.id === id);
-  if (!job || job.serviceType === 'tow' || job.status !== 'requested' || job.pricingStatus === 'quote_required' || !matchesService(job, $('providerService').value)) {
+  if (!job || job.serviceType === 'tow' || job.status !== 'requested' || job.pricingStatus === 'quote_required' || !jobMatchesFilter(job, jobFilter())) {
     setDriverMessage('This job is not available in your service queue.');
     return;
   }
@@ -616,161 +577,28 @@ async function completeRide(id) {
 ======================================== */
 
 function startRideListener() {
-  const listenerDriverUID = DRIVER_ID;
-
-  const ridesCollection =
-    collection(
-      db,
-      'rides'
-    );
-
-
-  return onSnapshot(
-
-    query(ridesCollection, or(where('status', '==', 'requested'), where('driverId', '==', DRIVER_ID))),
-    { includeMetadataChanges: true },
-
-
-    snapshot => {
-      if (auth.currentUser?.uid !== listenerDriverUID || DRIVER_ID !== listenerDriverUID) return;
-
-      rides =
-        snapshot.docs.map(
-          rideDoc => ({
-
-            id:
-              rideDoc.id,
-
-            ...rideDoc.data()
-
-          })
-        );
-
-
-      /*
-        Newest rides first.
-      */
-
-      rides.sort(
-        (a, b) => {
-
-          const timeA =
-            new Date(
-              a.requestedAt ||
-              0
-            ).getTime();
-
-          const timeB =
-            new Date(
-              b.requestedAt ||
-              0
-            ).getTime();
-
-          return (
-            timeB -
-            timeA
-          );
-
-        }
-      );
-
-
-      notifyNewRides(rides, $('providerService').value, snapshot.metadata?.fromCache === true);
-      saveLocalBackup();
-
-
-      /*
-        Restore the active ride
-        after phone/browser refresh.
-      */
-
-      const activeRide =
-        rides.find(
-          ride =>
-
-            ride.driverId ===
-              DRIVER_ID &&
-
-            [
-              'accepted',
-              'arrived',
-              'started'
-            ].includes(
-              ride.status
-            )
-        );
-
-
-      if (activeRide) {
-
-        /*
-          Save this immediately,
-          even if driver-location.js
-          has not loaded yet.
-        */
-
-        localStorage.setItem(
-          ACTIVE_RIDE_KEY,
-          activeRide.id
-        );
-
-
-        if (
-          window
-            .FareRideDriverLocation
-        ) {
-
-          window
-            .FareRideDriverLocation
-            .setActiveRide(
-              activeRide.id
-            );
-
-        }
-
-      }
-
-
-      if (activeRide) window.dispatchEvent(new Event('fareride-active-ride'));
-      else clearActiveDriverRide();
-      renderRequests();
-
-    },
-
-
-    error => {
-
-      console.error(
-        'Firestore ride listener failed:',
-        error
-      );
-
-
-      const list =
-        $('requestList');
-
-
-      if (list) {
-
-        list.innerHTML = `
-
-          <div class="card">
-
-            <p>
-              Unable to load ride requests
-              from Firebase.
-            </p>
-
-          </div>
-
-        `;
-
-      }
-
-    }
-
-  );
-
+ const expected=DRIVER_ID,parts=[new Map(),new Map()],ready=[false,false];let stopped=false;
+ const listen=(index,condition)=>onSnapshot(query(collection(db,'rides'),condition),{includeMetadataChanges:true},snapshot=>{
+  if(stopped||auth.currentUser?.uid!==expected||DRIVER_ID!==expected)return;
+  parts[index]=new Map(snapshot.docs.map(d=>[d.id,{...d.data(),id:d.id}]));
+  if(snapshot.metadata?.fromCache!==true)ready[index]=true;
+  rides=[...new Map([...parts[0],...parts[1]]).values()].sort((a,b)=>{
+   const time=value=>value?.toMillis?value.toMillis():new Date(value||0).getTime();
+   return time(b.requestedAt)-time(a.requestedAt);
+  });
+  if(ready.every(Boolean))notifyNewRides(rides,jobFilter(),snapshot.metadata?.fromCache===true);
+  saveLocalBackup();
+  const active=rides.find(job=>job.driverId===expected&&['accepted','arrived','started'].includes(job.status));
+  if(active){setActiveDriverRide(active.id);window.dispatchEvent(new Event('fareride-active-ride'));}
+  else clearActiveDriverRide();
+  renderRequests();
+ },error=>{
+  if(stopped||auth.currentUser?.uid!==expected)return;
+  console.error('Driver job listener failed:',error);
+  setDriverMessage(index===0?'Unable to load new job requests. Check your connection and driver approval.':'Unable to load your assigned jobs. Check your connection and driver approval.');
+ });
+ const stops=[listen(0,where('status','==','requested')),listen(1,where('driverId','==',expected))];
+ return ()=>{stopped=true;stops.forEach(stop=>stop());};
 }
 
 
