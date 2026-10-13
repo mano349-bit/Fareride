@@ -14,6 +14,7 @@
 <link
   rel="stylesheet"
   href="styles.css">
+<link rel="stylesheet" href="sos-ui.css">
 
 <style>
 
@@ -446,20 +447,30 @@
     </h2>
 
     <p class="emergency-warning">
-        If you are in immediate danger, use this button to
+        If you are in immediate danger, choose an SOS service to
         record your current GPS location with FareRide.
         After the SOS is recorded, you can call 911 directly
         from your phone.
     </p>
 
-    <button
-      class="sos-button"
-      type="button"
-      onclick="FareRideDriverLocation.sos()">
-
-        🚨 SOS — EMERGENCY
-
-    </button>
+    <div class="sos-services" role="group" aria-label="Choose SOS service">
+      <button class="sos-service-button" type="button" data-sos-service="police" aria-label="Send Police SOS to FareRide Admin">
+        <img class="sos-icon-animated" src="assets/sos-police.gif" width="64" height="48" alt="" aria-hidden="true">
+        <img class="sos-icon-still" src="assets/sos-police.png" width="64" height="48" alt="" aria-hidden="true">
+        <span>Police SOS</span>
+      </button>
+      <button class="sos-service-button" type="button" data-sos-service="ambulance" aria-label="Send Ambulance SOS to FareRide Admin">
+        <img class="sos-icon-animated" src="assets/sos-ambulance.gif" width="64" height="48" alt="" aria-hidden="true">
+        <img class="sos-icon-still" src="assets/sos-ambulance.png" width="64" height="48" alt="" aria-hidden="true">
+        <span>Ambulance SOS</span>
+      </button>
+      <button class="sos-service-button" type="button" data-sos-service="fire" aria-label="Send Fire Department SOS to FareRide Admin">
+        <img class="sos-icon-animated" src="assets/sos-fire.gif" width="64" height="48" alt="" aria-hidden="true">
+        <img class="sos-icon-still" src="assets/sos-fire.png" width="64" height="48" alt="" aria-hidden="true">
+        <span>Fire Department SOS</span>
+      </button>
+    </div>
+    <p class="sos-service-note">Sends your selected SOS and GPS location to FareRide Admin. Call 911 directly for emergency services.</p>
 
     <div id="sosResult"></div>
 

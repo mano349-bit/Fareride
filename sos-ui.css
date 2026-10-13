@@ -1,0 +1,47 @@
+.sos-services {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.sos-service-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 0 1 150px;
+  min-height: 112px;
+  padding: 12px 10px;
+  border: 2px solid var(--sos-color);
+  border-radius: 14px;
+  background: white;
+  color: var(--sos-color);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.sos-service-button[data-sos-service="police"] { --sos-color: #175cd3; }
+.sos-service-button[data-sos-service="ambulance"] { --sos-color: #087443; }
+.sos-service-button[data-sos-service="fire"] { --sos-color: #b42318; }
+.sos-service-button:hover { background: #f2f4f7; }
+.sos-service-button:focus-visible { outline: 3px solid #101828; outline-offset: 3px; }
+.sos-service-button:disabled { opacity: .55; cursor: wait; }
+.sos-service-button img { display: block; width: 64px; height: 48px; object-fit: contain; }
+.sos-icon-still { display: none !important; }
+.sos-service-note { font-size: 14px; line-height: 1.5; }
+
+@media (max-width: 420px) {
+  .sos-services { gap: 8px; }
+  .sos-service-button { flex: 1 1 80px; min-width: 80px; padding: 10px 6px; font-size: 13px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sos-icon-animated { display: none !important; }
+  .sos-icon-still { display: block !important; }
+}
