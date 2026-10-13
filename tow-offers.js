@@ -3,7 +3,7 @@ import {runTransaction} from 'https://www.gstatic.com/firebasejs/12.0.0/firebase
 import {driverDetails} from './ride-details.js';
 import {offerAmount,checkTowOpen,checkOfferVersion,offerResponse,acceptedTowFields} from './tow-offer-state.js';
 const driver=location.pathname.endsWith('/driver.html'),role=driver?'driver':'rider';
-const queue=document.getElementById('providerService');
+const queue=document.getElementById('jobServiceFilter') || document.getElementById('providerService');
 const panel=document.createElement('section');panel.className='tow-offers';document.querySelector('main').prepend(panel);
 const heading=document.createElement('h2');heading.textContent=driver?'Tow offers & rider issues':'Tow driver offers & live messages';
 const note=document.createElement('p');note.textContent=driver?'Send your towing price before accepting the job. Review the rider’s issue and messages here.':'Compare driver offers. Accept a price, send a counteroffer, or decline. Accepting assigns that tow driver. Messages appear live after sending.';
@@ -70,7 +70,7 @@ function chat(parent,ride,offer){
 }
 function render(){
  const focus=document.activeElement,key=focus?.dataset?.towDraft,start=focus?.selectionStart,end=focus?.selectionEnd;
- cards.replaceChildren();const all=jobs();panel.hidden=!uid||(!driver&&!all.length)||(driver&&queue&&queue.value!=='tow'&&!all.some(ride=>ride.driverId===uid));
+ cards.replaceChildren();const all=jobs();panel.hidden=!uid||(!driver&&!all.length)||(driver&&queue&&!['all','tow'].includes(queue.value)&&!all.some(ride=>ride.driverId===uid));
  if(!all.length){add(cards,'p','No active tow requests.');return;}
  for(const ride of all){
   const card=add(cards,'div',null,'tow-offer-card');add(card,'h3',ride.pickup+' → '+ride.dropoff);add(card,'p','Job: '+ride.id);
