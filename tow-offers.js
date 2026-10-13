@@ -1,3 +1,4 @@
+import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
 import {towJobWindow, filterTowJobs} from './tow-job-filter.js';
 import {auth,db,doc,getDoc,collection,query,where,onSnapshot,onAuthStateChanged,addDoc,serverTimestamp} from './firebase-session.js';
 import {runTransaction} from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
@@ -10,6 +11,7 @@ const heading=document.createElement('h2');heading.textContent=driver?'Tow offer
 const note=document.createElement('p');note.textContent=driver?'Send your towing price before accepting the job. Review the rider’s issue and messages here.':'Compare driver offers. Accept a price, send a counteroffer, or decline. Accepting assigns that tow driver. Messages appear live after sending.';
 const status=document.createElement('p');status.setAttribute('role','status');const cards=document.createElement('div');cards.className='tow-conversations';cards.tabIndex=0;cards.setAttribute('role','region');cards.setAttribute('aria-label','Towing offers and conversations; scroll up or down');panel.append(heading,note,status,cards);panel.hidden=true;
 let uid=null,epoch=0,application=null,pending=new Map(),assigned=new Map(),stops=[],busy=false;
+const chatPositions=new Map();
 const offers=new Map(),offerStops=new Map(),chats=new Map(),chatStops=new Map(),drafts=new Map();
 const money=value=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(value);
 const filterControls=document.createElement('div');filterControls.className='tow-job-filters';
@@ -94,7 +96,7 @@ async function respond(ride,cached,choice,value){
 }
 function chat(parent,ride,offer){
  const key=ride.id+':'+offer.driverId;
- const log=add(parent,'div',null,'tow-offer-chat');log.setAttribute('aria-label','Messages with '+(driver?'rider':offer.driverName));
+ const log=add(parent,'div',null,'tow-offer-chat');log.dataset.towChat=key;log.setAttribute('aria-label','Messages with '+(driver?'rider':offer.driverName));
  const messages=chats.get(key)||[];
  if(!messages.length)add(log,'p','No messages yet.');
  for(const m of messages){
@@ -102,6 +104,7 @@ function chat(parent,ride,offer){
   const name=String((isDriver?offer.driverName:ride.riderName)||'').trim().split(/\s+/)[0];
   add(log,'p',label+(name&&name.toLowerCase()!==label.toLowerCase()?' '+name:'')+': '+m.text,isDriver?'tow-message-driver':'tow-message-rider');
  }
+ const position=chatPositions.get(key);log.scrollTop=!position||position.atBottom?log.scrollHeight:position.top;
  if(offer.status==='declined')return;
  const input=field(parent,key+':message',driver?'Message the rider':'Describe the issue or message the driver','',true);
  button(parent,'Send message',async()=>{
@@ -112,6 +115,7 @@ function chat(parent,ride,offer){
 }
 function render(){
  const scrollTop=cards.scrollTop;
+ chatPositions.clear();for(const log of cards.querySelectorAll('[data-tow-chat]'))chatPositions.set(log.dataset.towChat,{top:log.scrollTop,atBottom:log.scrollHeight-log.clientHeight-log.scrollTop<30});
  const focus=document.activeElement,key=focus?.dataset?.towDraft,start=focus?.selectionStart,end=focus?.selectionEnd;
  cards.replaceChildren();refreshTowPicker();const all=selectedTowJobs(),active=jobs();cards.dataset.empty=String(!all.length);panel.hidden=!uid||(!driver&&!active.length)||(driver&&queue&&!['all','tow'].includes(queue.value)&&!active.some(ride=>ride.driverId===uid));
  if(!all.length){add(cards,'p',driver?'No tow requests match these dates. Choose a wider range up to 30 days.':'No active tow requests.');return;}
@@ -151,7 +155,7 @@ function reconcile(){
  for(const [id,stop] of offerStops)if(!ids.has(id)){stop();offerStops.delete(id);offers.delete(id);}
  for(const ride of active)if(!offerStops.has(ride.id)){
   const target=driver?ref(ride.id,uid):collection(db,'rides',ride.id,'towOffers');
-  offerStops.set(ride.id,onSnapshot(target,snapshot=>{
+  offerStops.set(ride.id,liveSnapshot(target,snapshot=>{
    if(epoch!==expected)return;
    offers.set(ride.id,driver?(snapshot.exists()?[snapshot.data()]:[]):snapshot.docs.map(d=>d.data()));
    syncChats();render();
@@ -163,7 +167,7 @@ function syncChats(){
  const expected=epoch,needed=new Map();
  for(const ride of selectedTowJobs())for(const offer of offers.get(ride.id)||[]){if(ride.status!=='requested'&&offer.driverId!==ride.driverId)continue;needed.set(ride.id+':'+offer.driverId,[ride.id,offer.driverId]);}
  for(const [key,stop] of chatStops)if(!needed.has(key)){stop();chatStops.delete(key);chats.delete(key);}
- for(const [key,[rideId,driverId]] of needed)if(!chatStops.has(key))chatStops.set(key,onSnapshot(collection(db,'rides',rideId,'towOffers',driverId,'messages'),snapshot=>{
+ for(const [key,[rideId,driverId]] of needed)if(!chatStops.has(key))chatStops.set(key,liveSnapshot(collection(db,'rides',rideId,'towOffers',driverId,'messages'),snapshot=>{
   if(epoch!==expected)return;chats.set(key,snapshot.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(a.createdAt?.toMillis?.()||0)-(b.createdAt?.toMillis?.()||0)||a.id.localeCompare(b.id)));render();
  },fail));
 }
@@ -173,7 +177,7 @@ onAuthStateChanged(auth,async user=>{
   const profile=await getDoc(doc(db,'users',user.uid));if(current!==epoch||profile.data()?.role!==role||!['approved','active'].includes(profile.data()?.accountStatus))return;
   if(driver){const app=await getDoc(doc(db,'driverApplications','driver_'+user.uid));if(current!==epoch||app.data()?.status!=='approved')return;application=app.data();}
   uid=user.uid;
-  const watch=(q,target)=>stops.push(onSnapshot(q,snapshot=>{if(current!==epoch)return;target.clear();for(const d of snapshot.docs)target.set(d.id,{...d.data(),id:d.id});reconcile();},fail));
+  const watch=(q,target)=>stops.push(liveSnapshot(q,snapshot=>{if(current!==epoch)return;target.clear();for(const d of snapshot.docs)target.set(d.id,{...d.data(),id:d.id});reconcile();},fail));
   if(driver){watch(query(collection(db,'rides'),where('status','==','requested')),pending);watch(query(collection(db,'rides'),where('driverId','==',uid)),assigned);}
   else watch(query(collection(db,'rides'),where('riderId','==',uid)),pending);
  }catch(error){fail(error);}

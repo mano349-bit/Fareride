@@ -1,3 +1,4 @@
+import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
 import {visibleDriverJobs, jobMatchesFilter} from './driver-jobs.js';
 import {notifyNewRides, resetRideAlerts} from './driver-alerts.js?v=20261013-all-jobs';
 import { escapeHTML } from './ride-ui.js';
@@ -578,7 +579,7 @@ async function completeRide(id) {
 
 function startRideListener() {
  const expected=DRIVER_ID,parts=[new Map(),new Map()],ready=[false,false];let stopped=false;
- const listen=(index,condition)=>onSnapshot(query(collection(db,'rides'),condition),{includeMetadataChanges:true},snapshot=>{
+ const listen=(index,condition)=>liveSnapshot(query(collection(db,'rides'),condition),{includeMetadataChanges:true},snapshot=>{
   if(stopped||auth.currentUser?.uid!==expected||DRIVER_ID!==expected)return;
   parts[index]=new Map(snapshot.docs.map(d=>[d.id,{...d.data(),id:d.id}]));
   if(snapshot.metadata?.fromCache!==true)ready[index]=true;
