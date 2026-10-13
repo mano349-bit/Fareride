@@ -1,3 +1,4 @@
+import {towJobWindow, filterTowJobs} from './tow-job-filter.js';
 import {auth,db,doc,getDoc,collection,query,where,onSnapshot,onAuthStateChanged,addDoc,serverTimestamp} from './firebase-session.js';
 import {runTransaction} from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 import {driverDetails} from './ride-details.js';
@@ -11,6 +12,43 @@ const status=document.createElement('p');status.setAttribute('role','status');co
 let uid=null,epoch=0,application=null,pending=new Map(),assigned=new Map(),stops=[],busy=false;
 const offers=new Map(),offerStops=new Map(),chats=new Map(),chatStops=new Map(),drafts=new Map();
 const money=value=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(value);
+const filterControls=document.createElement('div');filterControls.className='tow-job-filters';
+const filterDays=document.createElement('input'),filterStart=document.createElement('input'),filterEnd=document.createElement('input'),filterLimit=document.createElement('select'),filterJob=document.createElement('select');
+const filterSummary=document.createElement('p');filterSummary.setAttribute('role','status');let pickerSignature='';
+if(driver){
+ const window=towJobWindow();
+ for(const [label,input,type,value] of [['Past days (1–30)',filterDays,'number','1'],['Start date',filterStart,'date',window.start],['End date',filterEnd,'date',window.end],['Newest jobs',filterLimit,'select',null],['Choose a job',filterJob,'select',null]]){
+  const wrap=document.createElement('label');wrap.textContent=label;input.setAttribute('aria-label',label);
+  if(type!=='select'){input.type=type;input.value=value;}
+  if(type==='date'){input.required=true;input.min=window.earliest;input.max=window.end;}
+  wrap.append(input);filterControls.append(wrap);
+ }
+ filterDays.min='1';filterDays.max='30';filterDays.step='1';
+ for(const count of [1,2,3]){const option=document.createElement('option');option.value=String(count);option.textContent=String(count)+(count===1?' job':' jobs');filterLimit.append(option);}
+ const today=document.createElement('button');today.type='button';today.textContent='Today';filterControls.append(today);
+ panel.insertBefore(filterControls,status);panel.insertBefore(filterSummary,status);
+ const change=()=>{cards.scrollTop=0;filterJob.value='';reconcile();};
+ filterDays.onchange=()=>{const range=towJobWindow(filterDays.valueAsNumber);if(!range){filterDays.setCustomValidity('Enter a whole number from 1 to 30.');filterDays.reportValidity();return;}filterDays.setCustomValidity('');filterStart.value=range.start;filterEnd.value=range.end;change();};
+ filterStart.onchange=filterEnd.onchange=()=>{filterDays.value='';filterDays.setCustomValidity('');change();};
+ filterLimit.onchange=change;filterJob.onchange=()=>{cards.scrollTop=0;reconcile();};
+ today.onclick=()=>{const range=towJobWindow();filterDays.value='1';filterDays.setCustomValidity('');filterStart.value=filterEnd.value=range.end;change();};
+}
+function selectedTowJobs(){
+ return driver?filterTowJobs(jobs(),{start:filterStart.value,end:filterEnd.value,limit:Number(filterLimit.value),jobId:filterJob.value}).jobs:jobs();
+}
+function refreshTowPicker(){
+ if(!driver)return;
+ const selection=filterJob.value,result=filterTowJobs(jobs(),{start:filterStart.value,end:filterEnd.value,limit:Number(filterLimit.value)});
+ const signature=JSON.stringify(result.available.map(job=>[job.id,job.requestedAt,job.pickup,job.dropoff]));
+ if(signature!==pickerSignature||!filterJob.options.length){
+  pickerSignature=signature;filterJob.replaceChildren();
+  const latest=document.createElement('option');latest.value='';latest.textContent='Newest selected jobs';filterJob.append(latest);
+  for(const job of result.available){const option=document.createElement('option');option.value=job.id;const date=job.requestedAt?.toDate?job.requestedAt.toDate():new Date(job.requestedAt);option.textContent=date.toLocaleDateString()+' | '+(job.pickup||'Pickup')+' → '+(job.dropoff||'Destination')+' | '+job.id.slice(-8);filterJob.append(option);}
+ }
+ filterJob.value=result.available.some(job=>job.id===selection)?selection:'';
+ filterSummary.textContent=result.error || 'Showing '+selectedTowJobs().length+' of '+result.available.length+' active tow requests in these dates. Newest first, by rider request date.';
+}
+
 function ref(rideId,driverId){return doc(db,'rides',rideId,'towOffers',driverId);}
 function jobs(){return [...new Map([...pending,...assigned]).values()].filter(ride=>ride.serviceType==='tow'&&['requested','accepted','started','arrived'].includes(ride.status));}
 function fail(error){status.textContent=error.code==='permission-denied'?'Towing offers or messages were blocked. The updated Firebase rules must be published.':error.message||'Unable to save. Please retry.';}
@@ -71,8 +109,8 @@ function chat(parent,ride,offer){
 function render(){
  const scrollTop=cards.scrollTop;
  const focus=document.activeElement,key=focus?.dataset?.towDraft,start=focus?.selectionStart,end=focus?.selectionEnd;
- cards.replaceChildren();const all=jobs();cards.dataset.empty=String(!all.length);panel.hidden=!uid||(!driver&&!all.length)||(driver&&queue&&!['all','tow'].includes(queue.value)&&!all.some(ride=>ride.driverId===uid));
- if(!all.length){add(cards,'p','No active tow requests.');return;}
+ cards.replaceChildren();refreshTowPicker();const all=selectedTowJobs(),active=jobs();cards.dataset.empty=String(!all.length);panel.hidden=!uid||(!driver&&!active.length)||(driver&&queue&&!['all','tow'].includes(queue.value)&&!active.some(ride=>ride.driverId===uid));
+ if(!all.length){add(cards,'p',driver?'No tow requests match these dates. Choose a wider range up to 30 days.':'No active tow requests.');return;}
  for(const ride of all){
   const card=add(cards,'div',null,'tow-offer-card');add(card,'h3',ride.pickup+' → '+ride.dropoff);add(card,'p','Job: '+ride.id);
   add(card,'p','Vehicle: '+(ride.serviceDetails?.vehicle||'Not specified'));add(card,'p','Rider’s issue: '+(ride.serviceDetails?.issue||'Not specified'),'tow-offer-issue');
@@ -104,7 +142,8 @@ function render(){
  if(key){const input=[...cards.querySelectorAll('[data-tow-draft]')].find(el=>el.dataset.towDraft===key);if(input&&!input.disabled){input.focus({preventScroll:true});if(input.tagName==='TEXTAREA'&&start!=null)input.setSelectionRange(start,end);}}
 }
 function reconcile(){
- const active=jobs(),ids=new Set(active.map(r=>r.id)),expected=epoch;
+ refreshTowPicker();
+ const active=selectedTowJobs(),ids=new Set(active.map(r=>r.id)),expected=epoch;
  for(const [id,stop] of offerStops)if(!ids.has(id)){stop();offerStops.delete(id);offers.delete(id);}
  for(const ride of active)if(!offerStops.has(ride.id)){
   const target=driver?ref(ride.id,uid):collection(db,'rides',ride.id,'towOffers');
@@ -118,7 +157,7 @@ function reconcile(){
 }
 function syncChats(){
  const expected=epoch,needed=new Map();
- for(const ride of jobs())for(const offer of offers.get(ride.id)||[]){if(ride.status!=='requested'&&offer.driverId!==ride.driverId)continue;needed.set(ride.id+':'+offer.driverId,[ride.id,offer.driverId]);}
+ for(const ride of selectedTowJobs())for(const offer of offers.get(ride.id)||[]){if(ride.status!=='requested'&&offer.driverId!==ride.driverId)continue;needed.set(ride.id+':'+offer.driverId,[ride.id,offer.driverId]);}
  for(const [key,stop] of chatStops)if(!needed.has(key)){stop();chatStops.delete(key);chats.delete(key);}
  for(const [key,[rideId,driverId]] of needed)if(!chatStops.has(key))chatStops.set(key,onSnapshot(collection(db,'rides',rideId,'towOffers',driverId,'messages'),snapshot=>{
   if(epoch!==expected)return;chats.set(key,snapshot.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(a.createdAt?.toMillis?.()||0)-(b.createdAt?.toMillis?.()||0)||a.id.localeCompare(b.id)));render();
