@@ -1,3 +1,4 @@
+import {TOW_PRICING, calculateTowFare} from './tow-pricing.js';
 import { SERVICES, validateServiceDetails, priceLabel } from './services.js';
 /* =========================================================
    FARERIDE MOBILE NETWORK HELPER
@@ -87,7 +88,7 @@ $('customTipPercent')?.addEventListener('input',tipPreview);
 const selectedService = () => document.querySelector('[name="serviceType"]:checked').value;
 function details() {
   return validateServiceDetails(selectedService(), {
-    vehicle: $('towVehicle').value, issue: $('towIssue').value,
+    vehicle: $('towVehicle').value, issue: $('towIssue').value, vehicleClass: $('towVehicleClass')?.value || 'light',
     packageDescription: $('packageDescription').value, recipientName: $('recipientName').value
   });
 }
@@ -96,6 +97,8 @@ function invalidateEstimate() {
   estimate = null;
   $('summary').hidden = true;
   $('requestBtn').disabled = true;
+  if ($('towEstimateBreakdown')) $('towEstimateBreakdown').hidden = true;
+  tipPreview();
 }
 function updateService() {
   const type = selectedService();
@@ -104,16 +107,17 @@ function updateService() {
   $('rideType').closest('label').hidden = type !== 'ride';
   for (const id of ['towVehicle', 'towIssue']) $(id).required = type === 'tow';
   for (const id of ['packageDescription', 'recipientName']) $(id).required = type === 'messenger';
-  $('estimateBtn').textContent = type !== 'tow' ? 'Calculate mileage & fare' : 'Review quote request';
-  $('requestBtn').textContent = SERVICES[type].action;
+  const specialty = type === 'tow' && $('towVehicleClass')?.value === 'specialty';
+  $('estimateBtn').textContent = specialty ? 'Review quote request' : type === 'tow' ? 'Calculate towing mileage & fare' : 'Calculate mileage & fare';
+  $('requestBtn').textContent = specialty ? 'Request towing quote' : SERVICES[type].action;
   $('serviceNote').textContent = type !== 'tow' ? 'Choose your service and calculate an estimate. Bike delivery uses Economy sedan rates.'
-    : 'Request a quote. Price and provider availability must be confirmed before dispatch.';
+    : specialty ? 'Heavy vehicles and recovery require a provider quote before dispatch.' : 'Standard light-duty towing uses $112 hookup + $6 per loaded mile. Final price and availability must be confirmed with the tow driver.';
   invalidateEstimate();
 }
 $('rideForm').addEventListener('input', event => { if (['tipChoice', 'customTipPercent'].includes(event?.target?.id)) return; invalidateEstimate(); });
 document.querySelectorAll('[name="serviceType"]').forEach(input => input.addEventListener('change', updateService));
 updateService();
-
+$('towVehicleClass')?.addEventListener('change', updateService);
 
 function getSettings() {
   try {
@@ -164,6 +168,8 @@ function showSummary(ride) {
 
   $('summary').hidden = false;
 
+  const towBreakdown = $('towEstimateBreakdown');
+  if (towBreakdown) towBreakdown.hidden = true;
   if (ride.pricingStatus === 'quote_required') {
     $('mileage').textContent = 'Confirmed by provider';
     $('duration').textContent = 'Confirmed by provider';
@@ -179,10 +185,11 @@ function showSummary(ride) {
   $('fare').textContent =
     priceLabel(ride, money);
 
-  $('duration').textContent =
-    Number(
-      ride.durationMinutes || 0
-    ) + ' min';
+  $('duration').textContent = Number(ride.durationMinutes || 0) + (ride.serviceType === 'tow' ? ' min driving (loading time extra)' : ' min');
+  if (towBreakdown && ride.serviceType === 'tow' && ride.pricingStatus === 'estimated') {
+    towBreakdown.hidden = false;
+    towBreakdown.textContent = 'Estimated towing: ' + money(TOW_PRICING.hookup) + ' hookup + ' + Number(ride.miles).toFixed(2) + ' miles × ' + money(TOW_PRICING.perMile) + '/mile = ' + money(ride.fare) + '. Tips are separate. Taxes, tolls, recovery, storage, after-hours and specialty equipment are not included; confirm the final price with the tow driver.';
+  }
 }
 
 
@@ -386,7 +393,7 @@ async function calculateEstimate() {
   invalidateEstimate();
   const version = estimateVersion;
   const serviceType = selectedService();
-  if (serviceType === 'tow') {
+  if (serviceType === 'tow' && $('towVehicleClass')?.value === 'specialty') {
     try {
       const serviceDetails = details();
       const pickup = $('pickup').value.trim(), dropoff = $('dropoff').value.trim();
@@ -404,6 +411,8 @@ async function calculateEstimate() {
 
   $('msg').textContent = '';
 
+  let serviceDetails;
+  try { serviceDetails = details(); } catch (error) { $('msg').textContent = error.message; return; }
   const pickup =
     $('pickup').value.trim();
 
@@ -452,13 +461,13 @@ async function calculateEstimate() {
         )
       );
 
-    const fare =
-      calculateFare(miles, serviceType === 'messenger' ? 'economy' : $('rideType').value
-      );
+    const fare = serviceType === 'tow'
+      ? calculateTowFare(Number(miles.toFixed(2)))
+      : calculateFare(miles, serviceType === 'messenger' ? 'economy' : $('rideType').value);
 
     if (version !== estimateVersion) return;
     estimate = {
-      serviceType, serviceDetails: details(), pricingStatus: 'estimated',
+      serviceType, serviceDetails, pricingStatus: 'estimated',
       pickup,
       dropoff,
 
@@ -485,7 +494,7 @@ async function calculateEstimate() {
           fare.toFixed(2)
         ),
 
-      rideType: serviceType === 'messenger' ? 'economy' : $('rideType').value
+      rideType: serviceType === 'tow' ? 'tow' : serviceType === 'messenger' ? 'economy' : $('rideType').value
     };
 
     window.dispatchEvent(new CustomEvent("fareride-pickup-location",{detail:estimate.pickupLocation}));
@@ -495,7 +504,7 @@ async function calculateEstimate() {
     $('msg').textContent =
       (/^\d{5}(?:-\d{4})?$/.test(pickup) || /^\d{5}(?:-\d{4})?$/.test(dropoff))
         ? 'ZIP-area estimate ready. Use street addresses for an exact pickup and destination.'
-        : 'Estimate ready.';
+        : serviceType === 'tow' ? 'Tow estimate ready. Confirm the final price with the tow driver before towing.' : 'Estimate ready.';
 
     $('requestBtn').disabled =
       false;
