@@ -9,6 +9,6 @@ test('completed and cancelled trips allow a new request', () => {
   for (const status of ['completed', 'cancelled']) assert.equal(riderTripState({ status }).finished, true);
   assert.equal(riderTripState({ status: 'accepted' }).finished, false);
 });
-test('quote requests explain dispatch rather than implying an accepted ride', () => {
-  assert.match(riderTripState({ status: 'requested', pricingStatus: 'quote_required' }).message, /dispatch/);
+test('quote requests explain tow offers rather than implying an accepted ride', () => {
+  assert.match(riderTripState({ status: 'requested', pricingStatus: 'quote_required' }).message, /tow driver offers/);
 });

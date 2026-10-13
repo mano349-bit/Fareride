@@ -23,3 +23,7 @@ test('buttons follow Accept, Start, Arrive, Complete order', () => {
   const labels = [...html.matchAll(/>([^<]+)<\/button>/g)].map(match => match[1]);
   assert.deepEqual(labels, ['+ Accept Job', 'Start Ride', 'Arrive at Pickup', 'Complete Ride']);
 });
+
+test('requested towing jobs require rider offer acceptance rather than direct driver acceptance',()=>{
+ assert.match(actionButtons({id:'tow',serviceType:'tow',status:'requested',pricingStatus:'estimated'},'driver'),/acceptRide[^>]*disabled/);
+});

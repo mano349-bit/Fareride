@@ -10,7 +10,7 @@ export function actionButtons(ride, uid) {
   return '<div class="ride-actions">' + steps.map(step => {
     const enabled = Boolean(uid) && ride.status === step.status
       && (step.status === 'requested'
-        ? !ride.driverId && ride.pricingStatus !== 'quote_required'
+        ? !ride.driverId && ride.serviceType !== 'tow' && ride.pricingStatus !== 'quote_required'
         : owns);
     return `<button type="button" class="rideAction ${step.className}" data-id="${escape(ride.id)}" ${enabled ? '' : 'disabled'}>${step.label}</button>`;
   }).join('') + '</div>';

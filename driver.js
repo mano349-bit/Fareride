@@ -148,7 +148,7 @@ function renderRequests() {
           ride.status ===
           'requested'
         ) {
-          return ride.pricingStatus !== 'quote_required' && matchesService(ride, $('providerService').value);
+          return (ride.serviceType === 'tow' || ride.pricingStatus !== 'quote_required') && matchesService(ride, $('providerService').value);
         }
 
 
@@ -370,7 +370,7 @@ function renderRequests() {
 
 async function acceptRide(id) {
   const job = rides.find(ride => ride.id === id);
-  if (!job || job.status !== 'requested' || job.pricingStatus === 'quote_required' || !matchesService(job, $('providerService').value)) {
+  if (!job || job.serviceType === 'tow' || job.status !== 'requested' || job.pricingStatus === 'quote_required' || !matchesService(job, $('providerService').value)) {
     setDriverMessage('This job is not available in your service queue.');
     return;
   }

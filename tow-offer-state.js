@@ -1,0 +1,30 @@
+export const MAX_TOW_OFFER = 100000;
+export function offerAmount(value) {
+ if(value==='' || value==null)throw new Error('Enter a price.');
+ const amount=Number(value);
+ if(!Number.isFinite(amount)||amount<0.01||amount>MAX_TOW_OFFER)throw new Error('Enter a price greater than $0 and no more than $100,000.');
+ return Math.round(amount*100)/100;
+}
+export function checkTowOpen(ride) {
+ if(ride.serviceType!=='tow'||ride.status!=='requested'||ride.driverId)throw new Error('This tow request is no longer available.');
+}
+export function checkOfferVersion(current,expected) {
+ if((current?.revision||0)!==(expected?.revision||0))throw new Error('The offer changed. Review the latest price and try again.');
+}
+export function offerResponse(offer,action,value) {
+ if(!offer || !['pending','countered'].includes(offer.status))throw new Error('This offer is no longer open.');
+ if(action==='counter')return {status:'countered',counterAmount:offerAmount(value),revision:offer.revision+1};
+ if(action==='decline')return {status:'declined',revision:offer.revision+1};
+ if(action==='accept'&&offer.status==='pending')return {status:'accepted',revision:offer.revision+1};
+ throw new Error('Choose an available offer action.');
+}
+export function acceptedTowFields(ride,offer,acceptedAt) {
+ checkTowOpen(ride);
+ if(offer.status!=='pending')throw new Error('Only a current driver offer can be accepted.');
+ const fare=offerAmount(offer.amount),percent=Number(ride.tipPercent)||0;
+ if(percent<0||percent>100)throw new Error('Invalid saved tip percentage.');
+ const tipAmount=Math.round(fare*percent)/100;
+ return {status:'accepted',pricingStatus:'agreed',fare,tipAmount,totalFare:Math.round((fare+tipAmount)*100)/100,
+ driverId:offer.driverId,driverName:offer.driverName,driverPhone:offer.driverPhone,
+ vehicleYear:offer.vehicleYear,vehicleMake:offer.vehicleMake,vehicleModel:offer.vehicleModel,acceptedAt};
+}

@@ -9,7 +9,7 @@ export function riderTripState(ride) {
   };
   return {
     message: ride.pricingStatus === 'quote_required' && ride.status === 'requested'
-      ? 'Waiting for dispatch to confirm your quote.' : messages[ride.status] || 'Waiting for ride information.',
+      ? 'Waiting for tow driver offers. Review prices and messages in the towing offers section.' : messages[ride.status] || 'Waiting for ride information.',
     canCancel: ['requested', 'accepted', 'arrived'].includes(ride.status),
     finished: ['completed', 'cancelled'].includes(ride.status)
   };

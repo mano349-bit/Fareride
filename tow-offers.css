@@ -1,0 +1,14 @@
+.tow-offers { margin:24px 0; padding:20px; background:white; border:1px solid #dbe3ee; border-radius:12px; }
+.tow-offer-card { padding:16px; margin:16px 0; border:1px solid #cbd5e1; border-radius:10px; }
+.tow-offer-card h3 { margin:0 0 12px; }
+.tow-offer-actions { display:flex; flex-wrap:wrap; align-items:end; gap:10px; }
+.tow-offer-actions label { max-width:240px; margin:8px 0; }
+.tow-offer-card input, .tow-offer-card textarea { width:100%; max-width:100%; box-sizing:border-box; }
+.tow-offer-card textarea { padding:10px; border:1px solid #cbd5e1; border-radius:8px; font:inherit; }
+.tow-offer-card button { padding:10px 14px; }
+.tow-offer-chat { max-height:220px; overflow-y:auto; border:1px solid #dbe3ee; padding:12px; background:#f8fafc; border-radius:8px; }
+.tow-offer-chat p { margin:8px 0; white-space:pre-wrap; overflow-wrap:anywhere; }
+.tow-offer-issue { white-space:pre-wrap; overflow-wrap:anywhere; }
+.tow-offer-status { font-weight:700; }
+
+.tow-offer-card p { overflow-wrap:anywhere; }

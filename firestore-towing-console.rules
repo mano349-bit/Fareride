@@ -1,0 +1,171 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function owner(uid) { return signedIn() && request.auth.uid == uid; }
+    function admin() { return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)) && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active == true; }
+    match /admins/{uid} { allow get: if owner(uid); allow list, write: if false; }
+    match /users/{uid} {
+      allow get: if owner(uid) || admin();
+      allow list: if admin();
+      allow create: if owner(uid) && request.resource.data.keys().hasOnly(['uid', 'email', 'role', 'fullName', 'phone', 'accountStatus', 'updatedAt']) && request.resource.data.uid == uid && request.resource.data.email == request.auth.token.email && request.resource.data.role in ['rider', 'driver'] && request.resource.data.accountStatus == 'pending';
+      allow update: if (owner(uid) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fullName', 'phone', 'email', 'updatedAt']) && request.resource.data.email == request.auth.token.email) || (admin() && request.resource.data.uid == resource.data.uid && request.resource.data.role == resource.data.role);
+      allow delete: if false;
+    }
+    match /{collection}/{applicationId} {
+      allow get: if collection in ['riderApplications', 'driverApplications'] && (admin() || (signedIn() && applicationId == (collection == 'riderApplications' ? 'rider_' : 'driver_') + request.auth.uid));
+      allow list: if collection in ['riderApplications', 'driverApplications'] && admin();
+      allow create: if collection in ['riderApplications', 'driverApplications'] && signedIn() && request.resource.data.keys().hasOnly(['applicationId', 'role', 'uid', 'fullName', 'phone', 'email', 'dateOfBirth', 'address', 'city', 'state', 'zipCode', 'documents', 'status', 'adminNotes', 'submittedAt', 'approvedAt', 'suspendedAt', 'updatedAt', 'ssnLast4', 'vehicleYear', 'vehicleMake', 'vehicleModel', 'vehicleColor', 'plateNumber', 'insuranceCompany', 'insurancePolicyNumber', 'insuranceExpiration', 'applicantNotes', 'rating']) && applicationId == (collection == 'riderApplications' ? 'rider_' : 'driver_') + request.auth.uid && request.resource.data.uid == request.auth.uid && request.resource.data.applicationId == applicationId && request.resource.data.email == request.auth.token.email && request.resource.data.role == (collection == 'riderApplications' ? 'rider' : 'driver') && request.resource.data.status == 'new' && request.resource.data.adminNotes == '' && request.resource.data.approvedAt == null && request.resource.data.suspendedAt == null;
+      allow update: if collection in ['riderApplications', 'driverApplications'] && admin() && request.resource.data.uid == resource.data.uid && request.resource.data.role == resource.data.role && request.resource.data.applicationId == resource.data.applicationId;
+      allow delete: if false;
+    }
+    match /rides/{rideId} {
+ function approved(role) { return signedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accountStatus in ['approved', 'active']; }
+ function active() { return resource.data.status in ['accepted', 'arrived', 'started']; }
+ function point(location) { return location is map && location.keys().hasOnly(['lat','lng','accuracy','heading','speed']) && location.lat is number && location.lng is number && location.lat >= -90 && location.lat <= 90 && location.lng >= -180 && location.lng <= 180; }
+ function driverMatchesApplication() {
+ let application = get(/databases/$(database)/documents/driverApplications/$('driver_' + request.auth.uid)).data;
+ let next = request.resource.data;
+ return application.status == 'approved' && application.uid == request.auth.uid && next.driverName == application.fullName && next.driverPhone == application.phone && next.vehicleYear == application.vehicleYear && next.vehicleMake == application.vehicleMake && next.vehicleModel == application.vehicleModel;
+ }
+ allow read: if admin() || (approved('rider') && resource.data.riderId == request.auth.uid) || (approved('driver') && (resource.data.status == 'requested' || resource.data.driverId == request.auth.uid));
+ allow create: if approved('rider') && request.resource.data.keys().hasOnly(['id','serviceType','serviceDetails','pricingStatus','riderName','riderPhone','riderId','pickup','dropoff','pickupLocation','dropoffLocation','miles','durationMinutes','fare','rideType','tipPercent','tipAmount','totalFare','status','requestedAt','estimatedArrivalMinutes','estimatedArrivalAt','estimatedFinishAt','driverId','driverName','driverLocation','acceptedAt','arrivedAt','startedAt','completedAt','cancelledAt']) && request.resource.data.id == rideId && request.resource.data.riderId == request.auth.uid && request.resource.data.status == 'requested' && request.resource.data.driverId == null && request.resource.data.driverName == null && request.resource.data.driverLocation == null;
+ allow update: if admin() || (approved('driver') && resource.data.status == 'requested' && resource.data.driverId == null && (!('serviceType' in resource.data) || resource.data.serviceType != 'tow') && resource.data.pricingStatus != 'quote_required' && request.resource.data.status == 'accepted' && request.resource.data.driverId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','driverId','driverName','driverPhone','vehicleYear','vehicleMake','vehicleModel','acceptedAt']) && driverMatchesApplication())
+ || (approved('driver') && resource.data.driverId == request.auth.uid && active() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['driverLocation','driverLocationUpdatedAt']) && point(request.resource.data.driverLocation) && request.resource.data.driverLocationUpdatedAt == request.time)
+ || (approved('rider') && resource.data.riderId == request.auth.uid && active() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['riderLocation','riderLocationUpdatedAt']) && point(request.resource.data.riderLocation) && request.resource.data.riderLocationUpdatedAt == request.time)
+ || (approved('driver') && resource.data.driverId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','arrivedAt','startedAt','completedAt','estimatedFinishAt']) && ((resource.data.status == 'accepted' && request.resource.data.status == 'started') || (resource.data.status == 'started' && request.resource.data.status == 'arrived') || (resource.data.status == 'arrived' && request.resource.data.status == 'completed')));
+ allow update: if approved('rider') && resource.data.riderId == request.auth.uid && active() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['riderName','riderPhone']) && request.resource.data.riderName == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.fullName && request.resource.data.riderPhone == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.phone;
+ allow update: if approved('rider') && resource.data.riderId == request.auth.uid && resource.data.status in ['requested','accepted','arrived'] && request.resource.data.status == 'cancelled' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','cancelledAt']);
+ allow delete: if false;
+}
+match /rides/{rideId} {
+ function reviewer(role) { return signedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accountStatus in ['approved','active']; }
+ function validRating(value) { return value is int && value >= 1 && value <= 5; }
+ allow update: if resource.data.status == 'completed' && (
+ (reviewer('driver') && resource.data.driverId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['riderRating']) && validRating(request.resource.data.riderRating))
+ || (reviewer('rider') && resource.data.riderId == request.auth.uid && validRating(request.resource.data.driverRating)
+ && (!('driverComment' in request.resource.data) || (request.resource.data.driverComment is string && request.resource.data.driverComment.size() <= 1000))
+ && (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['driverRating','driverComment'])
+ || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['driverRating','driverComment','tipPercent','tipAmount','totalFare'])
+ && request.resource.data.tipPercent is number && request.resource.data.tipPercent >= 0 && request.resource.data.tipPercent <= 100
+ && request.resource.data.tipAmount is number && request.resource.data.tipAmount >= 0
+ && request.resource.data.tipAmount >= resource.data.fare * request.resource.data.tipPercent / 100 - 0.011
+ && request.resource.data.tipAmount <= resource.data.fare * request.resource.data.tipPercent / 100 + 0.011
+ && request.resource.data.totalFare >= resource.data.fare + request.resource.data.tipAmount - 0.011
+ && request.resource.data.totalFare <= resource.data.fare + request.resource.data.tipAmount + 0.011)))
+ );
+}
+    function towApproved(role) {
+      return signedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accountStatus in ['approved','active'];
+    }
+    function towRide(id) { return get(/databases/$(database)/documents/rides/$(id)).data; }
+    function towOpen(id) {
+      return towRide(id).serviceType == 'tow' && towRide(id).status == 'requested' && towRide(id).driverId == null;
+    }
+    function towPrice(value) { return value is number && value > 0 && value <= 100000
+        && value * 100 - int(value * 100 + 0.5) >= -0.0001
+        && value * 100 - int(value * 100 + 0.5) <= 0.0001; }
+    match /rides/{rideId}/towOffers/{driverUid} {
+      function rider() { return towApproved('rider') && towRide(rideId).riderId == request.auth.uid; }
+      function driver() { return towApproved('driver') && driverUid == request.auth.uid; }
+      function detailsMatch() {
+        let app = get(/databases/$(database)/documents/driverApplications/$('driver_' + driverUid)).data;
+        let next = request.resource.data;
+        return app.status == 'approved' && app.uid == driverUid
+          && next.driverName == app.fullName && next.driverPhone == app.phone
+          && next.vehicleYear == app.vehicleYear && next.vehicleMake == app.vehicleMake && next.vehicleModel == app.vehicleModel;
+      }
+      allow read: if admin() || rider() || (driver() && (towOpen(rideId) || towRide(rideId).driverId == driverUid));
+      allow create: if driver() && towOpen(rideId) && detailsMatch()
+        && request.resource.data.keys().hasOnly(['driverId','driverName','driverPhone','vehicleYear','vehicleMake','vehicleModel','amount','counterAmount','status','revision','updatedAt'])
+        && request.resource.data.driverId == driverUid && towPrice(request.resource.data.amount)
+        && request.resource.data.counterAmount == null && request.resource.data.status == 'pending'
+        && request.resource.data.revision == 1 && request.resource.data.updatedAt == request.time;
+      allow update: if towOpen(rideId)
+        && request.resource.data.revision == resource.data.revision + 1
+        && request.resource.data.updatedAt == request.time
+        && (
+          (driver() && resource.data.status in ['pending','countered','declined']
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['amount','counterAmount','status','revision','updatedAt'])
+            && request.resource.data.status == 'pending' && request.resource.data.counterAmount == null && towPrice(request.resource.data.amount))
+          || (rider() && resource.data.status in ['pending','countered']
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['counterAmount','status','revision','updatedAt'])
+            && (
+              (request.resource.data.status == 'countered' && towPrice(request.resource.data.counterAmount))
+              || (request.resource.data.status == 'declined' && request.resource.data.counterAmount == resource.data.counterAmount)
+              || (resource.data.status == 'pending' && request.resource.data.status == 'accepted'
+                && request.resource.data.counterAmount == resource.data.counterAmount
+                && getAfter(/databases/$(database)/documents/rides/$(rideId)).data.status == 'accepted'
+                && getAfter(/databases/$(database)/documents/rides/$(rideId)).data.driverId == driverUid
+                && getAfter(/databases/$(database)/documents/rides/$(rideId)).data.pricingStatus == 'agreed'
+                && getAfter(/databases/$(database)/documents/rides/$(rideId)).data.fare == resource.data.amount)
+            ))
+        );
+      allow delete: if false;
+    }
+    match /rides/{rideId}/towOffers/{driverUid}/messages/{messageId} {
+      function participant() {
+        return (towApproved('rider') && towRide(rideId).riderId == request.auth.uid)
+          || (towApproved('driver') && request.auth.uid == driverUid && (towOpen(rideId) || towRide(rideId).driverId == driverUid));
+      }
+      allow read: if admin() || participant();
+      allow create: if participant() && towRide(rideId).serviceType == 'tow'
+        && towRide(rideId).status in ['requested','accepted','arrived','started']
+        && get(/databases/$(database)/documents/rides/$(rideId)/towOffers/$(driverUid)).data.status in ['pending','countered','accepted']
+        && (towRide(rideId).status == 'requested' || towRide(rideId).driverId == driverUid)
+        && request.resource.data.keys().hasOnly(['senderId','senderRole','text','createdAt'])
+        && request.resource.data.senderId == request.auth.uid
+        && request.resource.data.senderRole == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 2000
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+    }
+    match /rides/{rideId} {
+      function chosenOffer() {
+        return getAfter(/databases/$(database)/documents/rides/$(rideId)/towOffers/$(request.resource.data.driverId)).data;
+      }
+      allow update: if towApproved('rider') && resource.data.riderId == request.auth.uid
+        && resource.data.serviceType == 'tow' && resource.data.status == 'requested' && resource.data.driverId == null
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','pricingStatus','fare','tipAmount','totalFare','driverId','driverName','driverPhone','vehicleYear','vehicleMake','vehicleModel','acceptedAt'])
+        && request.resource.data.status == 'accepted' && request.resource.data.pricingStatus == 'agreed'
+        && request.resource.data.driverId is string
+        && get(/databases/$(database)/documents/rides/$(rideId)/towOffers/$(request.resource.data.driverId)).data.status == 'pending'
+        && chosenOffer().status == 'accepted' && chosenOffer().updatedAt == request.time
+        && get(/databases/$(database)/documents/users/$(request.resource.data.driverId)).data.role == 'driver'
+        && get(/databases/$(database)/documents/users/$(request.resource.data.driverId)).data.accountStatus in ['approved','active']
+        && get(/databases/$(database)/documents/driverApplications/$('driver_' + request.resource.data.driverId)).data.status == 'approved'
+        && chosenOffer().driverId == request.resource.data.driverId && request.resource.data.fare == chosenOffer().amount
+        && request.resource.data.driverName == chosenOffer().driverName && request.resource.data.driverPhone == chosenOffer().driverPhone
+        && request.resource.data.vehicleYear == chosenOffer().vehicleYear && request.resource.data.vehicleMake == chosenOffer().vehicleMake && request.resource.data.vehicleModel == chosenOffer().vehicleModel
+        && request.resource.data.tipAmount is number && request.resource.data.tipAmount >= 0
+        && request.resource.data.tipAmount >= request.resource.data.fare * resource.data.tipPercent / 100 - 0.011
+        && request.resource.data.tipAmount <= request.resource.data.fare * resource.data.tipPercent / 100 + 0.011
+        && request.resource.data.totalFare >= request.resource.data.fare + request.resource.data.tipAmount - 0.011
+        && request.resource.data.totalFare <= request.resource.data.fare + request.resource.data.tipAmount + 0.011
+        && request.resource.data.acceptedAt is string;
+    }
+
+match /emergencies/{emergencyId} {
+ allow create: if signedIn()
+ && request.resource.data.keys().hasOnly(['type','emergencyService','source','reporterId','riderId','riderName','driverId','driverName','rideId','status','latitude','longitude','accuracy','mapUrl','createdAt'])
+ && request.resource.data.type == 'SOS' && request.resource.data.status == 'active'
+ && (!('emergencyService' in request.resource.data) || request.resource.data.emergencyService in ['police','ambulance','fire'])
+ && request.resource.data.reporterId == request.auth.uid
+ && request.resource.data.source in ['rider','driver']
+ && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == request.resource.data.source
+ && ((request.resource.data.source == 'driver' && request.resource.data.driverId == request.auth.uid && !('riderId' in request.resource.data)) || (request.resource.data.source == 'rider' && request.resource.data.riderId == request.auth.uid && !('driverId' in request.resource.data)))
+ && request.resource.data.latitude is number && request.resource.data.latitude >= -90 && request.resource.data.latitude <= 90
+ && request.resource.data.longitude is number && request.resource.data.longitude >= -180 && request.resource.data.longitude <= 180
+ && request.resource.data.accuracy is number && request.resource.data.accuracy >= 0
+ && request.resource.data.createdAt == request.time
+ && (request.resource.data.rideId == null || (request.resource.data.rideId is string && ((request.resource.data.source == 'driver' && get(/databases/$(database)/documents/rides/$(request.resource.data.rideId)).data.driverId == request.auth.uid) || (request.resource.data.source == 'rider' && get(/databases/$(database)/documents/rides/$(request.resource.data.rideId)).data.riderId == request.auth.uid))));
+ allow get: if admin() || (signedIn() && resource.data.reporterId == request.auth.uid);
+ allow list: if admin();
+ allow update: if admin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','acknowledgedAt','resolvedAt']) && request.resource.data.status in ['acknowledged','resolved'];
+ allow delete: if false;
+}
+    match /config/{docId} { allow read, write: if false; }
+  }
+}
