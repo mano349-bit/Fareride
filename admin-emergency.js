@@ -1,3 +1,4 @@
+import {adminRecords, onAdminCalendar} from './admin-calendar.js';
 import { observeAdmin } from './admin-session.js';
 import { sosServiceLabel } from './sos-services.js';
 import {
@@ -219,11 +220,12 @@ function renderEmergencyList() {
   }
 
 
-  if (!emergencies.length) {
+  const periodEmergencies=adminRecords(emergencies,'emergencies');
+  if (!periodEmergencies.length) {
 
     list.innerHTML = `
       <div class="empty">
-        No SOS emergencies have been recorded.
+        No SOS alerts in the selected dates.
       </div>
     `;
 
@@ -233,7 +235,7 @@ function renderEmergencyList() {
 
 
   list.innerHTML =
-    emergencies
+    periodEmergencies
       .map(
         item => {
 
@@ -662,3 +664,5 @@ observeAdmin(
 
   }
 );
+
+onAdminCalendar(renderEmergencyList);

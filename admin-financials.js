@@ -8,8 +8,8 @@ export function amounts(ride) {
   const driver = saved ? Number(ride.driverEarnings) : Math.round((fare * share / 100 + tip) * 100) / 100;
   return {rider, driver, estimated: !saved, rate: Number(ride.miles) > 0 ? fare / Number(ride.miles) : null};
 }
-export function report360(rides, now = Date.now()) {
-  const cutoff = now - 360 * 86400000, people = new Map();
+export function report360(rides, now = Date.now(), days = 360) {
+  const cutoff = now - days * 86400000, people = new Map();
   let count = 0, rider = 0, driver = 0, excluded = 0;
   for (const ride of rides) {
     const value = ride.completedAt;

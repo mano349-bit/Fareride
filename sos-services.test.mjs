@@ -74,7 +74,7 @@ test('Admin displays selected services and legacy SOS in cards and active banner
   const nodes=new Map(['emergencyTopBanner','emergencyCount','emergencyBannerSource','emergencyBannerService','emergencyBannerRide','emergencyBannerTime','emergencyBannerMap','emergencyList'].map(id=>[id,{classList:{add(){},remove(){}},textContent:'',innerHTML:''}]));
   let receive;
   const adminSource=readFileSync(new URL('./admin-emergency.js', import.meta.url),'utf8').replace(/import[\s\S]*?from\s*["'][^"']+["'];\s*/g,'');
-  vm.runInNewContext(adminSource,{sosServiceLabel,document:{getElementById:id=>nodes.get(id),querySelectorAll:()=>[]},observeAdmin:callback=>callback(true),db:{},auth:{},collection(){},doc(){},updateDoc(){},onAuthStateChanged(){},serverTimestamp(){},onSnapshot:(_query,callback)=>{receive=callback;return ()=>{};}});
+  vm.runInNewContext(adminSource,{sosServiceLabel,adminRecords:items=>items,onAdminCalendar(){},document:{getElementById:id=>nodes.get(id),querySelectorAll:()=>[]},observeAdmin:callback=>callback(true),db:{},auth:{},collection(){},doc(){},updateDoc(){},onAuthStateChanged(){},serverTimestamp(){},onSnapshot:(_query,callback)=>{receive=callback;return ()=>{};}});
   for (const emergencyService of ['police','ambulance','fire',undefined]) {
     receive({docs:[{id:'e',data:()=>({source:'driver',status:'active',emergencyService,latitude:40,longitude:-73,createdAt:{toMillis:()=>1,toDate:()=>new Date()}})}]});
     const label=sosServiceLabel(emergencyService);
