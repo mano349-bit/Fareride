@@ -1,9 +1,10 @@
 import {vehicleIcon,escapeHTML} from './ride-ui.js';
 import './ride-live.js?v=20261013-live-sync';
-// Keep a map available before acceptance and after the live trip ends.
+// Keep one map available before acceptance and after the live trip ends.
+if (!document.getElementById('riderMapPreviewPanel')) {
 const liveMap=document.querySelector('#rideLiveMap');
 const liveSection=liveMap?.closest('section');
-const panel=document.createElement('section');panel.className='card';
+const panel=document.createElement('section');panel.id='riderMapPreviewPanel';panel.className='card';
 panel.style.cssText='margin:20px auto;padding:20px;background:white;border:1px solid #cbd5e1;border-radius:12px';
 panel.innerHTML='<h2>Your rider map</h2><p role="status">Your live ride map appears here once a driver accepts your request.</p><button type="button" style="padding:12px 16px;margin-bottom:12px;background:#0875e1;color:white;border:0;border-radius:8px;font-weight:700">Share my location</button><div id="riderPreviewMap" style="height:360px;width:100%;border-radius:10px"></div>';
 if(liveSection)liveSection.before(panel);else document.querySelector('main').append(panel);
@@ -39,3 +40,5 @@ window.addEventListener('fareride-nearby-drivers',event=>{
  nearbyMarkers.forEach(marker=>marker.remove());nearbyMarkers=[];if(!map)return;
  event.detail.forEach((driver,index)=>{const label=(index+1)+'. '+driver.driverName+' — '+driver.miles.toFixed(1)+' mi';nearbyMarkers.push(L.marker([driver.lat,driver.lng],{icon:L.divIcon({html:vehicleIcon(driver.serviceType),className:'fareride-map-icon',iconSize:[40,36],iconAnchor:[20,18]})}).addTo(map).bindTooltip(escapeHTML(label)));});
 });
+
+}
