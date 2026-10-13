@@ -711,7 +711,7 @@ function renderRides() {
             id="details-${ride.id}"
             class="details">
 
-            <td colspan="8">
+            <td colspan="11">
 
               <div class="details-box">
 
