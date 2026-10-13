@@ -1,3 +1,4 @@
+import {createVehiclePicker} from './vehicle-picker.js?v=20261013-vehicle-dropdowns';
 import {TOW_PRICING, calculateTowFare} from './tow-pricing.js';
 import { SERVICES, validateServiceDetails, priceLabel } from './services.js';
 /* =========================================================
@@ -86,10 +87,11 @@ function tipPreview() {
 }
 $('tipChoice')?.addEventListener('change',tipPreview);
 $('customTipPercent')?.addEventListener('input',tipPreview);
+const vehiclePicker = createVehiclePicker();
 const selectedService = () => document.querySelector('[name="serviceType"]:checked').value;
 function details() {
   return validateServiceDetails(selectedService(), {
-    vehicle: $('towVehicle').value, issue: $('towIssue').value, vehicleClass: $('towVehicleClass')?.value || 'light',
+    vehicle: selectedService() === 'tow' ? vehiclePicker.description() : '', issue: $('towIssue').value, vehicleClass: $('towVehicleClass')?.value || 'light',
     packageDescription: $('packageDescription').value, recipientName: $('recipientName').value
   });
 }
@@ -106,7 +108,8 @@ function updateService() {
   $('towDetails').hidden = type !== 'tow';
   $('messengerDetails').hidden = type !== 'messenger';
   $('rideType').closest('label').hidden = type !== 'ride';
-  for (const id of ['towVehicle', 'towIssue']) $(id).required = type === 'tow';
+  vehiclePicker.setActive(type === 'tow');
+  $('towIssue').required = type === 'tow';
   for (const id of ['packageDescription', 'recipientName']) $(id).required = type === 'messenger';
   const specialty = type === 'tow' && $('towVehicleClass')?.value === 'specialty';
   $('estimateBtn').textContent = specialty ? 'Review quote request' : type === 'tow' ? 'Calculate towing mileage & fare' : 'Calculate mileage & fare';

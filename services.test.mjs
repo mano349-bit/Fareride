@@ -28,6 +28,7 @@ function riderHarness(fail = false) {
   };
   el('rideType').value = 'economy';
   const context = vm.createContext({ ...services, ...towPricing, CustomEvent: class {constructor(type,options){this.type=type;this.detail=options?.detail;}}, crypto: { randomUUID: () => 'unique' }, console: { log() {}, error() {}, warn() {} },
+    createVehiclePicker: () => ({description: () => el('towVehicle').value, setActive() {}}),
     document: { getElementById: el, querySelector: () => ({ value: type }), querySelectorAll: () => [] },
     window: { addEventListener() {}, dispatchEvent() {} }, localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) },
     auth: { currentUser: { uid: 'rider-uid', displayName: 'Test Rider' } }, db: {}, doc: (...args) => args, getDoc: async () => ({exists:()=>true,data:()=>({fullName:'Test Rider',phone:'(516) 376-4118'})}),
