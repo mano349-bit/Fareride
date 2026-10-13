@@ -52,9 +52,9 @@ function render(){
   cell(card,job.net!==null?money(job.net):'Unpriced',true);body.append(card);
  }
  const subtotal=document.createElement('tr');subtotal.className='daily-total';const title=cell(subtotal,day+' total - '+rows.length+' jobs');title.colSpan=7;cell(subtotal,money(dayTotal.income),true);
- cell(subtotal,money(dayTotal.expense),true);cell(subtotal,money(dayTotal.net)+(dayTotal.estimated?' (provisional)':''),true);body.append(subtotal);
+ cell(subtotal,money(dayTotal.expense),true);cell(subtotal,money(dayTotal.net)+(dayTotal.estimated?' Total-Net':''),true);body.append(subtotal);
  }
- const foot=document.createElement('tfoot');const total=document.createElement('tr');const title=cell(total,'Period totals');title.colSpan=7;cell(total,money(report.income),true);cell(total,money(daily.expenses),true);cell(total,money(daily.net)+(daily.days.some(day=>day.estimated)||report.unpriced?' (provisional)':''),true);foot.append(total);table.append(foot);
+ const foot=document.createElement('tfoot');const total=document.createElement('tr');const title=cell(total,'Period totals');title.colSpan=7;cell(total,money(report.income),true);cell(total,money(daily.expenses),true);cell(total,money(daily.net)+(daily.days.some(day=>day.estimated)||report.unpriced?' Total-Net':''),true);foot.append(total);table.append(foot);
  if(!report.jobs.length){const row=document.createElement('tr');const empty=cell(row,'No completed jobs in this period.');empty.colSpan=10;body.append(row);}
 }
 startDate.addEventListener('change',render);endDate.addEventListener('change',render);panel.querySelector('#earningsToday').onclick=()=>{startDate.value=endDate.value=localDay();render();};
