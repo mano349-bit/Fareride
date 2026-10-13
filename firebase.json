@@ -13,20 +13,18 @@
       "MULTI_SERVICE.md",
       "preview.cjs",
       "**/*.test.mjs",
-
       ".git/**",
       ".github/**",
       ".firebase/**",
       "functions/**",
       "**/node_modules/**",
-
       "driver/**",
       "rider/**",
       "Fare-Ride-Customer-Web/**",
       "public/**",
-
       "*.backup",
-      "users.json"
+      "users.json",
+      "firestore-towing-console.rules"
     ],
     "headers": [
       {

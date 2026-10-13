@@ -205,7 +205,7 @@ function showRideStatus(ride) {
     cancelled: 'Ride cancelled. You can request another ride.'
   };
   $('msg').textContent = ride.pricingStatus === 'quote_required' && ride.status === 'requested'
-    ? 'Quote requested. Waiting for dispatch to confirm pricing.'
+    ? 'Tow quote requested. Review driver offers in Tow driver offers & live messages.'
     : (messages[ride.status] || 'Waiting for ride information.');
   const finished = ['completed', 'cancelled'].includes(ride.status);
   $('requestBtn').disabled = !finished;
