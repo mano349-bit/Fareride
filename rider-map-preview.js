@@ -1,5 +1,5 @@
 import {vehicleIcon,escapeHTML} from './ride-ui.js';
-import './ride-live.js';
+import './ride-live.js?v=20261013-live-sync';
 // Keep a map available before acceptance and after the live trip ends.
 const liveMap=document.querySelector('#rideLiveMap');
 const liveSection=liveMap?.closest('section');

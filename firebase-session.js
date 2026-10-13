@@ -7,7 +7,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
 
 import {
-  getFirestore,
+  initializeFirestore,
   doc,
   getDoc,
   setDoc,
@@ -49,7 +49,8 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig, 'FareRide-' + authScope(location.pathname));
-const db = getFirestore(app);
+// Long polling avoids buffered streaming responses on mobile networks and proxies.
+const db = initializeFirestore(app, {experimentalForceLongPolling: true});
 // Avoid IndexedDB probes: Safari can stall them even when local storage is first.
 // Rider/driver/admin sessions remain separate, with local and session storage.
 const auth = initializeAuth(app, { persistence: [browserLocalPersistence, browserSessionPersistence] });

@@ -33,7 +33,7 @@ function riderHarness(fail = false) {
     window: { addEventListener() {}, dispatchEvent() {} }, localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) },
     auth: { currentUser: { uid: 'rider-uid', displayName: 'Test Rider' } }, db: {}, doc: (...args) => args, getDoc: async () => ({exists:()=>true,data:()=>({fullName:'Test Rider',phone:'(516) 376-4118'})}),
     setDoc: async (_, job) => { if (fail) throw new Error('Offline'); writes.push(job); },
-    onSnapshot: () => () => {}, Event: class Event { constructor(type) { this.type = type; } }, Date, Intl, URL, setTimeout, clearTimeout, AbortController });
+    liveSnapshot: () => () => {}, Event: class Event { constructor(type) { this.type = type; } }, Date, Intl, URL, setTimeout, clearTimeout, AbortController });
   const source = fs.readFileSync(new URL('./rider.js', import.meta.url), 'utf8').replace(/^import[\s\S]*?from ['"][^'"]+['"];\s*/gm, '');
   vm.runInContext(source, context);
   vm.runInContext('geocode=async()=>({lat:40,lon:-73});getRoute=async()=>({distance:1609.344*10,duration:600});',context);

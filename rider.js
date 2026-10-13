@@ -1,3 +1,4 @@
+import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
 import {createVehiclePicker} from './vehicle-picker.js?v=20261013-regular-vehicles';
 import {TOW_PRICING, calculateTowFare} from './tow-pricing.js';
 import { SERVICES, validateServiceDetails, priceLabel } from './services.js';
@@ -250,7 +251,7 @@ function watchRide(rideId) {
   }
 
   unsubscribeRide =
-    onSnapshot(
+    liveSnapshot(
       doc(db, 'rides', rideId),
 
       snapshot => {

@@ -1,0 +1,15 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {createLiveSubscriber} from './live-subscription.js';
+function harness(read=async()=>({value:'server'})) {
+ const streams=[],events=new Map(),timers=new Map();let visible=true,online=true,serial=0;
+ const watch=createLiveSubscriber({listen:(_ref,_options,next,error)=>{const stream={next,error,stopped:false};streams.push(stream);return ()=>stream.stopped=true;},read,visible:()=>visible,online:()=>online,
+  listenEvent:(name,cb)=>{events.set(name,cb);return ()=>events.delete(name);},setTimer:cb=>{timers.set(++serial,cb);return serial;},clearTimer:id=>timers.delete(id)});
+ const values=[],errors=[],stop=watch({type:'document'},snapshot=>values.push(snapshot.value),e=>errors.push(e));
+ return {streams,events,timers,values,errors,stop,setVisible:v=>visible=v,setOnline:v=>online=v,tick:async()=>{const [id,cb]=timers.entries().next().value;timers.delete(id);await cb();}};
+}
+test('stream changes arrive immediately, with server checks when stream updates stall',async()=>{const h=harness();h.streams[0].next({value:'requested'});h.streams[0].next({value:'accepted'});assert.deepEqual(h.values,['requested','accepted']);await h.tick();assert.deepEqual(h.values,['requested','accepted','server']);h.stop();});
+test('a newer live update cannot be overwritten by an older in-flight server read',async()=>{let resolve;const h=harness(()=>new Promise(r=>resolve=r));const check=h.tick();h.streams[0].next({value:'new message'});resolve({value:'old message'});await check;assert.deepEqual(h.values,['new message']);h.stop();});
+test('focus/online recovery reconnects and stale stream callbacks are ignored',async()=>{const h=harness();const old=h.streams[0];h.events.get('online')();assert.equal(old.stopped,true);old.next({value:'old'});h.streams.at(-1).next({value:'new'});await Promise.resolve();assert.deepEqual(h.values,['new']);h.stop();assert.equal(h.events.size,0);});
+test('hidden or offline pages do not poll; visible recovery restarts updates',async()=>{let reads=0;const h=harness(async()=>{reads++;return {value:'fresh'};});h.setVisible(false);await h.tick();assert.equal(reads,0);h.setVisible(true);h.setOnline(false);await h.tick();assert.equal(reads,0);h.setOnline(true);h.events.get('visibilitychange')();await Promise.resolve();assert.equal(reads,1);h.stop();});
+test('transient listener failures reconnect; permission errors stop and surface',async()=>{const h=harness();h.streams[0].error({code:'unavailable'});await h.tick();assert.equal(h.streams.length,2);h.streams[1].error({code:'permission-denied'});assert.equal(h.errors[0].code,'permission-denied');assert.equal(h.timers.size,0);h.events.get('focus')();assert.equal(h.streams.length,2);h.stop();});
+test('unsubscribe prevents delivery of pending server reads and cancels timers',async()=>{let resolve;const h=harness(()=>new Promise(r=>resolve=r));const check=h.tick();h.stop();resolve({value:'signed-out user'});await check;assert.deepEqual(h.values,[]);assert.equal(h.timers.size,0);});

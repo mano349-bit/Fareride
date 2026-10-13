@@ -1,3 +1,4 @@
+import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
 import {phoneNumber} from './ride-ui.js';
 import {latestCurrentRide} from './ride-recovery.js?v=20261013-live-acceptance';
 import { riderProgress } from './rider-progress.js';
@@ -18,7 +19,7 @@ function watch(next) {
   if (!uid || !next || next === id) return;
   clear(); id = next;
   const expected = uid;
-  stop = onSnapshot(doc(db, 'rides', next), snapshot => {
+  stop = liveSnapshot(doc(db, 'rides', next), snapshot => {
     if(id!==next)return;
     if (auth.currentUser?.uid !== expected || !snapshot.exists() || snapshot.data().riderId !== expected) { clear(); return; }
     applyRide({...snapshot.data(),id:next});
@@ -37,7 +38,7 @@ function applyRide(nextRide){
 }
 function discover(){
  discovery?.();discovery=null;if(!uid)return;const expected=uid;
- discovery=onSnapshot(query(collection(db,'rides'),where('riderId','==',uid)),snapshot=>{
+ discovery=liveSnapshot(query(collection(db,'rides'),where('riderId','==',uid)),snapshot=>{
   if(auth.currentUser?.uid!==expected||uid!==expected)return;
   const active=latestCurrentRide(snapshot.docs.map(d=>({...d.data(),id:d.id})),uid,'rider');
   if(active){try{localStorage.setItem('fareride_last_ride_id',active.id);}catch{}watch(active.id);applyRide(active);}

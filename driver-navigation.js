@@ -1,4 +1,5 @@
-import './ride-live.js';
+import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
+import './ride-live.js?v=20261013-live-sync';
 import {latestCurrentRide} from './ride-recovery.js';
 import {auth,db,collection,query,where,onSnapshot,onAuthStateChanged} from './firebase-session.js';
 import {ACTIVE_STATUSES} from './ride-details.js';
@@ -19,7 +20,7 @@ selector.onchange=render;
 onAuthStateChanged(auth,user=>{
  stop?.();stop=null;currentUID=user?.uid;ride=null;previousStage=null;render();if(!user)return;
  const uid=user.uid;
- stop=onSnapshot(query(collection(db,'rides'),where('driverId','==',uid)),snapshot=>{
+ stop=liveSnapshot(query(collection(db,'rides'),where('driverId','==',uid)),snapshot=>{
   if(currentUID!==uid)return;
   const job=latestCurrentRide(snapshot.docs.map(d=>({...d.data(),id:d.id})),uid,'driver');
   ride=job;const stage=ride?ride.id+':'+ride.status:null;

@@ -1,3 +1,4 @@
+import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
 import {latestCurrentRide} from './ride-recovery.js?v=20261013-live-acceptance';
 import {locationNotice} from './ride-location-notice.js';
 import { auth, db, doc, getDoc, updateDoc, onAuthStateChanged, onSnapshot, serverTimestamp, collection, query, where } from './firebase-session.js';
@@ -54,7 +55,7 @@ function render(){
 }
 function watch(id){
  if(!user||!id||id===rideId)return;reset();rideId=id;const expected=user.uid;
- stop=onSnapshot(doc(db,'rides',id),snapshot=>{
+ stop=liveSnapshot(doc(db,'rides',id),snapshot=>{
   if(rideId!==id)return;
   if(auth.currentUser?.uid!==expected||!snapshot.exists()){reset();return;}
   const next=snapshot.data();if(next[isDriver?'driverId':'riderId']!==expected){reset();return;}
@@ -73,7 +74,7 @@ function applyRide(next,id){
 }
 function discover(){
  discovery?.();if(!user)return;const discoveryUID=user.uid;
- discovery=onSnapshot(query(collection(db,'rides'),where(isDriver?'driverId':'riderId','==',user.uid)),snapshot=>{
+ discovery=liveSnapshot(query(collection(db,'rides'),where(isDriver?'driverId':'riderId','==',user.uid)),snapshot=>{
   if(auth.currentUser?.uid!==discoveryUID||user?.uid!==discoveryUID)return;
   const job=latestCurrentRide(snapshot.docs.map(d=>({...d.data(),id:d.id})),user.uid,isDriver?'driver':'rider');
   if(job){watch(job.id);applyRide(job,job.id);}else reset();
