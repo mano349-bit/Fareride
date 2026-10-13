@@ -1,0 +1,75 @@
+name: Video merger Windows EXE
+on:
+  push:
+    branches: [codex/video-batch-merger-download]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: tools/video-merger
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install build dependencies
+        run: python -m pip install -r requirements.txt "pyinstaller>=6.11,<7"
+      - name: Prepare FFmpeg for local tests
+        shell: pwsh
+        run: |
+          @'
+          import os
+          from pathlib import Path
+          from merge_engine import tools
+          ffmpeg, ffprobe = tools(print)
+          with open(os.environ['GITHUB_PATH'], 'a', encoding='utf-8') as output:
+              output.write(str(Path(ffmpeg).parent) + '\n')
+          '@ | python -
+      - name: Run merge and upload tests
+        run: python -m unittest discover -p "test_*.py" -v
+      - name: Package graphical application
+        run: >-
+          python -m PyInstaller --noconfirm --clean --onefile --windowed
+          --name VideoBatchMerger --icon app.ico --add-data "app.ico;."
+          --collect-data googleapiclient --hidden-import google_auth_httplib2 app.py
+      - name: Verify Windows GUI executable
+        shell: pwsh
+        run: |
+          @'
+          import struct
+          from pathlib import Path
+          binary = Path('dist/VideoBatchMerger.exe').read_bytes()
+          assert binary[:2] == b'MZ'
+          pe = struct.unpack_from('<I', binary, 0x3c)[0]
+          assert binary[pe:pe+4] == b'PE\0\0'
+          subsystem = struct.unpack_from('<H', binary, pe + 24 + 68)[0]
+          assert subsystem == 2, 'Executable must use the Windows GUI subsystem, not a console'
+          print('Windows GUI executable verified')
+          '@ | python -
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $compiler = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (!(Test-Path $compiler)) {
+            choco install innosetup --yes --no-progress
+          }
+          & $compiler installer.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Create checksums
+        shell: pwsh
+        run: |
+          Get-FileHash dist/VideoBatchMerger.exe, dist/VideoBatchMerger-Setup.exe -Algorithm SHA256 |
+            ForEach-Object { "$($_.Hash.ToLower())  $([IO.Path]::GetFileName($_.Path))" } |
+            Set-Content -Encoding ascii dist/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VideoBatchMerger-Windows
+          path: |
+            tools/video-merger/dist/VideoBatchMerger.exe
+            tools/video-merger/dist/VideoBatchMerger-Setup.exe
+            tools/video-merger/dist/SHA256SUMS.txt
+            tools/video-merger/README.md
