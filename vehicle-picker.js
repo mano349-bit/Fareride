@@ -1,9 +1,19 @@
 const API = 'https://vpic.nhtsa.dot.gov/api/vehicles/';
 const OTHER = '__other__';
+// Familiar passenger-car, SUV and pickup brands; other vehicles can be entered manually.
+const MAKES = ['Acura', 'Alfa Romeo', 'Aston Martin', 'Audi', 'Bentley', 'BMW', 'Buick',
+  'Cadillac', 'Chevrolet', 'Chrysler', 'Dodge', 'Ferrari', 'Fiat', 'Fisker', 'Ford',
+  'Genesis', 'GMC', 'Honda', 'Hummer', 'Hyundai', 'Infiniti', 'Isuzu', 'Jaguar', 'Jeep',
+  'Kia', 'Lamborghini', 'Land Rover', 'Lexus', 'Lincoln', 'Lotus', 'Lucid', 'Maserati',
+  'Mazda', 'Mercedes-Benz', 'Mini', 'Mitsubishi', 'Nissan', 'Oldsmobile', 'Plymouth',
+  'Polestar', 'Pontiac', 'Porsche', 'Ram', 'Rivian', 'Rolls-Royce', 'Saab', 'Saturn',
+  'Scion', 'Smart', 'Subaru', 'Suzuki', 'Tesla', 'Toyota', 'VinFast', 'Volkswagen', 'Volvo'];
+const VEHICLE_TYPES = ['car', 'truck', 'multipurpose'];
+const normalizeMake = value => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 const cache = new Map();
 
 async function catalog(path) {
-  const key = 'fareride_vehicle_catalog_v1:' + path;
+  const key = 'fareride_vehicle_catalog_v2:' + path;
   if (cache.has(path)) return cache.get(path);
   try {
     const saved = JSON.parse(localStorage.getItem(key));
@@ -36,16 +46,16 @@ export function createVehiclePicker() {
   const year = get('towVehicleYear'), make = get('towVehicleMake'), model = get('towVehicleModel');
   const customMake = get('towVehicleMakeOther'), customModel = get('towVehicleModelOther');
   const status = get('vehicleCatalogStatus'), retry = get('vehicleCatalogRetry');
-  let active = false, makesLoaded = false, loadingMakes = false, loadingModels = false, version = 0;
+  let active = false, loadingModels = false, version = 0;
   year.replaceChildren(new Option('Select year', ''));
   for (let value = new Date().getFullYear() + 1; value >= 1900; value--) year.add(new Option(String(value), String(value)));
-  options(make, [], 'Select year first');
+  options(make, MAKES.map(name => ({id: name, name})).sort((a, b) => a.name.localeCompare(b.name, 'en', {sensitivity: 'base'})), 'Select make');
   options(model, [], 'Select make first');
 
   function description() {
     const makeName = make.value === OTHER ? customMake.value.trim() : make.selectedOptions[0]?.textContent;
     const modelName = model.value === OTHER ? customModel.value.trim() : model.selectedOptions[0]?.textContent;
-    if (!year.value || !make.value || !model.value || !makeName || !modelName || loadingModels || loadingMakes) {
+    if (!year.value || !make.value || !model.value || !makeName || !modelName || loadingModels) {
       throw new Error('Choose the vehicle year, make and model, or enter the unlisted vehicle details.');
     }
     const value = [year.value, makeName, modelName].join(' ');
@@ -53,7 +63,7 @@ export function createVehiclePicker() {
     return value;
   }
   function sync() {
-    make.disabled = !year.value || loadingMakes;
+    make.disabled = !year.value;
     model.disabled = !year.value || !make.value || loadingModels;
     customMake.closest('label').hidden = make.value !== OTHER;
     customModel.closest('label').hidden = model.value !== OTHER;
@@ -70,24 +80,6 @@ export function createVehiclePicker() {
     sync();
     get('towVehicle').dispatchEvent(new Event('input', {bubbles: true}));
   }
-  async function loadMakes() {
-    if (loadingMakes || makesLoaded) return;
-    loadingMakes = true;
-    status.textContent = 'Loading vehicle makes…'; retry.hidden = true; sync();
-    try {
-      const results = await catalog('GetAllMakes');
-      const unique = new Map();
-      for (const row of results) if (row.Make_ID && row.Make_Name?.trim()) unique.set(String(row.Make_ID), row.Make_Name.trim());
-      const rows = [...unique].map(([id, name]) => ({id, name})).sort((a, b) => a.name.localeCompare(b.name, 'en', {sensitivity: 'base'}));
-      if (!rows.length) throw new Error('No makes available.');
-      options(make, rows, 'Select make'); makesLoaded = true;
-      status.textContent = 'Choose your vehicle year, make and model.';
-    } catch {
-      options(make, [], 'Select make');
-      status.textContent = 'Vehicle catalog unavailable. Choose Other / not listed and enter your make and model, or retry.';
-      retry.hidden = false;
-    } finally { loadingMakes = false; changed(); }
-  }
   async function loadModels() {
     const request = ++version, makeId = make.value, selectedYear = year.value;
     loadingModels = false;
@@ -103,12 +95,11 @@ export function createVehiclePicker() {
     status.textContent = 'Loading models…'; changed();
     try {
       // The year-specific endpoint supports model years after 1995.
-      const path = Number(selectedYear) > 1995
-        ? 'GetModelsForMakeIdYear/makeId/' + makeId + '/modelyear/' + selectedYear
-        : 'GetModelsForMakeId/' + makeId;
-      const results = await catalog(path);
+      const base = 'GetModelsForMakeYear/make/' + encodeURIComponent(makeId)
+        + (Number(selectedYear) > 1995 ? '/modelyear/' + selectedYear : '');
+      const results = (await Promise.all(VEHICLE_TYPES.map(type => catalog(base + '/vehicletype/' + type)))).flat();
       if (request !== version) return;
-      const names = [...new Set(results.filter(row => String(row.Make_ID) === makeId).map(row => row.Model_Name?.trim()).filter(Boolean))]
+      const names = [...new Set(results.filter(row => normalizeMake(row.Make_Name) === normalizeMake(makeId)).map(row => row.Model_Name?.trim()).filter(Boolean))]
         .sort((a, b) => a.localeCompare(b, 'en', {sensitivity: 'base'}));
       options(model, names.map(name => ({id: name, name})), 'Select model');
       status.textContent = names.length ? (Number(selectedYear) <= 1995 ? 'Older vehicle: models are listed across all years. Choose the model on your vehicle.' : 'Select the model for your ' + selectedYear + ' ' + make.selectedOptions[0].textContent + '.')
@@ -119,12 +110,12 @@ export function createVehiclePicker() {
       retry.hidden = false;
     } finally { if (request === version) { loadingModels = false; changed(); } }
   }
-  year.addEventListener('change', () => { if (!makesLoaded) loadMakes(); loadModels(); });
+  year.addEventListener('change', loadModels);
   make.addEventListener('change', () => { customMake.value = ''; loadModels(); });
   model.addEventListener('change', changed);
   customMake.addEventListener('input', changed);
   customModel.addEventListener('input', changed);
-  retry.addEventListener('click', () => makesLoaded ? loadModels() : loadMakes());
+  retry.addEventListener('click', loadModels);
   sync();
-  return {description, setActive(value) { active = value; sync(); if (active) loadMakes(); }};
+  return {description, setActive(value) { active = value; sync(); }};
 }
