@@ -97,7 +97,11 @@ function chat(parent,ride,offer){
  const log=add(parent,'div',null,'tow-offer-chat');log.setAttribute('aria-label','Messages with '+(driver?'rider':offer.driverName));
  const messages=chats.get(key)||[];
  if(!messages.length)add(log,'p','No messages yet.');
- for(const m of messages)add(log,'p',(m.senderId===uid?'You':m.senderRole==='rider'?'Rider':'Driver')+': '+m.text,m.senderRole==='driver'?'tow-message-driver':'tow-message-rider');
+ for(const m of messages){
+  const isDriver=m.senderRole==='driver',label=isDriver?'Driver':'Rider';
+  const name=String((isDriver?offer.driverName:ride.riderName)||'').trim().split(/\s+/)[0];
+  add(log,'p',label+(name&&name.toLowerCase()!==label.toLowerCase()?' '+name:'')+': '+m.text,isDriver?'tow-message-driver':'tow-message-rider');
+ }
  if(offer.status==='declined')return;
  const input=field(parent,key+':message',driver?'Message the rider':'Describe the issue or message the driver','',true);
  button(parent,'Send message',async()=>{
