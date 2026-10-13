@@ -1,10 +1,20 @@
 import {acceptanceTracker, acceptanceAnnouncement, arrivalEstimate} from './rider-alert-state.js';
 import {auth,onAuthStateChanged} from './firebase-session.js';
 const tracker = acceptanceTracker();
-let audio, enabled = false, dismissTimer, latestRide=null, utteranceRef, voiceTimer;const awaitingETA=new Set();
+let audio, enabled = false, dismissTimer, latestRide=null, latestAcceptance=null, utteranceRef, voiceTimer, voiceVersion=0;const awaitingETA=new Set();
 const recording = new Audio(new URL('./audio/rider-test.wav', import.meta.url));
 recording.preload='auto';
+function canReplayAcceptance() {
+ return latestAcceptance && latestRide?.id===latestAcceptance.rideId
+  && latestRide.driverId===latestAcceptance.driverId && ['accepted','started','arrived'].includes(latestRide.status);
+}
+function stopVoice() {
+ voiceVersion++; clearTimeout(voiceTimer); recording.onended=null; recording.pause();
+ window.speechSynthesis?.cancel(); utteranceRef=null;
+}
 function playRecording(accepted=false) {
+ if(accepted && !canReplayAcceptance())return;
+ if(!accepted)recording.onended=null;
  recording.src=new URL(accepted?'./audio/rider-accepted.wav':'./audio/rider-test.wav',import.meta.url).href;
  recording.currentTime=0;
  const playing=recording.play();
@@ -17,7 +27,7 @@ toggle.type = 'button';toggle.textContent = 'Enable rider voice alerts';
 toggle.style.cssText = 'background:#1473e6;color:white;padding:10px;border:0;border-radius:8px';
 const status = document.createElement('span');status.textContent = 'Tap to test voice alerts. Requesting a ride also enables them; keep this page open.';
 const replay=document.createElement('button');replay.type='button';replay.textContent='Replay voice alert';
-replay.onclick=()=>{enabled=true;toggle.textContent='Mute ride sounds';playRecording(Boolean(latestRide?.driverId));};
+replay.onclick=()=>{enabled=true;toggle.textContent='Mute ride sounds';stopVoice();if(canReplayAcceptance())speak(latestAcceptance.message);else playRecording();};
 recording.onplaying=()=>{status.textContent='Voice audio is playing. Adjust your phone media volume if silent.';};
 controls.append(toggle,replay,status);
 document.querySelector('main')?.prepend(controls);
@@ -37,21 +47,23 @@ function chime() {
  }
 }
 function speak(message) {
+ if(!enabled || !canReplayAcceptance())return;
+ const version=voiceVersion;
  clearTimeout(voiceTimer);
- if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) {playRecording(Boolean(latestRide?.driverId));return;}
+ if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) {playRecording(true);return;}
  const utterance = new window.SpeechSynthesisUtterance(message);utteranceRef=utterance;utterance.lang='en-US';utterance.volume=1;utterance.rate=0.95;
  let started=false;
  utterance.onstart=()=>{started=true;clearTimeout(voiceTimer);status.textContent='Voice announcement is playing.';};
  utterance.onend=()=>{if(utteranceRef===utterance)utteranceRef=null;};
- utterance.onerror=event=>{clearTimeout(voiceTimer);if(event.error==='canceled'||event.error==='interrupted')return;playRecording(Boolean(latestRide?.driverId));};
+ utterance.onerror=event=>{if(version!==voiceVersion)return;clearTimeout(voiceTimer);if(event.error==='canceled'||event.error==='interrupted')return;playRecording(true);};
  window.speechSynthesis.resume();window.speechSynthesis.speak(utterance);
- voiceTimer=setTimeout(()=>{if(!started && enabled){window.speechSynthesis.cancel();playRecording(Boolean(latestRide?.driverId));}},2500);
+ voiceTimer=setTimeout(()=>{if(!started && enabled && version===voiceVersion && canReplayAcceptance()){window.speechSynthesis.cancel();playRecording(true);}},2500);
 }
 toggle.onclick = async () => {
- if(enabled) {enabled=false;clearTimeout(voiceTimer);recording.pause();window.speechSynthesis?.cancel();toggle.textContent='Enable rider voice alerts';status.textContent='Ride pop-ups remain on. Sounds muted.';return;}
+ if(enabled) {enabled=false;stopVoice();toggle.textContent='Enable rider voice alerts';status.textContent='Ride pop-ups remain on. Sounds muted.';return;}
  enabled=true;toggle.textContent='Mute ride sounds';
- // Unlock the same HTML audio element directly inside the user's tap.
- playRecording(Boolean(latestRide?.driverId));
+ // Enabling sounds is a test, never an acceptance announcement.
+ stopVoice(); playRecording();
  try {
   const Audio = window.AudioContext || window.webkitAudioContext;
   if(Audio) audio ||= new Audio();
@@ -60,16 +72,22 @@ toggle.onclick = async () => {
  } catch { /* Voice playback remains independent of the chime API. */ }
 };
 function notifyAccepted(ride) {
- if(ride.riderId !== auth.currentUser?.uid) return;
+ if(!ride || ride.riderId !== auth.currentUser?.uid) return;
  latestRide=ride;
+ if(latestAcceptance && !canReplayAcceptance()){latestAcceptance=null;stopVoice();popup.hidden=true;}
+ if(!ride.driverId || !['accepted','started','arrived'].includes(ride.status))awaitingETA.delete(ride.id);
  const accepted=tracker.update(ride);
  const etaReady=awaitingETA.has(ride.id) && ['accepted','started'].includes(ride.status) && arrivalEstimate(ride);
  if(!accepted && !etaReady)return;
  if(accepted && !arrivalEstimate(ride) && ride.status!=='arrived')awaitingETA.add(ride.id);else awaitingETA.delete(ride.id);
- const message=acceptanceAnnouncement(ride);text.textContent=message;popup.hidden=false;
+ const message=acceptanceAnnouncement(ride);latestAcceptance={rideId:ride.id,driverId:ride.driverId,message};text.textContent=message;popup.hidden=false;
  clearTimeout(dismissTimer);dismissTimer=setTimeout(()=>popup.hidden=true,20000);
- if(enabled){try{chime();recording.onended=()=>{recording.onended=null;if(enabled)speak(message);};playRecording(true);}catch{status.textContent='Driver accepted your ride. Tap Replay voice alert to hear it.';}}
+ if(enabled){try{stopVoice();chime();const version=voiceVersion;recording.onended=()=>{recording.onended=null;if(enabled && version===voiceVersion && canReplayAcceptance())speak(message);};playRecording(true);}catch{status.textContent='Driver accepted your ride. Tap Replay voice alert to hear it.';}}
 }
 window.addEventListener('fareride-ride-restored',event=>notifyAccepted(event.detail));
-document.getElementById('requestBtn')?.addEventListener('click',()=>{if(!enabled)toggle.onclick();});
-onAuthStateChanged(auth,user=>{latestRide=null;awaitingETA.clear();tracker.reset();popup.hidden=true;clearTimeout(dismissTimer);clearTimeout(voiceTimer);recording.pause();controls.hidden=!user;controls.style.display=user?"flex":"none";window.speechSynthesis?.cancel();});
+document.getElementById('requestBtn')?.addEventListener('click',()=>{
+ // A new request must not replay a previous ride or its delayed ETA callback.
+ latestAcceptance=null;awaitingETA.clear();stopVoice();popup.hidden=true;
+ if(!enabled)toggle.onclick();
+});
+onAuthStateChanged(auth,user=>{latestRide=null;latestAcceptance=null;awaitingETA.clear();tracker.reset();popup.hidden=true;clearTimeout(dismissTimer);stopVoice();controls.hidden=!user;controls.style.display=user?"flex":"none";window.speechSynthesis?.cancel();});
