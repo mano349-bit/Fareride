@@ -6,9 +6,27 @@
 .tow-offer-card input, .tow-offer-card textarea { width:100%; max-width:100%; box-sizing:border-box; }
 .tow-offer-card textarea { padding:10px; border:1px solid #cbd5e1; border-radius:8px; font:inherit; }
 .tow-offer-card button { padding:10px 14px; }
-.tow-offer-chat { max-height:220px; overflow-y:auto; border:1px solid #dbe3ee; padding:12px; background:#f8fafc; border-radius:8px; }
+.tow-offer-chat { border:1px solid #dbe3ee; padding:12px; background:#f8fafc; border-radius:8px; }
 .tow-offer-chat p { margin:8px 0; white-space:pre-wrap; overflow-wrap:anywhere; }
 .tow-offer-issue { white-space:pre-wrap; overflow-wrap:anywhere; }
 .tow-offer-status { font-weight:700; }
 
 .tow-offer-card p { overflow-wrap:anywhere; }
+
+.tow-conversations {
+  height:clamp(300px,60vh,560px);
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+  padding:0 8px;
+  border:1px solid #dbe3ee;
+  border-radius:10px;
+}
+.tow-conversations:focus-visible { outline:2px solid #1677ff; outline-offset:2px; }
+@media(max-width:600px) {
+  .tow-offers { padding:14px; }
+  .tow-conversations { height:clamp(260px,55vh,440px); padding:0 6px; }
+}
+
+.tow-conversations[data-empty="true"] { height:auto; }

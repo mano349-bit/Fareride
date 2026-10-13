@@ -7,7 +7,7 @@ const queue=document.getElementById('jobServiceFilter') || document.getElementBy
 const panel=document.createElement('section');panel.className='tow-offers';document.querySelector('main').prepend(panel);
 const heading=document.createElement('h2');heading.textContent=driver?'Tow offers & rider issues':'Tow driver offers & live messages';
 const note=document.createElement('p');note.textContent=driver?'Send your towing price before accepting the job. Review the rider’s issue and messages here.':'Compare driver offers. Accept a price, send a counteroffer, or decline. Accepting assigns that tow driver. Messages appear live after sending.';
-const status=document.createElement('p');status.setAttribute('role','status');const cards=document.createElement('div');panel.append(heading,note,status,cards);panel.hidden=true;
+const status=document.createElement('p');status.setAttribute('role','status');const cards=document.createElement('div');cards.className='tow-conversations';cards.tabIndex=0;cards.setAttribute('role','region');cards.setAttribute('aria-label','Towing offers and conversations; scroll up or down');panel.append(heading,note,status,cards);panel.hidden=true;
 let uid=null,epoch=0,application=null,pending=new Map(),assigned=new Map(),stops=[],busy=false;
 const offers=new Map(),offerStops=new Map(),chats=new Map(),chatStops=new Map(),drafts=new Map();
 const money=value=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(value);
@@ -69,8 +69,9 @@ function chat(parent,ride,offer){
  });
 }
 function render(){
+ const scrollTop=cards.scrollTop;
  const focus=document.activeElement,key=focus?.dataset?.towDraft,start=focus?.selectionStart,end=focus?.selectionEnd;
- cards.replaceChildren();const all=jobs();panel.hidden=!uid||(!driver&&!all.length)||(driver&&queue&&!['all','tow'].includes(queue.value)&&!all.some(ride=>ride.driverId===uid));
+ cards.replaceChildren();const all=jobs();cards.dataset.empty=String(!all.length);panel.hidden=!uid||(!driver&&!all.length)||(driver&&queue&&!['all','tow'].includes(queue.value)&&!all.some(ride=>ride.driverId===uid));
  if(!all.length){add(cards,'p','No active tow requests.');return;}
  for(const ride of all){
   const card=add(cards,'div',null,'tow-offer-card');add(card,'h3',ride.pickup+' → '+ride.dropoff);add(card,'p','Job: '+ride.id);
@@ -99,6 +100,7 @@ function render(){
    }
   }
  }
+ cards.scrollTop=scrollTop;
  if(key){const input=[...cards.querySelectorAll('[data-tow-draft]')].find(el=>el.dataset.towDraft===key);if(input&&!input.disabled){input.focus({preventScroll:true});if(input.tagName==='TEXTAREA'&&start!=null)input.setSelectionRange(start,end);}}
 }
 function reconcile(){
