@@ -1,3 +1,4 @@
+import {adminRecords, onAdminCalendar} from './admin-calendar.js';
 import { amounts, report360, dailyAccounts } from './admin-financials.js';
 import { serviceName, priceLabel } from './services.js';
 ﻿import {
@@ -31,6 +32,7 @@ let applicants = [];
 let stopRideListener = null;
 let stopApplicantListener = null;
 let stopPricingListener = null;
+let currentPricing = null;
 
 
 /* =========================================================
@@ -405,14 +407,16 @@ function showPanel(name) {
 
 function updateStats() {
 
+  const periodRides = adminRecords(rides,'rides');
+
   $('totalCount')
     .textContent =
-      rides.length;
+      periodRides.length;
 
 
   $('requestedCount')
     .textContent =
-      rides.filter(
+      periodRides.filter(
         ride =>
           ride.status ===
           'requested'
@@ -421,7 +425,7 @@ function updateStats() {
 
   $('activeCount')
     .textContent =
-      rides.filter(
+      periodRides.filter(
         ride =>
           [
             'accepted',
@@ -437,7 +441,7 @@ function updateStats() {
 
   $('completedCount')
     .textContent =
-      rides.filter(
+      periodRides.filter(
         ride =>
           ride.status ===
           'completed'
@@ -446,7 +450,7 @@ function updateStats() {
 
   $('cancelledCount')
     .textContent =
-      rides.filter(
+      periodRides.filter(
         ride =>
           ride.status ===
           'cancelled'
@@ -473,7 +477,7 @@ function getFilteredRides() {
       .value;
 
 
-  return rides.filter(
+  return adminRecords(rides,'rides').filter(
     ride => {
 
       if (
@@ -1438,7 +1442,7 @@ function applicantCard(
 function renderApplicants() {
 
   const newApplicants =
-    applicants.filter(
+    adminRecords(applicants,'newApplicants','new').filter(
       applicant =>
         applicantStatus(
           applicant
@@ -1447,7 +1451,7 @@ function renderApplicants() {
 
 
   const approved =
-    applicants.filter(
+    adminRecords(applicants,'approvedDrivers','approved').filter(
       applicant =>
         applicantStatus(
           applicant
@@ -1456,7 +1460,7 @@ function renderApplicants() {
 
 
   const suspended =
-    applicants.filter(
+    adminRecords(applicants,'suspendedDrivers','suspended').filter(
       applicant =>
         applicantStatus(
           applicant
@@ -2047,6 +2051,8 @@ function startLiveListeners() {
 
         const pricing =
           snapshot.data();
+        currentPricing = pricing;
+        renderPricingPeriod();
 
 
         $('baseFareInput')
@@ -2210,12 +2216,29 @@ document
 function renderFinancials() {
  const days = Number($('dailyReportDays').value);
  if($('dailyReportDays').checkValidity()) {
- const rows = dailyAccounts(rides, days);
+ const rows = dailyAccounts(adminRecords(rides,'rides'), 365);
  $('dailyAccounts').innerHTML = rows.length ? rows.map(row => '<tr><td>'+row.day+'</td><td>'+escapeHtml(row.role)+'</td><td>'+escapeHtml(row.name)+'<br>'+escapeHtml(row.id)+'</td><td>'+row.pending+'</td><td>'+row.active+'</td><td>'+row.completed+'</td><td>'+row.cancelled+'</td><td>'+money(row.total)+(row.estimated?' (estimate)':'')+(row.unpriced?' / '+row.unpriced+' unpriced':'')+'</td></tr>').join('') : '<tr><td colspan="8">No jobs in this period.</td></tr>';
  }
- const summary = report360(rides);
- $('financialSummary').textContent = 'Past 360 days: ' + summary.count + ' completed rides | Rider charges: ' + money(summary.rider) + ' | Driver earnings: ' + money(summary.driver) + (summary.excluded ? ' | Unpriced rides excluded: ' + summary.excluded : '');
+ const summary = report360(adminRecords(rides,'rides'), Date.now(), 365);
+ $('financialSummary').textContent = 'Selected dates: ' + summary.count + ' completed rides | Rider charges: ' + money(summary.rider) + ' | Driver earnings: ' + money(summary.driver) + (summary.excluded ? ' | Unpriced rides excluded: ' + summary.excluded : '');
  $('financialPeople').innerHTML = summary.people.map(person => '<tr><td>' + escapeHtml(person.role) + '</td><td>' + escapeHtml(person.name) + '<br>' + escapeHtml(person.id) + '</td><td>' + person.count + '</td><td>' + money(person.total) + (person.estimated ? ' (estimate)' : '') + '</td></tr>').join('');
 }
 
 $('dailyReportDays').addEventListener('change', () => { if ($('dailyReportDays').reportValidity()) renderFinancials(); });
+
+onAdminCalendar(() => { renderRides(); renderApplicants(); renderPricingPeriod(); });
+
+function renderPricingPeriod() {
+ const panel=$('panel-rates');
+ let summary=$('ratesPeriodStatus');
+ if(!summary){
+  summary=document.createElement('p');summary.id='ratesPeriodStatus';summary.setAttribute('role','status');
+  const edit=document.createElement('button');edit.type='button';edit.textContent='Edit current rates';
+  edit.onclick=()=>{for(const child of panel.children) if(child.dataset.currentRates==='true') child.hidden=false;};
+  panel.querySelector('.admin-calendar').after(summary,edit);
+  for(const child of panel.children) if(child!==summary && child!==edit && child.tagName!=='H2' && !child.querySelector('.admin-calendar')) child.dataset.currentRates='true';
+ }
+ const matches=currentPricing && adminRecords([currentPricing],'rates','rates').length>0;
+ summary.textContent=matches?'Current rates were updated within the selected dates.':currentPricing?'No dated rate settings in this period. You can still edit the current rates.':'Waiting for current rates...';
+ for(const child of panel.children) if(child.dataset.currentRates==='true') child.hidden=!matches;
+}

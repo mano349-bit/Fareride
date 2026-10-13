@@ -1,0 +1,7 @@
+.admin-calendar { margin: 18px 0; padding: 16px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; }
+.admin-calendar-fields { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.admin-calendar-fields label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 700; }
+.admin-calendar-fields input { padding: 10px; border: 1px solid #94a3b8; border-radius: 6px; font: inherit; min-width: 120px; }
+.admin-calendar-fields input[type=number] { width: 130px; }
+.admin-calendar-fields button { padding: 11px 16px; border: 0; border-radius: 6px; background: #1677ff; color: white; font-weight: 700; cursor: pointer; }
+.admin-calendar p { margin: 12px 0 0; font-size: 13px; line-height: 1.5; }

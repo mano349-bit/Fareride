@@ -1,3 +1,4 @@
+import {adminRecords, mountAdminCalendar, onAdminCalendar} from './admin-calendar.js';
 import { db } from "./firebase-session.js";
 import { observeAdmin } from './admin-session.js';
 import { collection, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
@@ -31,9 +32,12 @@ async function bulk(r,g,next){
  try{for(const id of a)await move(r,id,next)}catch(e){console.error(e);alert("Action failed. Check F12 Console.")}
 }
 function btn(t,c,f){const b=document.createElement("button");b.type="button";b.textContent=t;b.className=`fr7-a ${c}`;b.onclick=f;return b}
+const calendarCleanups=[];
+const selectedGroups={driver:"new",rider:"new"};
+const calendarKey=(r,g)=>g==='new'?(r==='driver'?'newApplicants':'riderApplicants'):g==='approved'?(r==='driver'?'approvedDrivers':'approvedRiders'):g==='suspended'?'suspendedDrivers':r+'Deleted';
 function group(r,g){
- const a=S[r].filter(x=>G[g].m(status(x))),p=document.createElement("section");p.className="fr7-g";
- const h=document.createElement("h3");h.textContent=`${G[g].label} (${a.length})`;p.append(h);
+ const a=adminRecords(S[r],calendarKey(r,g),g).filter(x=>G[g].m(status(x))),p=document.createElement("section");p.className="fr7-g";
+ const h=document.createElement("h3");h.textContent=`${G[g].label} (${a.length})`;p.append(h);calendarCleanups.push(mountAdminCalendar(p,calendarKey(r,g)));
  if(!a.length){const q=document.createElement("p");q.textContent="No applicants in this section.";p.append(q);return p}
  const t=document.createElement("div");t.className="fr7-tools";
  const lab=document.createElement("label"),all=document.createElement("input");all.type="checkbox";lab.append(all,document.createTextNode(" Select All"));t.append(lab);
@@ -56,13 +60,14 @@ function role(r){
  const w=document.createElement("div");w.className="fr7-role";const h=document.createElement("h2");h.textContent=r==="driver"?"Driver Applicant Manager":"Rider Applicant Manager";w.append(h);
  const tabs=document.createElement("div");tabs.className="fr7-tabs";const panes=document.createElement("div");
  ["new","approved","suspended","deleted"].forEach((g,i)=>{
-  const b=document.createElement("button");b.type="button";b.textContent=G[g].label;b.className="fr7-tab"+(i===0?" active":"");
-  const p=group(r,g);p.hidden=i!==0;
-  b.onclick=()=>{tabs.querySelectorAll("button").forEach(x=>x.classList.remove("active"));panes.querySelectorAll(".fr7-g").forEach(x=>x.hidden=true);b.classList.add("active");p.hidden=false};
+  const b=document.createElement("button");b.type="button";b.textContent=G[g].label;b.className="fr7-tab"+(g===selectedGroups[r]?" active":"");
+  const p=group(r,g);p.hidden=g!==selectedGroups[r];
+  b.onclick=()=>{selectedGroups[r]=g;tabs.querySelectorAll("button").forEach(x=>x.classList.remove("active"));panes.querySelectorAll(".fr7-g").forEach(x=>x.hidden=true);b.classList.add("active");p.hidden=false};
   tabs.append(b);panes.append(p);
  });w.append(tabs,panes);return w;
 }
 function render(){
+ calendarCleanups.splice(0).forEach(cleanup=>cleanup());
  let host=document.getElementById("fr7-fixed-host");
  if(!host){
   host=document.createElement("div");host.id="fr7-fixed-host";
@@ -74,10 +79,12 @@ function render(){
 }
 let timer;
 let authorized = false;
+onAdminCalendar(()=>{if(authorized)schedule();});
 const stops = [];
 const schedule=()=>{clearTimeout(timer);timer=setTimeout(render,100)};
 observeAdmin(approved => {
  authorized = approved;
+ calendarCleanups.splice(0).forEach(cleanup=>cleanup());
  stops.splice(0).forEach(stop => stop());
  clearTimeout(timer);
  S.driver = []; S.rider = [];

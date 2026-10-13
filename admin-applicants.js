@@ -1,3 +1,4 @@
+import {adminRecords, onAdminCalendar} from './admin-calendar.js';
 import { observeAdmin } from './admin-session.js';
 import {
   db,
@@ -1104,7 +1105,7 @@ function riderCard(applicant) {
 function renderDrivers() {
 
   const newDrivers =
-    driverApplicants.filter(
+    adminRecords(driverApplicants,'newApplicants','new').filter(
       item =>
         ![
           "approved",
@@ -1116,14 +1117,14 @@ function renderDrivers() {
 
 
   const approvedDrivers =
-    driverApplicants.filter(
+    adminRecords(driverApplicants,'approvedDrivers','approved').filter(
       item =>
         statusOf(item) === "approved"
     );
 
 
   const suspendedDrivers =
-    driverApplicants.filter(
+    adminRecords(driverApplicants,'suspendedDrivers','suspended').filter(
       item =>
         statusOf(item) === "suspended"
     );
@@ -1207,7 +1208,7 @@ function renderDrivers() {
 function renderRiders() {
 
   const pendingRiders =
-    riderApplicants.filter(
+    adminRecords(riderApplicants,'riderApplicants','new').filter(
       item =>
         ![
           "approved",
@@ -1219,7 +1220,7 @@ function renderRiders() {
 
 
   const approvedRiders =
-    riderApplicants.filter(
+    adminRecords(riderApplicants,'approvedRiders','approved').filter(
       item =>
         statusOf(item) === "approved"
     );
@@ -2344,3 +2345,5 @@ document.addEventListener(
 
   }
 );
+
+onAdminCalendar(() => { renderDrivers(); renderRiders(); });
