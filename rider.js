@@ -70,6 +70,7 @@ const $ = id =>
 
 let estimate = null;
 let unsubscribeRide = null;
+let watchedRideId = null;
 let estimateVersion = 0;
 let submitting = false;
 function selectedTip() {
@@ -236,6 +237,9 @@ function updateLocalRideFromFirestore(
 
 
 function watchRide(rideId) {
+  const listenerUID=auth.currentUser?.uid;
+  if(!listenerUID||!rideId)return;
+  watchedRideId=rideId;
 
   if (unsubscribeRide) {
     unsubscribeRide();
@@ -248,7 +252,7 @@ function watchRide(rideId) {
 
       snapshot => {
 
-        if (!snapshot.exists()) {
+        if (watchedRideId!==rideId||auth.currentUser?.uid!==listenerUID||!snapshot.exists()||snapshot.data().riderId!==listenerUID) {
           return;
         }
 
@@ -266,6 +270,8 @@ function watchRide(rideId) {
       },
 
       error => {
+        if(watchedRideId!==rideId||auth.currentUser?.uid!==listenerUID)return;
+        watchedRideId=null;
         console.error(
           'FareRide realtime listener error:',
           error
@@ -727,4 +733,8 @@ if (existingRideId) {
   );
 }
 
-window.addEventListener('fareride-ride-restored',event=>showRideStatus(event.detail));
+window.addEventListener('fareride-ride-restored',event=>{
+ const ride=event.detail;if(!ride||ride.riderId!==auth.currentUser?.uid)return;
+ updateLocalRideFromFirestore(ride.id,ride);showRideStatus(ride);
+ if(watchedRideId!==ride.id)watchRide(ride.id);
+});

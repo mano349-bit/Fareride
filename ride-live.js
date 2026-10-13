@@ -1,4 +1,4 @@
-import {latestCurrentRide} from './ride-recovery.js';
+import {latestCurrentRide} from './ride-recovery.js?v=20261013-live-acceptance';
 import {locationNotice} from './ride-location-notice.js';
 import { auth, db, doc, getDoc, updateDoc, onAuthStateChanged, onSnapshot, serverTimestamp, collection, query, where } from './firebase-session.js';
 import { ACTIVE_STATUSES, validCoordinates } from './ride-details.js';
@@ -58,21 +58,25 @@ function watch(id){
   if(rideId!==id)return;
   if(auth.currentUser?.uid!==expected||!snapshot.exists()){reset();return;}
   const next=snapshot.data();if(next[isDriver?'driverId':'riderId']!==expected){reset();return;}
-  ride=next;render();
+  applyRide(next,id);
+ },()=>{if(rideId!==id||auth.currentUser?.uid!==expected)return;locationError='Unable to access the live ride.';status.textContent=locationError;});
+}
+function applyRide(next,id){
+ if(!user||auth.currentUser?.uid!==user.uid||rideId!==id||next[isDriver?'driverId':'riderId']!==user.uid)return;
+ ride=next;render();
   if(!isDriver&&!contactAttempted&&ACTIVE_STATUSES.includes(ride.status)){
    contactAttempted=true;
    const name=profile.fullName||user.displayName||'Rider',phone=String(profile.phone||'');
    if(ride.riderName!==name||ride.riderPhone!==phone)updateDoc(doc(db,'rides',id),{riderName:name,riderPhone:phone}).catch(()=>{status.textContent='Unable to share your contact details. Retry after checking your profile.';});
   }
   if(!attempted&&ACTIVE_STATUSES.includes(ride.status))startLocation();
- },()=>{if(rideId!==id||auth.currentUser?.uid!==expected)return;locationError='Unable to access the live ride.';status.textContent=locationError;});
 }
 function discover(){
  discovery?.();if(!user)return;const discoveryUID=user.uid;
  discovery=onSnapshot(query(collection(db,'rides'),where(isDriver?'driverId':'riderId','==',user.uid)),snapshot=>{
   if(auth.currentUser?.uid!==discoveryUID||user?.uid!==discoveryUID)return;
   const job=latestCurrentRide(snapshot.docs.map(d=>({...d.data(),id:d.id})),user.uid,isDriver?'driver':'rider');
-  if(job)watch(job.id);else reset();
+  if(job){watch(job.id);applyRide(job,job.id);}else reset();
  },()=>{status.textContent='Unable to find your active ride.';});
 }
 onAuthStateChanged(auth,async next=>{
