@@ -3,156 +3,511 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+
 <title>Rate and tip your driver | FareRide</title>
+
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="styles.css">
-<script type="module" src="./fare-auth-guard.js?v=20261008-session2"></script>
+
+<script
+  type="module"
+  src="./fare-auth-guard.js?v=20261008-session2">
+</script>
+
 <style>
-.driver-rating { border:0; padding:0; margin:0 0 24px; }
-.driver-rating legend { font-size:20px; font-weight:700; margin-bottom:10px; }
-.rating-stars { display:flex; gap:8px; flex-wrap:wrap; }
-.rating-stars label { position:relative; display:inline-flex; }
-.rating-stars input { position:absolute; opacity:0; width:100%; height:100%; margin:0; cursor:pointer; }
-.rating-stars span { display:inline-flex; align-items:center; justify-content:center; width:48px; height:48px; font-size:36px; border:2px solid #cbd5e1; border-radius:10px; color:#64748b; background:white; }
-.rating-stars input:focus-visible + span { outline:3px solid #1677ff; outline-offset:3px; }
-.rating-stars span.selected { color:#a86600; background:#fff7db; border-color:#a86600; }
+.driver-rating {
+  border: 0;
+  padding: 0;
+  margin: 0 0 24px;
+}
+
+.driver-rating legend {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.rating-stars {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rating-stars label {
+  position: relative;
+  display: inline-flex;
+}
+
+.rating-stars input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+}
+
+.rating-stars span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  font-size: 36px;
+  border: 2px solid #cbd5e1;
+  border-radius: 10px;
+  color: #64748b;
+  background: white;
+}
+
+.rating-stars input:focus-visible + span {
+  outline: 3px solid #1677ff;
+  outline-offset: 3px;
+}
+
+.rating-stars span.selected {
+  color: #a86600;
+  background: #fff7db;
+  border-color: #a86600;
+}
 </style>
 </head>
+
 <body>
-<header><h1>FareRide</h1><a href="rider.html">Home</a></header>
+<header>
+  <h1>FareRide</h1>
+  <a href="rider.html">Home</a>
+</header>
+
 <main>
 <section class="card">
-<h2>Your ride has ended</h2>
-<p id="rideDetails"></p>
-<p id="tipStatus" role="status" aria-live="polite">Loading your completed ride…</p>
-<form id="completedTipForm" hidden>
-<fieldset class="driver-rating">
-<legend>Rate your driver (optional)</legend>
-<div class="rating-stars">
-<label><input type="radio" name="driverRating" value="1" aria-label="1 star"><span aria-hidden="true">☆</span></label>
-<label><input type="radio" name="driverRating" value="2" aria-label="2 stars"><span aria-hidden="true">☆</span></label>
-<label><input type="radio" name="driverRating" value="3" aria-label="3 stars"><span aria-hidden="true">☆</span></label>
-<label><input type="radio" name="driverRating" value="4" aria-label="4 stars"><span aria-hidden="true">☆</span></label>
-<label><input type="radio" name="driverRating" value="5" aria-label="5 stars"><span aria-hidden="true">☆</span></label>
-</div>
-<p id="driverRatingDescription" aria-live="polite">Tap a star to rate your driver.</p>
-<button type="button" id="clearDriverRating">Clear rating</button>
-</fieldset>
-<fieldset id="tipOptions" style="border:0;padding:0;margin:0">
-<label>Driver tip
-<select id="tipPercent">
-<option value="0">No tip</option><option value="10">10%</option>
-<option value="15">15%</option><option value="20">20%</option>
-<option value="custom">Custom percentage</option>
-</select></label>
-<label id="customTipLabel" hidden>Custom tip (%)
-<input id="customTipPercent" type="number" min="0" max="100" step="0.1" value="0">
-</label>
-<p id="completedTipPreview" aria-live="polite"></p>
-<p>Tips go to the driver. This records the tip; no payment is charged here.</p>
-</fieldset>
-<button id="submitCompletedTip" type="submit">Save rating and tip</button>
-</form>
-<a id="backHome" href="rider.html" style="display:block;text-align:center;margin-top:20px;padding:16px;background:#1677ff;color:white;border-radius:12px;font-weight:700;text-decoration:none">Back Home</a>
+  <h2>Your ride has ended</h2>
+
+  <p id="rideDetails"></p>
+
+  <p id="tipStatus" role="status" aria-live="polite">
+    Loading your completed ride…
+  </p>
+
+  <form id="completedTipForm" hidden>
+    <fieldset class="driver-rating">
+      <legend>Rate your driver (optional)</legend>
+
+      <div class="rating-stars">
+        <label>
+          <input
+            type="radio"
+            name="driverRating"
+            value="1"
+            aria-label="1 star">
+          <span aria-hidden="true">☆</span>
+        </label>
+
+        <label>
+          <input
+            type="radio"
+            name="driverRating"
+            value="2"
+            aria-label="2 stars">
+          <span aria-hidden="true">☆</span>
+        </label>
+
+        <label>
+          <input
+            type="radio"
+            name="driverRating"
+            value="3"
+            aria-label="3 stars">
+          <span aria-hidden="true">☆</span>
+        </label>
+
+        <label>
+          <input
+            type="radio"
+            name="driverRating"
+            value="4"
+            aria-label="4 stars">
+          <span aria-hidden="true">☆</span>
+        </label>
+
+        <label>
+          <input
+            type="radio"
+            name="driverRating"
+            value="5"
+            aria-label="5 stars">
+          <span aria-hidden="true">☆</span>
+        </label>
+      </div>
+
+      <p id="driverRatingDescription" aria-live="polite">
+        Tap a star to rate your driver.
+      </p>
+
+      <button type="button" id="clearDriverRating">
+        Clear rating
+      </button>
+    </fieldset>
+
+    <fieldset
+      id="tipOptions"
+      style="border:0;padding:0;margin:0">
+
+      <label>
+        Driver tip
+        <select id="tipPercent">
+          <option value="0">No tip</option>
+          <option value="10">10%</option>
+          <option value="15">15%</option>
+          <option value="20">20%</option>
+          <option value="custom">Custom percentage</option>
+        </select>
+      </label>
+
+      <label id="customTipLabel" hidden>
+        Custom tip (%)
+        <input
+          id="customTipPercent"
+          type="number"
+          min="0"
+          max="100"
+          step="0.1"
+          value="0">
+      </label>
+
+      <p id="completedTipPreview" aria-live="polite"></p>
+
+      <p>
+        Tips go to the driver. This records the tip;
+        no payment is charged here.
+      </p>
+    </fieldset>
+
+    <button id="submitCompletedTip" type="submit">
+      Save rating and tip
+    </button>
+  </form>
+
+  <a
+    id="backHome"
+    href="rider.html"
+    style="
+      display:block;
+      text-align:center;
+      margin-top:20px;
+      padding:16px;
+      background:#1677ff;
+      color:white;
+      border-radius:12px;
+      font-weight:700;
+      text-decoration:none
+    ">
+    Back Home
+  </a>
 </section>
 </main>
+
 <script type="module">
-import {auth,db,doc,getDoc,onAuthStateChanged} from './firebase-session.js';
-import {runTransaction} from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
-import {canTip,tipValues} from './rider-tip-state.js';
-const form=document.getElementById('completedTipForm');
-const status=document.getElementById('tipStatus');
-const choice=document.getElementById('tipPercent');
-const custom=document.getElementById('customTipPercent');
-const submit=document.getElementById('submitCompletedTip');
-const id=new URLSearchParams(location.search).get('ride');
-let ride=null,uid=null,generation=0;
-const ratingInputs=[...form.querySelectorAll('input[name="driverRating"]')];
-function displayRating(){
-  const selected=Number(ratingInputs.find(input=>input.checked)?.value)||0;
-  for(const input of ratingInputs){
-    input.nextElementSibling.classList.toggle('selected',Number(input.value)<=selected);
-    input.nextElementSibling.textContent=Number(input.value)<=selected?'★':'☆';
+import {
+  auth,
+  db,
+  doc,
+  getDoc,
+  onAuthStateChanged
+} from './firebase-session.js';
+
+import {
+  runTransaction
+} from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
+
+import {
+  canTip,
+  tipValues
+} from './rider-tip-state.js';
+
+const form = document.getElementById('completedTipForm');
+const status = document.getElementById('tipStatus');
+const choice = document.getElementById('tipPercent');
+const custom = document.getElementById('customTipPercent');
+const submit = document.getElementById('submitCompletedTip');
+const backHome = document.getElementById('backHome');
+
+const id = new URLSearchParams(location.search).get('ride');
+
+let ride = null;
+let uid = null;
+let generation = 0;
+
+const ratingInputs = [
+  ...form.querySelectorAll('input[name="driverRating"]')
+];
+
+function displayRating() {
+  const selected =
+    Number(ratingInputs.find(input => input.checked)?.value) || 0;
+
+  for (const input of ratingInputs) {
+    const highlighted = Number(input.value) <= selected;
+
+    input.nextElementSibling.classList.toggle(
+      'selected',
+      highlighted
+    );
+
+    input.nextElementSibling.textContent =
+      highlighted ? '★' : '☆';
   }
-  document.getElementById('driverRatingDescription').textContent=selected?selected+' out of 5 stars':'Tap a star to rate your driver.';
+
+  document.getElementById('driverRatingDescription').textContent =
+    selected
+      ? selected + ' out of 5 stars'
+      : 'Tap a star to rate your driver.';
 }
-for(const input of ratingInputs)input.addEventListener('change',displayRating);
-document.getElementById('clearDriverRating').onclick=()=>{for(const input of ratingInputs)input.checked=false;displayRating();};
-const money=n=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(n);
-function home(){
-  const url=new URL('rider.html',location.href).href;
+
+for (const input of ratingInputs) {
+  input.addEventListener('change', displayRating);
+}
+
+document.getElementById('clearDriverRating').onclick = () => {
+  for (const input of ratingInputs) {
+    input.checked = false;
+  }
+
+  displayRating();
+};
+
+const money = value =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(value);
+
+function home() {
+  const url = new URL('rider.html', location.href).href;
+
   try {
-    if(window.opener && !window.opener.closed && window.opener.location.origin===location.origin){
-      window.opener.location.href=url;
+    if (
+      window.opener &&
+      !window.opener.closed &&
+      window.opener.location.origin === location.origin
+    ) {
+      window.opener.location.href = url;
       window.opener.focus();
       window.close();
     }
   } catch {}
+
   location.replace(url);
 }
-document.getElementById('backHome').onclick=event=>{event.preventDefault();home();};
-function preview(){
-  const isCustom=choice.value==='custom';
-  document.getElementById('customTipLabel').hidden=!isCustom;
-  custom.required=isCustom;
-  custom.disabled=!isCustom;
-  try {
-    const values=tipValues(ride.fare,isCustom?custom.valueAsNumber:Number(choice.value));
-    document.getElementById('completedTipPreview').textContent='Tip: '+money(values.tipAmount)+' | Total: '+money(values.totalFare);
-  } catch {document.getElementById('completedTipPreview').textContent='Enter a tip percentage from 0 to 100.';}
-}
-choice.onchange=preview;custom.oninput=preview;
-onAuthStateChanged(auth,async user=>{
-  const check=++generation;form.hidden=true;submit.disabled=false;ride=null;uid=null;for(const input of ratingInputs)input.checked=false;displayRating();
-  if(!user){status.textContent='Sign in to tip your driver.';return;}
-  if(!id || id.includes('/')){status.textContent='No valid completed ride was selected.';return;}
-  try {
-    const snapshot=await getDoc(doc(db,'rides',id));
-    if(check!==generation||auth.currentUser?.uid!==user.uid)return;
-    if(!snapshot.exists()||snapshot.data().riderId!==user.uid){status.textContent='This ride is unavailable.';return;}
-    const next=snapshot.data();
-    if(next.status!=='completed'){status.textContent='Tipping is available after your ride ends.';return;}
-    uid=user.uid;ride=next;
-    for(const input of ratingInputs)input.checked=Number(input.value)===Number(ride.driverRating);
-    displayRating();
-    document.getElementById('rideDetails').textContent='Driver: '+(ride.driverName||'Your driver')+' | '+(ride.pickup||'')+' to '+(ride.dropoff||'');
-    status.textContent='Rate your driver and choose a tip or No tip. Your rating is optional.';
-    const tippingAvailable=canTip(ride,uid);
-    document.getElementById('tipOptions').hidden=!tippingAvailable;
-    choice.disabled=!tippingAvailable;custom.disabled=true;custom.required=false;
-    submit.textContent=tippingAvailable?'Save rating and tip':'Save driver rating';
-    if(!tippingAvailable)status.textContent=ride.tipSubmitted||Number(ride.tipAmount)>0?'Your tip is already recorded. You can still rate your driver.':'You can rate your driver now. Tipping is unavailable until the final fare is confirmed.';
-    form.hidden=false;if(tippingAvailable)preview();
-  } catch {status.textContent='Unable to load your ride. Refresh to retry.';}
-});
-form.onsubmit=async event=>{
+
+backHome.onclick = event => {
   event.preventDefault();
-  if(submit.disabled||!ride||auth.currentUser?.uid!==uid)return;
-  if(!form.reportValidity())return;
-  const percent=choice.value==='custom'?custom.valueAsNumber:Number(choice.value);
-  const driverRating=Number(ratingInputs.find(input=>input.checked)?.value)||null;
-  submit.disabled=true;status.textContent='Saving your rating and tip…';
-  try {
-    await runTransaction(db,async transaction=>{
-      if(auth.currentUser?.uid!==uid)throw new Error('Sign in again before submitting.');
-      const ref=doc(db,'rides',id),snapshot=await transaction.get(ref);
-      const current=snapshot.exists()?snapshot.data():null;
-      if(current?.riderId!==uid||current.status!=='completed')throw new Error('Only your completed ride can be reviewed.');
-      const values=canTip(current,uid)?tipValues(current.fare,percent):{};
-      if(driverRating!==null)values.driverRating=driverRating;
-      if(Object.keys(values).length)transaction.update(ref,values);
-    });
-    if(auth.currentUser?.uid===uid){
-      form.hidden=true;
-      status.textContent='Thank you! Your choices have been saved. Tap Back Home to return to the rider page.';
-      document.getElementById('backHome').focus();
-    }
-  } catch(error) {
-    status.textContent=error.code==='permission-denied'?'Rating and tip were not saved. Check ride permissions and retry.':(error.message||'Rating and tip were not saved. Please retry.');
-    submit.disabled=false;
-  }
+  home();
 };
 
+function preview() {
+  const isCustom = choice.value === 'custom';
+
+  document.getElementById('customTipLabel').hidden = !isCustom;
+  custom.required = isCustom;
+  custom.disabled = !isCustom;
+
+  try {
+    const percent = isCustom
+      ? custom.valueAsNumber
+      : Number(choice.value);
+
+    const values = tipValues(ride.fare, percent);
+
+    document.getElementById('completedTipPreview').textContent =
+      'Tip: ' + money(values.tipAmount) +
+      ' | Total: ' + money(values.totalFare);
+  } catch {
+    document.getElementById('completedTipPreview').textContent =
+      'Enter a tip percentage from 0 to 100.';
+  }
+}
+
+choice.onchange = preview;
+custom.oninput = preview;
+
+onAuthStateChanged(auth, async user => {
+  const check = ++generation;
+
+  form.hidden = true;
+  submit.disabled = false;
+  ride = null;
+  uid = null;
+
+  for (const input of ratingInputs) {
+    input.checked = false;
+  }
+
+  displayRating();
+
+  if (!user) {
+    status.textContent = 'Sign in to tip your driver.';
+    return;
+  }
+
+  if (!id || id.includes('/')) {
+    status.textContent = 'No valid completed ride was selected.';
+    return;
+  }
+
+  try {
+    const snapshot = await getDoc(doc(db, 'rides', id));
+
+    if (
+      check !== generation ||
+      auth.currentUser?.uid !== user.uid
+    ) {
+      return;
+    }
+
+    if (
+      !snapshot.exists() ||
+      snapshot.data().riderId !== user.uid
+    ) {
+      status.textContent = 'This ride is unavailable.';
+      return;
+    }
+
+    const next = snapshot.data();
+
+    if (next.status !== 'completed') {
+      status.textContent =
+        'Tipping is available after your ride ends.';
+      return;
+    }
+
+    uid = user.uid;
+    ride = next;
+
+    for (const input of ratingInputs) {
+      input.checked =
+        Number(input.value) === Number(ride.driverRating);
+    }
+
+    displayRating();
+
+    document.getElementById('rideDetails').textContent =
+      'Driver: ' + (ride.driverName || 'Your driver') +
+      ' | ' + (ride.pickup || '') +
+      ' to ' + (ride.dropoff || '');
+
+    status.textContent =
+      'Rate your driver and choose a tip or No tip. ' +
+      'Your rating is optional.';
+
+    const tippingAvailable = canTip(ride, uid);
+
+    document.getElementById('tipOptions').hidden =
+      !tippingAvailable;
+
+    choice.disabled = !tippingAvailable;
+    custom.disabled = true;
+    custom.required = false;
+
+    submit.textContent = tippingAvailable
+      ? 'Save rating and tip'
+      : 'Save driver rating';
+
+    if (!tippingAvailable) {
+      status.textContent =
+        ride.tipSubmitted || Number(ride.tipAmount) > 0
+          ? 'Your tip is already recorded. You can still rate your driver.'
+          : 'You can rate your driver now. Tipping is unavailable until the final fare is confirmed.';
+    }
+
+    form.hidden = false;
+
+    if (tippingAvailable) {
+      preview();
+    }
+  } catch {
+    status.textContent =
+      'Unable to load your ride. Refresh to retry.';
+  }
+});
+
+form.onsubmit = async event => {
+  event.preventDefault();
+
+  if (
+    submit.disabled ||
+    !ride ||
+    auth.currentUser?.uid !== uid
+  ) {
+    return;
+  }
+
+  if (!form.reportValidity()) return;
+
+  const percent = choice.value === 'custom'
+    ? custom.valueAsNumber
+    : Number(choice.value);
+
+  const driverRating =
+    Number(ratingInputs.find(input => input.checked)?.value) ||
+    null;
+
+  submit.disabled = true;
+  status.textContent = 'Saving your rating and tip…';
+
+  try {
+    await runTransaction(db, async transaction => {
+      if (auth.currentUser?.uid !== uid) {
+        throw new Error('Sign in again before submitting.');
+      }
+
+      const reference = doc(db, 'rides', id);
+      const snapshot = await transaction.get(reference);
+      const current = snapshot.exists()
+        ? snapshot.data()
+        : null;
+
+      if (
+        current?.riderId !== uid ||
+        current.status !== 'completed'
+      ) {
+        throw new Error(
+          'Only your completed ride can be reviewed.'
+        );
+      }
+
+      const values = canTip(current, uid)
+        ? tipValues(current.fare, percent)
+        : {};
+
+      if (driverRating !== null) {
+        values.driverRating = driverRating;
+      }
+
+      if (Object.keys(values).length) {
+        transaction.update(reference, values);
+      }
+    });
+
+    if (auth.currentUser?.uid === uid) {
+      form.hidden = true;
+
+      status.textContent =
+        'Thank you! Your choices have been saved. ' +
+        'Tap Back Home to return to the rider page.';
+
+      backHome.focus();
+    }
+  } catch (error) {
+    status.textContent =
+      error.code === 'permission-denied'
+        ? 'Rating and tip were not saved. Check ride permissions and retry.'
+        : error.message ||
+          'Rating and tip were not saved. Please retry.';
+
+    submit.disabled = false;
+  }
+};
 </script>
 </body>
 </html>
