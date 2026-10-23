@@ -1,3 +1,4 @@
+import {openCompletedTip} from './rider-tip-prompt.js?v=20261023-post-ride';
 import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
 import {phoneNumber} from './ride-ui.js';
 import {latestCurrentRide} from './ride-recovery.js?v=20261013-live-acceptance';
@@ -34,6 +35,7 @@ function applyRide(nextRide){
     panel.querySelector('#tripDetails').textContent='Job ID: '+nextRide.id+'\nPickup: '+(currentRide.pickup||'')+'\nDestination: '+(currentRide.dropoff||'')+'\nDriver: '+(currentRide.driverName||'Waiting for assignment')+'\nVehicle: '+([currentRide.vehicleYear,currentRide.vehicleMake,currentRide.vehicleModel].filter(Boolean).join(' ')||'Waiting for vehicle details')+'\nTelephone: '+(currentRide.driverPhone||'Not provided');
     const call=panel.querySelector('#tripCallDriver'),number=phoneNumber(currentRide.driverPhone);call.hidden=!number||state.finished;call.textContent='Call driver: '+(currentRide.driverPhone||'');if(number&&!state.finished)call.href='tel:'+number;else call.removeAttribute('href');
     window.dispatchEvent(new CustomEvent('fareride-ride-restored',{detail:currentRide}));
+    openCompletedTip(currentRide);
     panel.querySelector('#riderProgress').innerHTML = riderProgress(currentRide.status);
     cancel.hidden = !state.canCancel; cancel.disabled = false;
 }

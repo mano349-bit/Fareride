@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Driver tip | FareRide</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="styles.css">
+<script type="module" src="./fare-auth-guard.js?v=20261008-session2"></script>
+</head>
+<body>
+<header><h1>FareRide</h1><a href="rider.html">Home</a></header>
+<main>
+<section class="card">
+<h2>Your ride has ended</h2>
+<p id="rideDetails"></p>
+<p id="tipStatus" role="status" aria-live="polite">Loading your completed ride…</p>
+<form id="completedTipForm" hidden>
+<label>Driver tip
+<select id="tipPercent">
+<option value="0">No tip</option><option value="10">10%</option>
+<option value="15">15%</option><option value="20">20%</option>
+<option value="custom">Custom percentage</option>
+</select></label>
+<label id="customTipLabel" hidden>Custom tip (%)
+<input id="customTipPercent" type="number" min="0" max="100" step="0.1" value="0">
+</label>
+<p id="completedTipPreview" aria-live="polite"></p>
+<p>Tips go to the driver. This records the tip; no payment is charged here.</p>
+<button id="submitCompletedTip" type="submit">Submit tip and return Home</button>
+</form>
+</section>
+</main>
+<script type="module" src="rider-tip.js?v=20261023-post-ride"></script>
+</body>
+</html>
