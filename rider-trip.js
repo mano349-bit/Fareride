@@ -10,7 +10,8 @@ const panel = document.createElement('section');
 panel.style.cssText = 'padding:20px;margin:20px 0;border:1px solid #ccc;border-radius:12px;background:white';
 panel.hidden = true;
 panel.innerHTML = '<h2>Your Trip</h2><p id="tripStage" role="status" aria-live="polite"></p><p id="tripDetails" style="white-space:pre-line"></p><a id="tripCallDriver" hidden style="padding:12px 16px;margin:12px 0;background:#0875e1;color:white;border-radius:8px;font-weight:700;text-decoration:none">Call driver</a><div id="riderProgress"></div><button type="button" id="cancelTrip">Cancel Ride</button><p id="tripActionMessage" role="status"></p>';
-document.querySelector('main').prepend(panel);
+const rideForm=document.getElementById('rideForm');
+if(rideForm)rideForm.after(panel);else document.querySelector('main').prepend(panel);
 const stage = panel.querySelector('#tripStage'), cancel = panel.querySelector('#cancelTrip'), message = panel.querySelector('#tripActionMessage');
 let stop = null, discovery=null, uid = null, id = null, currentRide = null, generation=0;
 function clear() { stop?.(); stop = null; panel.hidden = true; currentRide = null; id = null; }
