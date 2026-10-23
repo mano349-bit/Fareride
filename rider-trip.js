@@ -1,4 +1,4 @@
-import {openCompletedTip} from './rider-tip-prompt.js?v=20261023-feedback-recovery';
+import {openCompletedTip} from './rider-tip-prompt.js?v=20261023-permitted-feedback';
 import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
 import {phoneNumber} from './ride-ui.js';
 import {latestCurrentRide} from './ride-recovery.js?v=20261013-live-acceptance';
