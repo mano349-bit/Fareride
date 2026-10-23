@@ -51,7 +51,7 @@
   position:relative; display:inline-flex; align-items:center;
   min-height:44px; margin:0; padding:0;
   border:0; border-radius:0; background:transparent;
-  color:#15803d; font-weight:800; cursor:pointer; text-decoration:underline;
+  color:#15803d; font-size:18px; font-weight:900; cursor:pointer; text-decoration:underline;
   text-underline-offset:3px;
 }
 #rideForm .service-picker label:has(input:checked) {
