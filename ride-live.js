@@ -9,7 +9,9 @@ const section = document.createElement('section');
 section.style.cssText = 'max-width:900px;margin:20px auto;padding:20px;background:white;border:1px solid #ccc;border-radius:12px';
 section.hidden = true;
 section.innerHTML = '<h2>Rider and driver live map</h2><p id="liveDriverDetails"></p><a id="liveDriverPhone" hidden></a><p id="liveMapStatus" role="status"></p><p>Location shares automatically while this page is open. Allow location access when asked.</p><button type="button" hidden>Retry location</button><div style="position:relative;margin-top:16px"><div id="rideLiveMap" style="height:360px"></div><div id="rideMapPeople" aria-label="Rider and driver information" style="position:absolute;top:10px;right:10px;z-index:1000;max-width:75%;padding:10px 12px;background:white;border:1px solid #aac8e6;border-radius:8px;box-shadow:0 2px 8px #0002;white-space:pre-line;font-size:14px;pointer-events:none"></div></div>';
-if(isDriver)document.querySelector('main').append(section);else document.querySelector('main').prepend(section);
+if(isDriver)document.querySelector('main').append(section);
+else if(document.getElementById('riderMapSlot'))document.getElementById('riderMapSlot').append(section);
+else document.querySelector('main').prepend(section);
 const status = section.querySelector('#liveMapStatus'), button = section.querySelector('button');
 if(!isDriver){button.textContent='Share my location';button.hidden=false;button.style.cssText='padding:12px 16px;background:#0875e1;color:white;border:0;border-radius:8px;font-weight:700';}
 let user=null, profile=null, ride=null, rideId=null, stop=null, discovery=null, gps=null, lastSent=0, attempted=false;
