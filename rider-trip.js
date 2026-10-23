@@ -1,8 +1,8 @@
-import {openCompletedTip} from './rider-tip-prompt.js?v=20261023-feedback2';
+import {openCompletedTip} from './rider-tip-prompt.js?v=20261023-inline-feedback';
 import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
 import {phoneNumber} from './ride-ui.js';
 import {latestCurrentRide} from './ride-recovery.js?v=20261013-live-acceptance';
-import {riderProgress} from './rider-progress.js?v=20261023-compact';
+import {riderProgress} from './rider-progress.js?v=20261023-completion';
 import {
   auth,
   db,
@@ -157,13 +157,12 @@ function applyRide(nextRide) {
     })
   );
 
-  openCompletedTip(currentRide);
-
   panel.querySelector('#riderProgress').innerHTML =
     riderProgress(currentRide.status);
 
   cancel.hidden = !state.canCancel;
   cancel.disabled = false;
+  openCompletedTip(currentRide);
 }
 
 function discover() {
@@ -191,6 +190,9 @@ function discover() {
         ...document.data(),
         id: document.id
       }));
+
+      const updatedCurrent = rides.find(ride => ride.id === id);
+      if (updatedCurrent) applyRide(updatedCurrent);
 
       const active = latestCurrentRide(
         rides,
