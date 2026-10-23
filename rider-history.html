@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My rides, ratings and tips | FareRide</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="table-fit.css">
+<style>
+header { flex-wrap:wrap; gap:12px; }
+header h1 { margin:0; font-size:24px; }
+header a { color:#075fd8; font-weight:700; padding:12px 0; }
+main { padding-top:16px; }
+main input, main select, main textarea { max-width:100%; }
+main textarea { font:inherit; }
+</style>
+<script type="module" src="./fare-auth-guard.js?v=20261008-session2"></script>
+</head>
+<body>
+<header>
+<h1>FareRide Rider</h1>
+<a href="rider.html">Home</a>
+</header>
+<main aria-label="My rides, ratings and tips"></main>
+<script type="module" src="ride-reviews.js?v=20261013-rider-jobs"></script>
+<script type="module" src="table-fit.js"></script>
+<script type="module" src="connection-status.js"></script>
+<script type="module" src="ride-logout.js"></script>
+</body>
+</html>
