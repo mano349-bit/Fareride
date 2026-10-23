@@ -4,7 +4,7 @@ import {nearestDrivers} from './nearby-drivers-state.js';
 import {validCoordinates} from './ride-details.js';
 const panel=document.createElement('section');panel.className='card';panel.style.cssText='margin:20px auto;padding:20px';
 panel.innerHTML='<h2>Nearest drivers within 20 miles</h2><p role="status">Share your location or calculate a pickup route to find nearby drivers.</p><ol></ol>';
-const message=panel.querySelector('p'),list=panel.querySelector('ol');document.getElementById('riderPreviewMap')?.closest('section').after(panel);
+const message=panel.querySelector('p'),list=panel.querySelector('ol');document.querySelector('#rideForm .service-picker')?.before(panel);
 let origin,drivers=[],stop,uid,mode='GPS location';
 const service=()=>document.querySelector('[name="serviceType"]:checked')?.value||document.getElementById('serviceType')?.value||'ride';
 function render(){
