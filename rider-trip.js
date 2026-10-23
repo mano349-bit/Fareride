@@ -1,4 +1,4 @@
-import {openCompletedTip} from './rider-tip-prompt.js?v=20261023-inline-feedback';
+import {openCompletedTip} from './rider-tip-prompt.js?v=20261023-feedback-recovery';
 import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
 import {phoneNumber} from './ride-ui.js';
 import {latestCurrentRide} from './ride-recovery.js?v=20261013-live-acceptance';
@@ -162,7 +162,7 @@ function applyRide(nextRide) {
 
   cancel.hidden = !state.canCancel;
   cancel.disabled = false;
-  openCompletedTip(currentRide);
+  openCompletedTip(currentRide, panel);
 }
 
 function discover() {
@@ -211,7 +211,19 @@ function discover() {
         watch(active.id);
         applyRide(active);
       } else {
-        watch();
+        let savedId;
+        try { savedId = localStorage.getItem('fareride_last_ride_id'); } catch {}
+        const completed = rides.find(ride => ride.id === (id || savedId) && ride.status === 'completed')
+          || rides.filter(ride => ride.status === 'completed').sort((a,b) => {
+            const time = ride => ride.completedAt?.toMillis?.() || new Date(ride.completedAt || ride.requestedAt || 0).getTime() || 0;
+            return time(b) - time(a);
+          })[0];
+        if (completed) {
+          watch(completed.id);
+          applyRide(completed);
+        } else {
+          watch();
+        }
       }
     },
     () => {
