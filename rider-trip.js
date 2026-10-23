@@ -70,6 +70,7 @@ let uid = null;
 let id = null;
 let currentRide = null;
 let generation = 0;
+const feedbackRide = new URLSearchParams(location.search).get('feedbackRide');
 
 function clear() {
   stop?.();
@@ -190,6 +191,13 @@ function discover() {
         ...document.data(),
         id: document.id
       }));
+
+      const requestedFeedback = rides.find(ride => ride.id === feedbackRide && ride.status === 'completed');
+      if (requestedFeedback) {
+        watch(requestedFeedback.id);
+        applyRide(requestedFeedback);
+        return;
+      }
 
       const updatedCurrent = rides.find(ride => ride.id === id);
       if (updatedCurrent) applyRide(updatedCurrent);
