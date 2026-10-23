@@ -3,18 +3,18 @@ import {runTransaction} from 'https://www.gstatic.com/firebasejs/12.0.0/firebase
 import {canTip,tipValues} from './rider-tip-state.js';
 let panel=null, currentId=null;
 onAuthStateChanged(auth,()=>{panel?.remove();panel=null;currentId=null;});
-export function openCompletedTip(ride) {
+export function openCompletedTip(ride, host = document.getElementById('riderProgress')?.closest('section')) {
  const uid=auth.currentUser?.uid;
  if(!uid||ride?.riderId!==uid||ride.status!=='completed'||!ride.id||ride.id.includes('/'))return;
- if(currentId===ride.id)return;
- panel?.remove();currentId=ride.id;
+ if(!host)return;
+ host.hidden=false;
+ if(currentId===ride.id&&panel?.isConnected){panel.hidden=false;return;}
+ panel?.remove();
  panel=document.createElement('section');panel.className='card';
  panel.style.cssText='padding:20px;margin:16px 0;background:white;border:1px solid #cbd5e1;border-radius:12px';
  panel.innerHTML='<h3>Rate and tip your driver</h3><form><label>Driver rating (optional)<select name="rating"><option value="">Choose rating</option><option value="1">★ 1 star</option><option value="2">★★ 2 stars</option><option value="3">★★★ 3 stars</option><option value="4">★★★★ 4 stars</option><option value="5">★★★★★ 5 stars</option></select></label><fieldset style="border:0;padding:0"><label>Driver tip<select name="tip"><option value="0">No tip</option><option value="10">10%</option><option value="15">15%</option><option value="20">20%</option><option value="custom">Custom percentage</option></select></label><label hidden>Custom tip (%)<input name="custom" type="number" min="0" max="100" step="0.1" value="0"></label><p data-preview aria-live="polite"></p><p>Tips go to the driver. This records the tip; no payment is charged here.</p></fieldset><button type="submit">Save rating and tip</button><button type="button" data-later>Not now</button></form><p role="status" aria-live="polite"></p>';
- const host=document.getElementById('riderProgress')?.closest('section');
- if(!host)return;
- host.append(panel);
- const form=panel.querySelector('form'),rating=form.elements.rating,choice=form.elements.tip,custom=form.elements.custom;
+ host.append(panel);currentId=ride.id;
+ const form=panel.querySelector('form'),rating=form.elements.namedItem('rating'),choice=form.elements.namedItem('tip'),custom=form.elements.namedItem('custom');
  const tipBox=form.querySelector('fieldset'),submit=form.querySelector('[type="submit"]'),status=panel.querySelector('[role="status"]');
  rating.value=ride.driverRating||'';
  const eligible=canTip(ride,uid);tipBox.hidden=!eligible;
