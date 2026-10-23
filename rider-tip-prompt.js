@@ -31,17 +31,27 @@ export function openCompletedTip(ride, host = document.getElementById('riderProg
   const selectedRating=Number(rating.value)||null,selectedPercent=percent();
   submit.disabled=true;status.textContent='Saving…';
   try{
-   await runTransaction(db,async transaction=>{
-    if(auth.currentUser?.uid!==uid)throw Error('Sign in again before submitting.');
-    const ref=doc(db,'rides',ride.id),snapshot=await transaction.get(ref),current=snapshot.exists()?snapshot.data():null;
-    if(current?.riderId!==uid||current.status!=='completed')throw Error('Only your completed ride can be reviewed.');
-    const values=canTip(current,uid)?tipValues(current.fare,selectedPercent):{};
-    if(selectedRating!==null)values.driverRating=selectedRating;
-    if(Object.keys(values).length)transaction.update(ref,values);
-   });
+   await saveCompletedFeedback(ride.id,uid,selectedRating,selectedPercent);
    if(auth.currentUser?.uid!==uid)return;
    form.hidden=true;status.textContent='Thank you! Your choices have been saved.';
   }catch(error){status.textContent=error.message||'Unable to save. Please retry.';submit.disabled=false;}
  };
  panel.scrollIntoView?.({behavior:'smooth',block:'nearest'});
+}
+
+export async function saveCompletedFeedback(rideId, uid, selectedRating, selectedPercent) {
+ async function savePart(part) {
+  return runTransaction(db, async transaction => {
+   if(auth.currentUser?.uid!==uid)throw Error('Sign in again before submitting.');
+   const ref=doc(db,'rides',rideId),snapshot=await transaction.get(ref),current=snapshot.exists()?snapshot.data():null;
+   if(current?.riderId!==uid||current.status!=='completed')throw Error('Only your completed ride can be reviewed.');
+   if(part==='rating') {
+    if(selectedRating!==null&&current.driverRating!==selectedRating)transaction.update(ref,{driverRating:selectedRating});
+   } else if(canTip(current,uid)) {
+    transaction.update(ref,tipValues(current.fare,selectedPercent));
+   }
+  });
+ }
+ if(selectedRating!==null)await savePart('rating');
+ await savePart('tip');
 }
