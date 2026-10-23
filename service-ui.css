@@ -40,3 +40,30 @@
   }
   #rideForm .service-details { padding:10px; margin:8px 0; }
 }
+
+/* Service choices are text links on every screen size. */
+#rideForm .service-picker {
+  display:flex; flex-wrap:wrap; gap:4px 20px;
+  margin:0 0 12px; padding:0; border:0; min-width:0;
+}
+#rideForm .service-picker legend { padding:0; margin-bottom:6px; }
+#rideForm .service-picker label {
+  position:relative; display:inline-flex; align-items:center;
+  min-height:44px; margin:0; padding:0;
+  border:0; border-radius:0; background:transparent;
+  color:#15803d; font-size:18px; font-weight:900; cursor:pointer; text-decoration:underline;
+  text-underline-offset:3px;
+}
+#rideForm .service-picker label:has(input:checked) {
+  border:0; background:transparent; color:#166534;
+  font-weight:900; text-decoration-thickness:2px;
+}
+#rideForm .service-picker label:hover { color:#166534; }
+#rideForm .service-picker label:has(input:focus-visible) {
+  outline:2px solid #15803d; outline-offset:4px;
+}
+#rideForm .service-picker input {
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip-path:inset(50%); white-space:nowrap;
+}
+#rideForm .service-picker small { display:none; }
