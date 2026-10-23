@@ -75,19 +75,6 @@ let unsubscribeRide = null;
 let watchedRideId = null;
 let estimateVersion = 0;
 let submitting = false;
-function selectedTip() {
- const choice = $('tipChoice')?.value || '0';
- const percent = choice === 'custom' ? Number($('customTipPercent').value) : Number(choice);
- if (!Number.isFinite(percent) || percent < 0 || percent > 100 || (choice === 'custom' && $('customTipPercent').value === '')) throw new Error('Enter a tip percentage from 0 to 100.');
- return percent;
-}
-function tipPreview() {
- if (!$('tipChoice')) return;
- $('customTipLabel').hidden = $('tipChoice').value !== 'custom';
- try { const p = selectedTip(), fare = Number(estimate?.fare || 0); $('tipPreview').textContent = estimate?.fare != null ? 'Tip: '+money(Math.round(fare*p)/100)+' | Total: '+money(Math.round((fare+Math.round(fare*p)/100)*100)/100) : 'Tips go to the driver. Calculate a fare to preview the total.'; } catch (e) { $('tipPreview').textContent=e.message; }
-}
-$('tipChoice')?.addEventListener('change',tipPreview);
-$('customTipPercent')?.addEventListener('input',tipPreview);
 const vehiclePicker = createVehiclePicker();
 const selectedService = () => document.querySelector('[name="serviceType"]:checked').value;
 function details() {
@@ -102,7 +89,7 @@ function invalidateEstimate() {
   $('summary').hidden = true;
   $('requestBtn').disabled = true;
   if ($('towEstimateBreakdown')) $('towEstimateBreakdown').hidden = true;
-  tipPreview();
+  
 }
 function updateService() {
   const type = selectedService();
@@ -119,7 +106,7 @@ function updateService() {
     : specialty ? 'Heavy vehicles and recovery require a provider quote before dispatch.' : 'Standard light-duty towing uses $112 hookup + $6 per loaded mile. Final price and availability must be confirmed with the tow driver.';
   invalidateEstimate();
 }
-$('rideForm').addEventListener('input', event => { if (['tipChoice', 'customTipPercent'].includes(event?.target?.id)) return; invalidateEstimate(); });
+$('rideForm').addEventListener('input', event => { invalidateEstimate(); });
 document.querySelectorAll('[name="serviceType"]').forEach(input => input.addEventListener('change', updateService));
 updateService();
 $('towVehicleClass')?.addEventListener('change', updateService);
@@ -515,7 +502,7 @@ async function calculateEstimate() {
 
     window.dispatchEvent(new CustomEvent("fareride-pickup-location",{detail:estimate.pickupLocation}));
     showSummary(estimate);
-    tipPreview();
+    
 
     $('msg').textContent =
       (/^\d{5}(?:-\d{4})?$/.test(pickup) || /^\d{5}(?:-\d{4})?$/.test(dropoff))
@@ -568,9 +555,8 @@ async event => {
     }
   }
 
-  let tipPercent = 0;
-  try { tipPercent = estimate.fare == null ? 0 : selectedTip(); } catch (error) { $('msg').textContent = error.message; return; }
-  const tipAmount = estimate.fare == null ? 0 : Math.round(Number(estimate.fare) * tipPercent) / 100;
+  const tipPercent = 0;
+  const tipAmount = 0;
   const requestedAt =
     new Date();
 
