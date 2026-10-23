@@ -337,7 +337,7 @@
  src="./fare-auth-guard.js?v=20261008-session2">
 </script>
 
-<link rel="stylesheet" href="service-ui.css?v=20261023-bold-service-labels">
+<link rel="stylesheet" href="service-ui.css?v=20261023-service-top-red">
 <link rel="stylesheet" href="table-fit.css">
 <link rel="stylesheet" href="tow-offers.css?v=20261013-message-colors">
 </head>
@@ -362,12 +362,20 @@
 <main>
 
 
+
+
+
+<form id="rideForm">
+<fieldset class="service-picker"><legend>What do you need?</legend>
+<label><input type="radio" name="serviceType" value="ride" checked>Passenger ride<small>Economy, Comfort or XL</small></label>
+<label><input type="radio" name="serviceType" value="tow">Tow truck<small>Vehicle pickup and transport</small></label>
+<label><input type="radio" name="serviceType" value="messenger">Bike messenger<small>Small package delivery at Economy sedan rates</small></label>
+</fieldset>
+
 <h2>
     Where are you going?
 </h2>
 
-
-<form id="rideForm">
 <label>
 
     Pickup
@@ -454,11 +462,7 @@
 
 </div>
 
-<fieldset class="service-picker"><legend>What do you need?</legend>
-<label><input type="radio" name="serviceType" value="ride" checked>Passenger ride<small>Economy, Comfort or XL</small></label>
-<label><input type="radio" name="serviceType" value="tow">Tow truck<small>Vehicle pickup and transport</small></label>
-<label><input type="radio" name="serviceType" value="messenger">Bike messenger<small>Small package delivery at Economy sedan rates</small></label>
-</fieldset>
+
 <div id="towDetails" class="service-details" hidden>
 <label>Vehicle year<select id="towVehicleYear"><option value="">Select year</option></select></label>
 <label>Vehicle make<select id="towVehicleMake" disabled><option value="">Select year first</option></select></label>
