@@ -367,6 +367,32 @@
 
 
 <form id="rideForm">
+<label>
+
+    Pickup
+
+    <input
+      id="pickup"
+      required
+      placeholder="Pickup address or US ZIP, e.g. 10001">
+
+</label>
+
+
+<label>
+
+    Destination
+
+    <input
+      id="dropoff"
+      required
+      placeholder="Destination address or US ZIP, e.g. 11201">
+
+</label>
+
+
+<div id="riderMapSlot" aria-label="Rider map"></div>
+
 <fieldset class="service-picker"><legend>What do you need?</legend>
 <label><input type="radio" name="serviceType" value="ride" checked>Passenger ride<small>Economy, Comfort or XL</small></label>
 <label><input type="radio" name="serviceType" value="tow">Tow truck<small>Vehicle pickup and transport</small></label>
@@ -395,30 +421,6 @@
 <p id="towEstimateBreakdown" class="service-note" hidden aria-live="polite"></p>
 <p class="service-note">Route estimates use <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap data</a>. <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener">Report a map issue</a>.</p>
 <p id="serviceNote" class="service-note" aria-live="polite">Choose your ride and calculate an estimate.</p>
-
-<label>
-
-    Pickup
-
-    <input
-      id="pickup"
-      required
-      placeholder="Pickup address or US ZIP, e.g. 10001">
-
-</label>
-
-
-<label>
-
-    Destination
-
-    <input
-      id="dropoff"
-      required
-      placeholder="Destination address or US ZIP, e.g. 11201">
-
-</label>
-
 
 <label>
 
