@@ -13,12 +13,12 @@ if(isDriver)document.querySelector('main').append(section);
 else if(document.getElementById('riderMapSlot'))document.getElementById('riderMapSlot').append(section);
 else document.querySelector('main').prepend(section);
 const status = section.querySelector('#liveMapStatus'), button = section.querySelector('button');
-if(!isDriver){button.textContent='Share my location';button.hidden=false;button.style.cssText='padding:12px 16px;background:#0875e1;color:white;border:0;border-radius:8px;font-weight:700';}
+{button.textContent='Retry location';button.hidden=true;button.style.cssText='padding:12px 16px;background:#0875e1;color:white;border:0;border-radius:8px;font-weight:700';}
 let user=null, profile=null, ride=null, rideId=null, stop=null, discovery=null, gps=null, lastSent=0, attempted=false;
 let heartbeat=null,positionHandler=null,sharingPaused=false;
 let map=null, riderMarker=null, driverMarker=null, pickupMarker=null, contactAttempted=false, locationError='';
 function stopGPS(){if(heartbeat!==null)clearInterval(heartbeat);heartbeat=null;positionHandler=null;if(gps!==null) navigator.geolocation.clearWatch(gps);gps=null;button.disabled=false;}
-function reset(){stopGPS();stop?.();stop=null;ride=null;rideId=null;section.hidden=true;attempted=false;contactAttempted=false;lastSent=0;locationError='';button.hidden=isDriver;map?.remove();map=riderMarker=driverMarker=pickupMarker=null;}
+function reset(){stopGPS();stop?.();stop=null;ride=null;rideId=null;section.hidden=true;attempted=false;contactAttempted=false;lastSent=0;locationError='';button.hidden=true;map?.remove();map=riderMarker=driverMarker=pickupMarker=null;}
 function marker(current,point,label,type){
  if(!validCoordinates(point))return current;
  const text=document.createElement('span');text.textContent=label;
@@ -27,9 +27,9 @@ function marker(current,point,label,type){
  return L.marker([point.lat,point.lng],{icon}).addTo(map).bindPopup(text).bindTooltip(text.cloneNode(true),{permanent:true,direction:type==='rider'?'bottom':'top',opacity:1});
 }
 function render(){
- const active=ACTIVE_STATUSES.includes(ride.status);section.hidden=!active;if(!active){stopGPS();return;}
+ const active=ACTIVE_STATUSES.includes(ride.status), waiting=!isDriver&&ride.status==='requested';section.hidden=!(active||waiting);if(!active&&!waiting){stopGPS();return;}
  const details=section.querySelector('#liveDriverDetails');details.style.cssText='white-space:pre-line;padding:14px;background:#eff6ff;border:1px solid #aac8e6;border-radius:8px;font-weight:700';
- details.textContent=isDriver ? 'Rider: '+(ride.riderName||'Rider') : 'Driver: '+(ride.driverName||'Waiting for driver details')+'\nVehicle: '+([ride.vehicleYear,ride.vehicleMake,ride.vehicleModel].filter(Boolean).join(' ')||'Waiting for vehicle details')+'\nTelephone: '+(ride.driverPhone||'Not provided')+'\nLocation: '+(validCoordinates(ride.driverLocation)?ride.driverLocation.lat.toFixed(5)+', '+ride.driverLocation.lng.toFixed(5):'Waiting for driver GPS — driver must allow location access and keep FareRide open.');
+ details.textContent=isDriver ? 'Rider: '+(ride.riderName||'Rider') : 'Driver: '+(ride.driverName||'Waiting for a driver to accept')+'\nVehicle: '+([ride.vehicleYear,ride.vehicleMake,ride.vehicleModel].filter(Boolean).join(' ')||'Waiting for vehicle details')+'\nTelephone: '+(ride.driverPhone||'Not provided')+'\nLocation: '+(validCoordinates(ride.driverLocation)?ride.driverLocation.lat.toFixed(5)+', '+ride.driverLocation.lng.toFixed(5):'Waiting for driver GPS — driver must allow location access and keep FareRide open.');
  const riderName = (!isDriver && profile?.fullName) || ride.riderName || 'Rider';
  const driverName = (isDriver && profile?.fullName) || ride.driverName || 'Driver';
  const vehicle = [ride.vehicleYear,ride.vehicleMake,ride.vehicleModel].filter(Boolean).join(' ');
@@ -51,6 +51,7 @@ function render(){
   const visible=[riderMarker,driverMarker,pickupMarker].filter(Boolean);
   if(visible.length>1)map.fitBounds(L.latLngBounds(visible.map(marker=>marker.getLatLng())),{paddingTopLeft:[55,100],paddingBottomRight:[55,65],maxZoom:16});
  }
+ if(waiting){status.textContent='Finding a driver. Your accepted driver will appear here automatically.';return;}
  const age=stamp=>{const time=stamp?.toMillis?.()||0;return !time?'waiting for GPS':Date.now()-time>30000?'location stale — waiting for an update':'live';};
  status.textContent=locationError||'Rider: '+age(ride.riderLocationUpdatedAt)+' | Driver: '+age(ride.driverLocationUpdatedAt);const notice=locationNotice(ride);if(notice)status.textContent+=' | '+notice;
  if(isDriver){const message=document.getElementById('locationStatus');if(message)message.textContent=status.textContent;}
@@ -66,7 +67,9 @@ function watch(id){
 }
 function applyRide(next,id){
  if(!user||auth.currentUser?.uid!==user.uid||rideId!==id||next[isDriver?'driverId':'riderId']!==user.uid)return;
+ const newlyAccepted=ACTIVE_STATUSES.includes(next.status)&&!ACTIVE_STATUSES.includes(ride?.status);
  ride=next;render();
+ if(newlyAccepted&&!isDriver)section.scrollIntoView?.({behavior:'smooth',block:'start'});
   if(!isDriver&&!contactAttempted&&ACTIVE_STATUSES.includes(ride.status)){
    contactAttempted=true;
    const name=profile.fullName||user.displayName||'Rider',phone=String(profile.phone||'');
@@ -91,7 +94,7 @@ onAuthStateChanged(auth,async next=>{
 function startLocation(){
  if(!user||!ride||!ACTIVE_STATUSES.includes(ride.status)||gps!==null||sharingPaused)return;attempted=true;
  if(!navigator.geolocation){locationError='Location is unavailable on this device.';status.textContent=locationError;button.hidden=false;return;}
- const id=rideId,uid=user.uid;button.disabled=isDriver;button.hidden=isDriver;locationError='';
+ const id=rideId,uid=user.uid;button.disabled=true;button.hidden=true;locationError='';
  positionHandler=async position=>{
   if(auth.currentUser?.uid!==uid||rideId!==id)return;
   if(!ACTIVE_STATUSES.includes(ride?.status)){stopGPS();return;}
