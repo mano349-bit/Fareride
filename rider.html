@@ -403,6 +403,18 @@
 #rideForm .service-picker label { justify-content:center; text-align:center; }
 
 .app-shell > .rider-content-frame { max-width:740px; }
+
+main > p:has(> a[href="rider-history.html"]),
+main > p:has(> a[href="about-fare-ride.html"]) { text-align:center; }
+main .rider-emergency-card {
+  grid-template-columns:minmax(0,1fr) auto;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+}
+@media(max-width:420px) {
+  main .rider-emergency-card { grid-template-columns:minmax(0,1fr); }
+}
 </style>
 
 <script
@@ -683,8 +695,8 @@
   </a>
 </p>
 
-<section class="rider-emergency-card">
-  <h2>Emergency SOS</h2>
+<section class="rider-emergency-card" aria-label="Emergency assistance">
+  
 
   <div
     class="sos-services"
