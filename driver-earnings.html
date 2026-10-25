@@ -43,11 +43,17 @@ body header nav a {
 body header nav a:hover { background:#0754b6; }
 body header > button { margin:0 !important; }
 body header > span:empty { display:none; }
+
+.app-shell > .earnings-content-frame { max-width:1400px; }
+.earnings-content-frame > header { justify-content:center; }
+.earnings-content-frame > main { margin:0; padding:0; }
+.earnings-content-frame .driver-history { margin:0; }
 </style>
 <script type="module" src="./fare-auth-guard.js?v=20261008-session2"></script>
-<link rel="stylesheet" href="brand-frame.css?v=20261025-blue-white-green">
+<link rel="stylesheet" href="brand-frame.css?v=20261025-header-inside">
 </head>
-<body class="app-frame">
+<body class="app-shell">
+<div class="app-content-frame earnings-content-frame">
 <header>
 <h1>FareRide Driver</h1>
 <nav aria-label="Main navigation">
@@ -56,6 +62,7 @@ body header > span:empty { display:none; }
 </nav>
 </header>
 <main aria-label="Driver completed jobs and earnings"></main>
+</div>
 <script type="module" src="driver-history.js?v=20261025-fare-tip-details"></script>
 <script type="module" src="table-fit.js"></script>
 <script type="module" src="connection-status.js"></script>
