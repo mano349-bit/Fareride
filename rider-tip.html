@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FareRide feedback</title>
+<script>
+const ride = new URLSearchParams(location.search).get('ride');
+const target = new URL('rider.html', location.href);
+if (ride && !ride.includes('/')) target.searchParams.set('feedbackRide', ride);
+location.replace(target.href);
+</script>
+</head>
+<body><p>Opening feedback in the FareRide app… <a href="rider.html">Return to FareRide</a></p></body>
+</html>

@@ -96,3 +96,43 @@
   font-size: 14px;
 }
 .driver-sos-compact #sosResult:empty { display: none; }
+/* Compact rider emergency controls, with all three services in one row. */
+main .rider-emergency-card {
+  display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center;
+  gap:8px; margin-top:20px; padding:12px; border-width:2px; border-radius:12px;
+  text-align:left; box-shadow:0 3px 10px rgba(217,45,32,.1);
+}
+main .rider-emergency-card h2 {
+  grid-column:1 / -1; margin:0; font-size:18px; line-height:1.25;
+}
+main .rider-emergency-card .sos-services {
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:6px; margin:0; min-width:0;
+}
+main .rider-emergency-card .sos-service-button {
+  flex:none; min-width:0; min-height:44px; margin:0; padding:5px 3px;
+  gap:3px; border-width:1px; border-radius:7px; font-size:11px; line-height:1.15;
+}
+main .rider-emergency-card .sos-service-button img {
+  width:24px; height:18px;
+}
+main .rider-emergency-card > a[href="tel:911"] {
+  margin:0 !important; padding:10px 8px !important;
+  min-height:44px; font-size:11px; text-align:center;
+}
+main .rider-emergency-card .rider-emergency-warning,
+main .rider-emergency-card .sos-service-note,
+main .rider-emergency-card .rider-emergency-note {
+  grid-column:1 / -1; margin:0; max-width:none;
+  font-size:12px; line-height:1.4; font-weight:400;
+}
+main .rider-emergency-card .rider-emergency-warning { grid-row:3; }
+main .rider-emergency-card #riderSosResult {
+  grid-column:1 / -1; margin:0; max-width:100%; font-size:13px;
+}
+main .rider-emergency-card #riderSosResult:empty { display:none; }
+@media (min-width:601px) {
+  main .rider-emergency-card { grid-template-columns:auto minmax(0,1fr) auto; }
+  main .rider-emergency-card h2 { grid-column:auto; }
+  main .rider-emergency-card .rider-emergency-warning { grid-row:2; }
+}

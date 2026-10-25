@@ -122,13 +122,22 @@ service cloud.firestore {
         || (reviewer('rider') && resource.data.riderId == request.auth.uid && validRating(request.resource.data.driverRating)
           && (!('driverComment' in request.resource.data) || (request.resource.data.driverComment is string && request.resource.data.driverComment.size() <= 1000))
           && (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['driverRating','driverComment'])
-          || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['driverRating','driverComment','tipPercent','tipAmount','totalFare'])
-            && request.resource.data.tipPercent is number && request.resource.data.tipPercent >= 0 && request.resource.data.tipPercent <= 100
-            && request.resource.data.tipAmount is number && request.resource.data.tipAmount >= 0
-            && request.resource.data.tipAmount >= resource.data.fare * request.resource.data.tipPercent / 100 - 0.011
-            && request.resource.data.tipAmount <= resource.data.fare * request.resource.data.tipPercent / 100 + 0.011
-            && request.resource.data.totalFare >= resource.data.fare + request.resource.data.tipAmount - 0.011
-            && request.resource.data.totalFare <= resource.data.fare + request.resource.data.tipAmount + 0.011)))
+          ))
+        || (reviewer('rider') && resource.data.riderId == request.auth.uid
+          && resource.data.get('tipSubmitted', false) == false
+          && resource.data.get('tipAmount', 0) == 0
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tipPercent','tipAmount','totalFare','tipSubmitted'])
+          && request.resource.data.tipSubmitted == true
+          && resource.data.fare is number && resource.data.fare >= 0
+          && resource.data.pricingStatus != 'quote_required'
+          && request.resource.data.tipPercent is number && request.resource.data.tipPercent >= 0 && request.resource.data.tipPercent <= 100
+          && request.resource.data.tipAmount is number && request.resource.data.tipAmount >= 0
+          && request.resource.data.tipAmount >= resource.data.fare * request.resource.data.tipPercent / 100 - 0.011
+          && request.resource.data.tipAmount <= resource.data.fare * request.resource.data.tipPercent / 100 + 0.011
+          && request.resource.data.totalFare is number
+          && request.resource.data.totalFare >= resource.data.fare + request.resource.data.tipAmount - 0.011
+          && request.resource.data.totalFare <= resource.data.fare + request.resource.data.tipAmount + 0.011)
+
       );
     }
     function towApproved(role) {
