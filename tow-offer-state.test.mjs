@@ -19,3 +19,18 @@ test('stale offers, closed jobs and other services cannot be accepted',()=>{
  for(const altered of [{status:'accepted'},{status:'cancelled'},{driverId:'other'},{serviceType:'ride'}])assert.throws(()=>checkTowOpen({...ride,...altered}));
  assert.throws(()=>acceptedTowFields(ride,{...offer,status:'declined'},'now'));
 });
+
+
+test('driver accepts only a rider counteroffer and assigns its exact price and tip',()=>{
+ const counter={...offer,status:'countered',counterAmount:150,revision:2};
+ assert.deepEqual(offerResponse(counter,'accept',undefined,'driver'),{status:'accepted',amount:150,revision:3});
+ const fields=acceptedTowFields(ride,counter,'now','driver');assert.equal(fields.fare,150);assert.equal(fields.tipAmount,22.5);assert.equal(fields.totalFare,172.5);assert.equal(fields.driverId,'d');assert.equal(fields.status,'accepted');assert.equal(fields.pricingStatus,'agreed');
+ assert.throws(()=>offerResponse(offer,'accept',undefined,'driver'));assert.throws(()=>acceptedTowFields(ride,offer,'now','driver'));
+ assert.throws(()=>acceptedTowFields(ride,counter,'now','rider'));assert.throws(()=>offerResponse(counter,'counter',140,'driver'));
+});
+test('driver cannot accept declined/closed offers, invalid counters, or stale revisions',()=>{
+ for(const status of ['pending','declined','accepted'])assert.throws(()=>offerResponse({...offer,status},'accept',undefined,'driver'));
+ for(const counterAmount of [null,0,-1,NaN,Infinity,100001])assert.throws(()=>acceptedTowFields(ride,{...offer,status:'countered',counterAmount},'now','driver'));
+ assert.throws(()=>acceptedTowFields({...ride,status:'accepted'},{...offer,status:'countered',counterAmount:150},'now','driver'));
+ assert.throws(()=>checkOfferVersion({...offer,revision:3},{...offer,revision:2}));
+});

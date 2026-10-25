@@ -27,3 +27,13 @@ test('buttons follow Accept, Start, Arrive, Complete order', () => {
 test('requested towing jobs require rider offer acceptance rather than direct driver acceptance',()=>{
  assert.match(actionButtons({id:'tow',serviceType:'tow',status:'requested',pricingStatus:'estimated'},'driver'),/acceptRide[^>]*disabled/);
 });
+
+
+test('an agreed towing job follows the passenger start, arrive, complete sequence',()=>{
+ for(const [status,expected] of [['accepted','startRide'],['started','arrivedRide'],['arrived','completeRide']]){
+  const html=actionButtons({id:'tow',serviceType:'tow',status,driverId:'driver',pricingStatus:'agreed'},'driver');
+  const enabled=[...html.matchAll(/<button[^>]+>/g)].map(m=>m[0]).filter(tag=>!tag.includes('disabled'));
+  assert.equal(enabled.length,1);assert.ok(enabled[0].includes(expected));
+ }
+ assert.equal((actionButtons({id:'tow',serviceType:'tow',status:'accepted',driverId:'other',pricingStatus:'agreed'},'driver').match(/ disabled/g)||[]).length,4);
+});
