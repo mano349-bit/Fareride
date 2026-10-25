@@ -121,7 +121,7 @@ function render(){
  const scrollTop=cards.scrollTop;
  chatPositions.clear();for(const log of cards.querySelectorAll('[data-tow-chat]'))chatPositions.set(log.dataset.towChat,{top:log.scrollTop,atBottom:log.scrollHeight-log.clientHeight-log.scrollTop<30});
  const focus=document.activeElement,key=focus?.dataset?.towDraft,start=focus?.selectionStart,end=focus?.selectionEnd;
- cards.replaceChildren();refreshTowPicker();const all=selectedTowJobs(),active=jobs();cards.dataset.empty=String(!all.length);content.hidden=!uid||(!driver&&!active.length)||(driver&&queue&&!['all','tow'].includes(queue.value)&&!active.some(ride=>ride.driverId===uid));panel.hidden=driver?!uid:content.hidden;
+ cards.replaceChildren();refreshTowPicker();const all=selectedTowJobs(),active=jobs();cards.dataset.empty=String(!all.length);content.hidden=!uid||!active.length||(driver&&queue&&!['all','tow'].includes(queue.value)&&!active.some(ride=>ride.driverId===uid));panel.hidden=driver?!uid:content.hidden;
  if(!all.length){add(cards,'p',driver?'No tow requests match these dates. Choose a wider range up to 30 days.':'No active tow requests.');return;}
  for(const ride of all){
   const card=add(cards,'div',null,'tow-offer-card');add(card,'h3',ride.pickup+' → '+ride.dropoff);add(card,'p','Job: '+ride.id);
