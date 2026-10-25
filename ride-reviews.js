@@ -3,16 +3,17 @@ import {localDay, completedInRange} from './rider-history-dates.js';
 import {reviewWindow, driverReviewsInRange} from './driver-review-dates.js';
 import {auth,db,doc,getDoc,collection,query,where,onSnapshot,onAuthStateChanged,updateDoc} from './firebase-session.js';
 const role=location.pathname.includes('driver')?'driver':'rider';
+const driverDashboard=role==='driver'&&location.pathname.toLowerCase().endsWith('/driver.html');
 const section=document.createElement('section');section.className='card';section.style.cssText='background:white;padding:20px;margin:24px 0;border:1px solid #dbe3ee;border-radius:12px';
 const heading=document.createElement('h2');heading.textContent=role==='rider'?'My rides, ratings and tips':'Rate your riders';const message=document.createElement('p');message.setAttribute('role','status');const jobs=document.createElement('div');section.append(heading,message,jobs);document.querySelector('main').append(section);
 let stop=null,generation=0,refreshHistory=null;
 const startDate=document.createElement('input'),endDate=document.createElement('input');
 const riderDays=document.createElement('input'),riderLimit=document.createElement('select');
-if(role==='driver'){
- const window=reviewWindow();
+if(role==='driver'&&!driverDashboard){
+ const window=reviewWindow(365);
  const filters=document.createElement('div');filters.style.cssText='display:flex;flex-wrap:wrap;gap:16px;align-items:end;margin:16px 0';
  const daysLabel=document.createElement('label');daysLabel.textContent='Past days (1–365)';
- const days=document.createElement('input');days.type='number';days.min='1';days.max='365';days.step='1';days.value='1';days.required=true;days.style.cssText='display:block;padding:10px;margin-top:6px;width:120px';daysLabel.append(days);filters.append(daysLabel);
+ const days=document.createElement('input');days.type='number';days.min='1';days.max='365';days.step='1';days.value='365';days.required=true;days.style.cssText='display:block;padding:10px;margin-top:6px;width:120px';daysLabel.append(days);filters.append(daysLabel);
  for(const [text,input,value] of [['Start date',startDate,window.start],['End date',endDate,window.end]]){
   const label=document.createElement('label');label.textContent=text;input.type='date';input.required=true;input.min=window.earliest;input.max=window.end;input.value=value;input.style.cssText='display:block;padding:10px;margin-top:6px';label.append(input);filters.append(label);
   input.onchange=()=>{days.value='';refreshHistory?.();};
@@ -24,8 +25,12 @@ if(role==='driver'){
   startDate.min=endDate.min=selected.earliest;startDate.max=endDate.max=selected.end;
   refreshHistory?.();
  };
- const note=document.createElement('p');note.textContent='Showing today by default. Choose dates within the past 365 days.';
+ const note=document.createElement('p');note.textContent='Showing completed jobs from the past 365 days. Choose a smaller range or specific dates.';
  section.insertBefore(filters,message);section.insertBefore(note,message);
+}
+if(driverDashboard){
+ const window=reviewWindow(365);startDate.value=window.start;endDate.value=window.end;
+ const history=document.createElement('a');history.href='driver-ratings.html';history.textContent='Rate your riders';history.style.cssText='display:inline-block;margin:0 0 12px;padding:8px 0;font-weight:700';section.insertBefore(history,message);
 }
 if(role==='rider'){
  const window=reviewWindow(365);
@@ -44,7 +49,7 @@ if(role==='rider'){
 }
 
 const money=n=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(n);
-onAuthStateChanged(auth,async user=>{const check=++generation;stop?.();stop=null;refreshHistory=null;jobs.replaceChildren();message.textContent='Sign in to review completed rides.';if(!user)return;try{const profile=await getDoc(doc(db,'users',user.uid));if(check!==generation||profile.data()?.role!==role)return;message.textContent='Loading completed rides...';stop=onSnapshot(query(collection(db,'rides'),where(role+'Id','==',user.uid)),snap=>{if(check!==generation)return;const allRides=snap.docs.map(d=>({...d.data(),id:d.id})).filter(r=>r.status==='completed');refreshHistory=()=>{jobs.replaceChildren();const selection=role==='rider'?selectRiderReviews(allRides,startDate.value,endDate.value,riderLimit.value):null;const rides=role==='rider'?selection?.rides??null:driverReviewsInRange(allRides,startDate.value,endDate.value);if(rides===null){message.textContent=role==='driver'?'Choose valid dates within the past 365 days, with the end date on or after the start date.':'Choose valid dates within the past 365 days, with the end date on or after the start date.';return;}message.textContent=rides.length?(role==='rider'?'Showing '+rides.length+' of '+selection.total+' completed job(s), newest first. ':rides.length+' completed ride(s). ')+'Choose 1 to 5 stars. Ratings can be updated.':'No completed rides in this date range.';for(const ride of rides){const card=document.createElement('div');card.style.cssText='padding:16px 0;border-bottom:1px solid #e5e7eb';const title=document.createElement('p');title.dataset.fitLongText='true';title.textContent=(role==='rider'?ride.driverName:ride.riderName)+' | '+ride.pickup+' to '+ride.dropoff;
+onAuthStateChanged(auth,async user=>{const check=++generation;stop?.();stop=null;refreshHistory=null;jobs.replaceChildren();message.textContent='Sign in to review completed rides.';if(!user)return;try{const profile=await getDoc(doc(db,'users',user.uid));if(check!==generation||profile.data()?.role!==role)return;message.textContent='Loading completed rides...';stop=onSnapshot(query(collection(db,'rides'),where(role+'Id','==',user.uid)),snap=>{if(check!==generation)return;const allRides=snap.docs.map(d=>({...d.data(),id:d.id})).filter(r=>r.status==='completed');refreshHistory=()=>{jobs.replaceChildren();const selection=role==='rider'||driverDashboard?selectRiderReviews(allRides,startDate.value,endDate.value,driverDashboard?'1':riderLimit.value):null;const rides=role==='rider'||driverDashboard?selection?.rides??null:driverReviewsInRange(allRides,startDate.value,endDate.value);if(rides===null){message.textContent=role==='driver'?'Choose valid dates within the past 365 days, with the end date on or after the start date.':'Choose valid dates within the past 365 days, with the end date on or after the start date.';return;}message.textContent=rides.length?(driverDashboard?'Latest completed job. ':role==='rider'?'Showing '+rides.length+' of '+selection.total+' completed job(s), newest first. ':rides.length+' completed ride(s). ')+'Choose 1 to 5 stars. Ratings can be updated.':'No completed rides in this date range.';for(const ride of rides){const card=document.createElement('div');card.style.cssText='padding:16px 0;border-bottom:1px solid #e5e7eb';const title=document.createElement('p');title.dataset.fitLongText='true';title.textContent=(role==='rider'?ride.driverName:ride.riderName)+' | '+ride.pickup+' to '+ride.dropoff;
 const label=document.createElement('label');label.textContent=role==='rider'?'Driver rating ':'Rider rating ';const rating=document.createElement('select');rating.innerHTML='<option value="">Choose rating</option>'+[1,2,3,4,5].map(n=>'<option value="'+n+'">'+n+' '+(n===1?'star':'stars')+'</option>').join('');rating.value=ride[role==='rider'?'driverRating':'riderRating']||'';label.append(rating);{const date=document.createElement('p');const completed=ride.completedAt?.toDate?ride.completedAt.toDate():new Date(ride.completedAt);date.textContent='Completed: '+completed.toLocaleString();card.append(date);}card.append(title,label);
 let comment=null;
 if(role==='rider'){const commentLabel=document.createElement('label');commentLabel.textContent='Comment about your driver (optional)';commentLabel.style.display='block';comment=document.createElement('textarea');comment.maxLength=1000;comment.rows=3;comment.value=ride.driverComment||'';comment.style.cssText='display:block;width:100%;padding:10px;margin-top:8px';comment.setAttribute('aria-label','Comment about your driver');commentLabel.append(comment);const notice=document.createElement('p');notice.textContent='Your driver can see this comment and rating.';card.append(commentLabel,notice);}

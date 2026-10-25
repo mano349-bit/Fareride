@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rate your riders | FareRide Driver</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="table-fit.css">
+<style>
+header{flex-wrap:wrap;gap:16px}
+header h1{font-size:24px;margin:0}
+header nav{display:flex;flex-wrap:wrap;gap:16px}
+header a{display:inline-block;padding:8px 0;font-weight:700}
+main{max-width:1400px;padding:24px 20px}
+.driver-history{margin-top:0}
+a:focus-visible{outline:3px solid #075fd8;outline-offset:4px}
+@media(max-width:650px){header{padding:16px}main{padding:16px 12px}.earnings-dates{gap:12px}}
+</style>
+<script type="module" src="./fare-auth-guard.js?v=20261008-session2"></script>
+</head>
+<body>
+<header>
+<h1>FareRide Driver</h1>
+<nav aria-label="Main navigation">
+<a href="driver.html">Back to driver dashboard</a>
+<a href="driver-earnings.html">My completed jobs and earnings</a>
+<a href="about-fare-ride.html">About Fare-Ride</a>
+</nav>
+</header>
+<main aria-label="Driver rider rating history"></main>
+<script type="module" src="ride-reviews.js?v=20261025-driver-rating-history"></script>
+<script type="module" src="table-fit.js"></script>
+<script type="module" src="connection-status.js"></script>
+<script type="module" src="ride-logout.js?v=20261025-driver-pages"></script>
+</body>
+</html>
