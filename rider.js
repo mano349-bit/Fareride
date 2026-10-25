@@ -177,7 +177,7 @@ function showSummary(ride) {
   $('fare').textContent =
     priceLabel(ride, money);
 
-  $('duration').textContent = Number(ride.durationMinutes || 0) + (ride.serviceType === 'tow' ? ' min driving (loading time extra)' : ' min');
+  $('duration').textContent = Number(ride.durationMinutes || 0) + (ride.serviceType === 'tow' ? ' min driving' : ' min');
   if (towBreakdown && ride.serviceType === 'tow' && ride.pricingStatus === 'estimated') {
     towBreakdown.hidden = false;
     towBreakdown.textContent = 'Estimated towing: ' + money(TOW_PRICING.hookup) + ' hookup + ' + Number(ride.miles).toFixed(2) + ' miles × ' + money(TOW_PRICING.perMile) + '/mile = ' + money(ride.fare) + '. Tips are separate. Taxes, tolls, recovery, storage, after-hours and specialty equipment are not included; confirm the final price with the tow driver.';
