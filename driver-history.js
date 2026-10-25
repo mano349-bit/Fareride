@@ -7,6 +7,7 @@ panel.innerHTML='<h2>My completed jobs and earnings</h2><div class="earnings-dat
 panel.classList.add('driver-history');
 const style = document.createElement('style');
 style.textContent = '.driver-history{margin-top:24px}.earnings-dates{display:flex;flex-wrap:wrap;gap:16px;align-items:end}.earnings-dates label{display:flex;flex-direction:column;gap:6px}.earnings-dates input{padding:9px;border:1px solid #cbd5e1;border-radius:8px}.driver-history #earningsSummary{padding:16px;background:#eff6ff;border-radius:10px;font-weight:700;line-height:1.8}.earnings-table-wrap{overflow-x:auto;border:1px solid #dbe3ee;border-radius:12px}.earnings-table{width:100%;border-collapse:collapse;min-width:0;font-size:14px}.earnings-table caption{text-align:left;padding:14px;font-weight:700}.earnings-table th{background:#eaf2ff;color:#173b68;text-align:left;white-space:nowrap}.earnings-table th,.earnings-table td{padding:13px 14px;border:1px solid #aab8ca}.earnings-table tbody tr:nth-child(even){background:#f8fafc}.earnings-table .amount{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.earnings-table .daily-total,.earnings-table tfoot{background:#eef6ff;font-weight:700}.earnings-table input{width:110px;padding:8px;border:1px solid #cbd5e1;border-radius:7px}.earnings-table .job-id{display:block;width:270px;max-width:100%;margin-top:8px;font-family:monospace;font-size:12px;background:#f8fafc;color:#173b68}.earnings-table small{display:block;color:#64748b;font-size:11px}';
+style.textContent += '.earnings-job-details[hidden]{display:none!important}.earnings-job-details .details-box p{margin:6px 0}';
 document.head.append(style);
 document.querySelector('main').append(panel);
 const startDate=panel.querySelector('#earningsStart'),endDate=panel.querySelector('#earningsEnd');startDate.value=endDate.value=localDay();
@@ -22,7 +23,7 @@ function render(){
  list.replaceChildren();
  const wrap=document.createElement('div');wrap.className='earnings-table-wrap';
  const table=document.createElement('table');table.className='earnings-table';
- table.innerHTML='<caption>Completed jobs - '+startDate.value+' to '+endDate.value+'</caption><thead><tr><th scope="col">Job #</th><th scope="col">Date / time</th><th scope="col">Job / route</th><th scope="col">Fare</th><th scope="col">Tip</th><th scope="col">Your rating from rider</th><th scope="col">Rider comment</th><th scope="col">My earnings</th><th scope="col">Driver expense ($)</th><th scope="col">Net profit</th></tr></thead>';
+ table.innerHTML='<colgroup><col style="width:10%"><col style="width:10%"><col style="width:10%"><col style="width:5%"><col style="width:5%"><col style="width:10%"><col style="width:10%"><col style="width:10%"><col style="width:10%"><col style="width:10%"><col style="width:10%"></colgroup><caption>Completed jobs - '+startDate.value+' to '+endDate.value+'</caption><thead><tr><th scope="col">Job #</th><th scope="col">Date / time</th><th scope="col">Job / route</th><th scope="col">Fare</th><th scope="col">Tip</th><th scope="col">Your rating from rider</th><th scope="col">Rider comment</th><th scope="col">My earnings</th><th scope="col">Driver expense ($)</th><th scope="col">Net profit</th><th scope="col">Details</th></tr></thead>';
  const body=document.createElement('tbody');table.append(body);wrap.append(table);list.append(wrap);
  function cell(row,text,amount=false){const td=document.createElement('td');td.textContent=text;if(amount)td.className='amount';row.append(td);return td;}
  for(const dayTotal of daily.days){
@@ -49,13 +50,22 @@ function render(){
   };
   expenseLabel.append(input);expenseCell.append(expenseLabel);
   const expenseNote=document.createElement('small');expenseNote.textContent=!job.expenseKnown?'Enter expense':job.expenseEstimated?'1/3 default':'Your ride expense';expenseCell.append(expenseNote);
-  cell(card,job.net!==null?money(job.net):'Unpriced',true);body.append(card);
+  cell(card,job.net!==null?money(job.net):'Unpriced',true);
+  const actions=cell(card,''),detailButton=document.createElement('button');
+  detailButton.type='button';detailButton.textContent='Details';detailButton.style.cssText='width:100%;min-width:0;background:#0875e1';detailButton.setAttribute('aria-expanded','false');
+  const detailRow=document.createElement('tr');detailRow.hidden=true;detailRow.className='earnings-job-details';detailRow.id='earnings-details-'+job.jobNumber;
+  detailButton.setAttribute('aria-controls',detailRow.id);
+  const detailCell=cell(detailRow,'');detailCell.colSpan=11;
+  const box=document.createElement('div');box.className='details-box';
+  const fields=[['Job ID',job.id],['Rider',job.riderName],['Driver',job.driverName],['Service',job.serviceType==='tow'?'Tow truck':job.serviceType==='messenger'?'Bike delivery':'Passenger ride'],['Pickup',job.pickup],['Destination',job.dropoff],['Miles',job.miles],['Fare',job.fare!=null?money(job.fare):'Unpriced'],['Tip',money(Number(job.tipAmount)||0)],['Earnings',job.earnings?money(job.earnings.driver):'Unpriced'],['Expense',job.expenseKnown?money(job.expense):'Unknown'],['Net',job.net!==null?money(job.net):'Unpriced'],['Requested',job.requestedAt],['Accepted',job.acceptedAt],['Started',job.startedAt],['Arrived at pickup',job.arrivedAt],['Completed',job.date.toLocaleString()],['Rider rating',job.driverRating?job.driverRating+' / 5':'Not rated'],['Rider comment',job.driverComment||'No comment']];
+  for(const [label,value] of fields){if(value===null||value===undefined||value==='')continue;const line=document.createElement('p'),title=document.createElement('strong');title.textContent=label+': ';line.append(title,document.createTextNode(String(value)));box.append(line);}
+  detailCell.append(box);detailButton.onclick=()=>{detailRow.hidden=!detailRow.hidden;detailButton.setAttribute('aria-expanded',String(!detailRow.hidden));detailButton.textContent=detailRow.hidden?'Details':'Hide details';};actions.append(detailButton);body.append(card,detailRow);
  }
  const subtotal=document.createElement('tr');subtotal.className='daily-total';const title=cell(subtotal,day+' total - '+rows.length+' jobs');title.colSpan=7;cell(subtotal,money(dayTotal.income),true);
- cell(subtotal,money(dayTotal.expense),true);cell(subtotal,money(dayTotal.net)+(dayTotal.estimated?' Total-Net':''),true);body.append(subtotal);
+ cell(subtotal,money(dayTotal.expense),true);cell(subtotal,money(dayTotal.net)+(dayTotal.estimated?' Total-Net':''),true);cell(subtotal,'');body.append(subtotal);
  }
- const foot=document.createElement('tfoot');const total=document.createElement('tr');const title=cell(total,'Period totals');title.colSpan=7;cell(total,money(report.income),true);cell(total,money(daily.expenses),true);cell(total,money(daily.net)+(daily.days.some(day=>day.estimated)||report.unpriced?' Total-Net':''),true);foot.append(total);table.append(foot);
- if(!report.jobs.length){const row=document.createElement('tr');const empty=cell(row,'No completed jobs in this period.');empty.colSpan=10;body.append(row);}
+ const foot=document.createElement('tfoot');const total=document.createElement('tr');const title=cell(total,'Period totals');title.colSpan=7;cell(total,money(report.income),true);cell(total,money(daily.expenses),true);cell(total,money(daily.net)+(daily.days.some(day=>day.estimated)||report.unpriced?' Total-Net':''),true);cell(total,'');foot.append(total);table.append(foot);
+ if(!report.jobs.length){const row=document.createElement('tr');const empty=cell(row,'No completed jobs in this period.');empty.colSpan=11;body.append(row);}
 }
 startDate.addEventListener('change',render);endDate.addEventListener('change',render);panel.querySelector('#earningsToday').onclick=()=>{startDate.value=endDate.value=localDay();render();};
 onAuthStateChanged(auth,async user=>{const current=++generation;stop?.();stop=null;uid=null;rides=[];costs={};list.replaceChildren();summary.textContent='Sign in as a driver to load history.';if(!user)return;try{const profile=await getDoc(doc(db,'users',user.uid));if(current!==generation)return;if(!profile.exists()||profile.data().role!=='driver')return;uid=user.uid;try{const saved=JSON.parse(localStorage.getItem('fareRide_driver_costs_'+uid)||'{}');if(saved&&typeof saved==='object'&&!Array.isArray(saved))costs=saved;}catch{}summary.textContent='Loading completed jobs...';stop=onSnapshot(query(collection(db,'rides'),where('driverId','==',uid)),snapshot=>{if(current!==generation)return;rides=snapshot.docs.map(d=>({...d.data(),id:d.id}));render();},()=>{summary.textContent='Unable to load job history. Check driver approval and Firebase ride permissions.';list.replaceChildren();});}catch{summary.textContent='Unable to verify your driver account.';}});

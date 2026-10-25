@@ -735,7 +735,15 @@ td{
 
 .app-shell > .admin-content-frame { max-width:1400px; }
 #adminApp { padding:0; }
-body table.operations-table th:nth-child(10) { width:19%; }
+
+body table.operations-table th:nth-child(1) { width:11%; }
+body table.operations-table th:nth-child(2), body table.operations-table th:nth-child(3) { width:9%; }
+body table.operations-table th:nth-child(4) { width:12%; }
+body table.operations-table th:nth-child(5), body table.operations-table th:nth-child(6) { width:3.5%; }
+body table.operations-table th:nth-child(7), body table.operations-table th:nth-child(8) { width:7%; }
+body table.operations-table th:nth-child(9), body table.operations-table th:nth-child(10) { width:8%; }
+body table.operations-table th:nth-child(11), body table.operations-table th:nth-child(12) { width:11%; }
+
 .requested-actions { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
 .requested-actions button { width:100%; min-width:0; }
 @media(max-width:600px) {
@@ -1088,9 +1096,10 @@ body table.operations-table th:nth-child(10) { width:19%; }
             <th>Rider</th>
             <th>Driver</th>
             <th>Trip</th>
-            <th>Fare</th><th>Effective fare / mile</th><th>Rider total</th><th>Driver earnings</th>
+            <th>Fare</th><th>Tip</th><th>Effective fare / mile</th><th>Rider total</th><th>Driver earnings</th>
             <th>Status</th>
             <th>Requested</th>
+            <th>Details</th>
             
           </tr>
 
@@ -1321,7 +1330,7 @@ body table.operations-table th:nth-child(10) { width:19%; }
 
 <script
   type="module"
-  src="admin.js?v=20261025-details-under-date">
+  src="admin.js?v=20261025-fare-tip-details">
 </script>
 
 

@@ -642,25 +642,8 @@ function renderRides() {
             <td>
 
               ${priceLabel(ride, money)}
-
-              ${
-                tip
-                  ? `
-                    <br>
-                    Tip:
-                    ${money(tip)}
-
-                    <br>
-                    <strong>
-                      Total:
-                      ${money(total)}
-                    </strong>
-                  `
-                  : ''
-              }
-
             </td>
-
+            <td>${money(tip)}</td>
 
             <td>${earnings?.rate != null ? money(earnings.rate) + "/mi" : "-"}</td>
             <td>${earnings ? money(earnings.rider) : "Unpriced"}</td>
@@ -679,6 +662,8 @@ function renderRides() {
                 )
               }
 
+            </td>
+            <td>
               <div class="requested-actions">
               <button
                 class="action-btn view-btn"
@@ -709,7 +694,7 @@ function renderRides() {
             id="details-${ride.id}"
             class="details">
 
-            <td colspan="10">
+            <td colspan="12">
 
               <div class="details-box">
 
