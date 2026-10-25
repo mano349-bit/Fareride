@@ -2,7 +2,7 @@ import {openCompletedTip} from './rider-tip-prompt.js?v=20261023-permitted-feedb
 import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
 import {phoneNumber} from './ride-ui.js';
 import {latestCurrentRide} from './ride-recovery.js?v=20261013-live-acceptance';
-import {riderProgress} from './rider-progress.js?v=20261023-completion';
+import {riderProgress} from './rider-progress.js?v=20261025-step-order';
 import {
   auth,
   db,
