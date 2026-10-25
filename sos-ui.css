@@ -175,3 +175,6 @@ main .rider-emergency-card h2 { font-size:19px; }
   main .rider-emergency-card > a[href="tel:911"] { justify-self:stretch; }
   .driver-sos-compact .sos-services { flex-basis:100%; }
 }
+
+/* Two available emergency services share the rider toolbar evenly. */
+main .rider-emergency-card .sos-services { grid-template-columns:repeat(2,minmax(0,1fr)); }
