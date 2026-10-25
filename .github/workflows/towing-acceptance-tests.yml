@@ -30,3 +30,11 @@ jobs:
         run: node --test tow-offer-state.test.mjs driver-actions.test.mjs
       - name: Test Firestore rules against local emulator
         run: tests/towing-rules/node_modules/.bin/firebase emulators:exec --only firestore --project demo-fareride --config firebase.test.json "node --test tests/towing-rules/towing-rules.test.mjs"
+      - name: Save emulator diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: towing-rules-diagnostics-${{ github.run_id }}
+          path: |
+            firestore-debug.log
+            tests/towing-rules/rules-coverage.json

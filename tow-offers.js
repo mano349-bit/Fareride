@@ -187,8 +187,10 @@ function reconcile(){
    if(epoch!==expected)return;
    const previous=offers.get(ride.id),next=driver?(snapshot.exists()?[snapshot.data()]:[]):snapshot.docs.map(d=>d.data());
    const incoming=!driver&&previous?next.find(offer=>offer.status==='pending'&&!previous.some(old=>old.driverId===offer.driverId&&old.revision===offer.revision&&old.status===offer.status)):null;
+   const acceptedNotice=!driver&&previous?next.find(offer=>offer.status==='accepted'&&!previous.some(old=>old.driverId===offer.driverId&&old.status==='accepted')):null;
    const editing=cards.contains(document.activeElement);
    offers.set(ride.id,next);syncChats();render();
+   if(acceptedNotice)status.textContent='Offer accepted at '+money(acceptedNotice.amount)+'. Your driver can now start the job.';
    if(incoming){
     status.textContent='New offer from '+incoming.driverName+': '+money(incoming.amount)+'. Accept it or send a counteroffer below.';
     if(!editing){const card=[...cards.querySelectorAll('[data-tow-ride]')].find(card=>card.dataset.towRide===ride.id),item=card&&[...card.querySelectorAll('[data-tow-driver]')].find(item=>item.dataset.towDriver===incoming.driverId);if(item)cards.scrollTop=Math.max(0,cards.scrollTop+item.getBoundingClientRect().top-cards.getBoundingClientRect().top-12);}

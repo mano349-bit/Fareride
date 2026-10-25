@@ -1,6 +1,6 @@
 import {test,before,beforeEach,after} from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile} from 'node:fs/promises';
+import {readFile,writeFile} from 'node:fs/promises';
 import {initializeTestEnvironment,assertSucceeds,assertFails} from '@firebase/rules-unit-testing';
 import {doc,setDoc,updateDoc,getDoc,writeBatch,serverTimestamp,Timestamp} from 'firebase/firestore';
 import {offerResponse,acceptedTowFields,driverAcceptanceFields} from '../../tow-offer-state.js';
@@ -15,7 +15,7 @@ async function seed(offer=counter,extra={}){
  await env.clearFirestore();
  await env.withSecurityRulesDisabled(async context=>{
   const store=context.firestore();
-  for(const [uid,role] of [['r','rider'],['r2','rider'],['d','driver'],['d2','driver']])await setDoc(doc(store,'users',uid),{uid,role,accountStatus:'approved'});
+  for(const [uid,role] of [['r','rider'],['r2','rider'],['d','driver'],['d2','driver']])await setDoc(doc(store,'users',uid),{uid,role,accountStatus:'approved',fullName:role==='rider'?'Rider':'Driver',phone:'555'});
   for(const uid of ['d','d2']){
    await setDoc(doc(store,'driverApplications','driver_'+uid),{...driverFields,uid,status:'approved',fullName:'Driver',phone:'5551234567'});
    await setDoc(doc(store,'driverPresence',uid),{available:true,updatedAt:Timestamp.fromMillis(Date.now()-1000)});
@@ -31,7 +31,7 @@ function acceptance(uid,offer,actor,overrideRide={},overrideOffer={}){
  return batch.commit();
 }
 before(async()=>{env=await initializeTestEnvironment({projectId:'demo-fareride',firestore:{host:'127.0.0.1',port:8080,rules:await readFile(new URL('../../firestore.rules',import.meta.url),'utf8')}});});
-beforeEach(()=>seed());after(async()=>env?.cleanup());
+beforeEach(()=>seed());after(async()=>{try{const coverage=await fetch('http://127.0.0.1:8080/emulator/v1/projects/demo-fareride:ruleCoverage');await writeFile(new URL('rules-coverage.json',import.meta.url),await coverage.text());}catch{}await env?.cleanup();});
 
 test('driver accepts the rider counteroffer atomically at its exact price',async()=>{
  await assertSucceeds(acceptance('d',counter,'driver'));
@@ -89,4 +89,13 @@ test('driver original-price acceptance ignores its own different pending quote',
 });
 test('an unpriced quote cannot be accepted as an original rider price',async()=>{
  await seed(pending,{fare:null,pricingStatus:'quote_required',tipAmount:0,totalFare:null});await assertFails(acceptance('d',pending,'rider'));
+});
+
+
+test('passenger acceptance and start controls remain permitted',async()=>{
+ await seed(null,{serviceType:'ride'});const store=db('d');await assertSucceeds(updateDoc(doc(store,'rides','tow'),{status:'accepted',...driverFields,acceptedAt:'now'}));await assertSucceeds(updateDoc(doc(store,'rides','tow'),{status:'started',startedAt:'now'}));
+});
+test('rider cancellation and live location updates remain permitted',async()=>{
+ await assertSucceeds(updateDoc(doc(db('r'),'rides','tow'),{status:'cancelled',cancelledAt:'now'}));
+ await seed(counter,{status:'accepted',driverId:'d'});await assertSucceeds(updateDoc(doc(db('r'),'rides','tow'),{riderLocation:{lat:40,lng:-73},riderLocationUpdatedAt:serverTimestamp()}));
 });

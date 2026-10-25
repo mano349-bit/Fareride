@@ -2,6 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
+    function towAssignmentRequest() { return resource.data.get('serviceType', 'ride') == 'tow' && resource.data.status == 'requested' && request.resource.data.status == 'accepted'; }
     function owner(uid) { return signedIn() && request.auth.uid == uid; }
     function admin() {
       return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
@@ -82,7 +83,7 @@ service cloud.firestore {
         && request.resource.data.status == 'requested'
         && request.resource.data.driverId == null && request.resource.data.driverName == null
         && request.resource.data.driverLocation == null;
-      allow update: if admin() || (
+      allow update: if admin() || (!towAssignmentRequest() && ((
         approved('driver') && driverAvailable(request.auth.uid) && resource.data.status == 'requested' && resource.data.driverId == null
         && (!('serviceType' in resource.data) || resource.data.serviceType != 'tow')
         && resource.data.pricingStatus != 'quote_required'
@@ -103,12 +104,12 @@ service cloud.firestore {
         && ((resource.data.status == 'accepted' && request.resource.data.status == 'started')
           || (resource.data.status == 'started' && request.resource.data.status == 'arrived')
           || (resource.data.status == 'arrived' && request.resource.data.status == 'completed'))
-      );
-      allow update: if approved('rider') && resource.data.riderId == request.auth.uid && active()
+      )));
+      allow update: if !towAssignmentRequest() && approved('rider') && resource.data.riderId == request.auth.uid && active()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['riderName','riderPhone'])
         && request.resource.data.riderName == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.fullName
         && request.resource.data.riderPhone == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.phone;
-      allow update: if approved('rider') && resource.data.riderId == request.auth.uid
+      allow update: if !towAssignmentRequest() && approved('rider') && resource.data.riderId == request.auth.uid
         && resource.data.status in ['requested', 'accepted', 'arrived']
         && request.resource.data.status == 'cancelled'
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'cancelledAt']);
