@@ -193,12 +193,12 @@ function showRideStatus(ride) {
     accepted: 'Ride accepted. Your driver is on the way.',
     arrived: 'Your driver has arrived at pickup.',
     started: 'Your ride is in progress.',
-    completed: 'Ride completed. You can request another ride.',
+    completed: '',
     cancelled: 'Ride cancelled. You can request another ride.'
   };
   $('msg').textContent = ride.pricingStatus === 'quote_required' && ride.status === 'requested'
     ? 'Tow quote requested. Review driver offers in Tow driver offers & live messages.'
-    : (messages[ride.status] || 'Waiting for ride information.');
+    : (messages[ride.status] ?? 'Waiting for ride information.');
   const finished = ['completed', 'cancelled'].includes(ride.status);
   $('requestBtn').disabled = !finished;
   if (finished && localStorage.getItem(LAST) === ride.id) localStorage.removeItem(LAST);
