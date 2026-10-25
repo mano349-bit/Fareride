@@ -367,6 +367,32 @@
   text-align:center;
 }
 #rideForm > .service-note a { color:inherit; font-weight:inherit; }
+
+#rideForm .rider-scrolling-notes {
+  height:3em;
+  max-height:3em;
+  margin:12px 0;
+  padding:0 !important;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  overflow-y:auto;
+  overflow-x:hidden;
+  font-size:14px;
+  line-height:1.5;
+  color:#075fd8;
+  font-weight:700;
+  text-align:center;
+  scrollbar-width:thin;
+}
+#rideForm .rider-scrolling-notes .service-note {
+  margin:0;
+  color:inherit;
+  font-size:inherit;
+  line-height:inherit;
+  font-weight:inherit;
+}
+#rideForm .rider-scrolling-notes a { color:inherit; font-weight:inherit; }
 </style>
 
 <script
@@ -597,18 +623,14 @@
     </label>
   </div>
 
+  <div class="rider-scrolling-notes" data-fit-long-text tabindex="0" title="Hover or focus to pause; scroll up or down to read.">
   <p class="service-note">
     Enter an address or a US ZIP code in each field.
     ZIP-only routes estimate travel between ZIP areas;
     use street addresses for exact pickup and drop-off.
   </p>
 
-  <p
-    id="towEstimateBreakdown"
-    class="service-note"
-    hidden
-    aria-live="polite">
-  </p>
+
 
   <p class="service-note">
     Route estimates use
@@ -627,6 +649,13 @@
     class="service-note"
     aria-live="polite">
     Choose your ride and calculate an estimate.
+  </p>
+  </div>
+  <p
+    id="towEstimateBreakdown"
+    class="service-note"
+    hidden
+    aria-live="polite">
   </p>
 </form>
 
