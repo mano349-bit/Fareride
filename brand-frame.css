@@ -13,8 +13,8 @@ body.app-frame {
     inset 0 0 0 10px #ffffff,
     0 6px 24px rgba(0, 130, 235, .12);
 }
-/* Frame only the rider/driver content column; leave the page header outside. */
-.app-shell > main.app-content-frame {
+/* Keep navigation and app content within the same branded column. */
+.app-shell > .app-content-frame {
   box-sizing: border-box;
   width: calc(100% - 24px);
   max-width: 900px;
@@ -30,7 +30,7 @@ body.app-frame {
 }
 .app-shell select { min-width: 0; max-width: 100%; }
 @media (max-width: 600px) {
-  .app-shell > main.app-content-frame {
+  .app-shell > .app-content-frame {
     width: calc(100% - 12px);
     margin: 12px auto;
     padding: 14px;
@@ -53,7 +53,7 @@ body.app-frame {
 @media print {
   body.app-frame,
   body.app-frame.app-shell,
-  .app-shell > main.app-content-frame {
+  .app-shell > .app-content-frame {
     width: auto;
     max-width: none;
     margin: 0;
@@ -64,3 +64,24 @@ body.app-frame {
     box-shadow: none;
   }
 }
+
+.app-content-frame > main {
+  width:100%;
+  max-width:none;
+  margin:0;
+  padding:0;
+}
+.app-content-frame > header,
+.app-frame > header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:12px;
+  padding:12px 0 18px;
+  margin:0 0 18px;
+  background:transparent;
+  border-bottom:1px solid #ccd9ea;
+}
+.app-content-frame > header h1 { margin:0; font-size:22px; }
+.app-content-frame > header a { color:#075fd8; font-weight:700; }
