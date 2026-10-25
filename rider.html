@@ -17,27 +17,34 @@
 .booking-heading {
   display:flex;
   align-items:center;
-  justify-content:space-between;
+  justify-content:center;
   gap:10px 16px;
   flex-wrap:wrap;
   margin:18px 0;
+  text-align:center;
 }
-.booking-heading h2 { margin:0; }
+.booking-heading h2,
+.booking-heading #msg {
+  margin:0;
+  font-family:Arial,sans-serif;
+  font-size:14px;
+  line-height:1.4;
+  font-weight:700;
+  white-space:nowrap;
+}
 #msg {
-  margin:0 0 0 auto;
   padding:6px 10px;
   border:1px solid #1677ff;
   border-radius:8px;
   background:#eef6ff;
   color:#075fd8;
-  font-size:13px;
-  line-height:1.4;
-  font-weight:700;
-  text-align:right;
+  text-align:center;
   box-sizing:border-box;
   max-width:100%;
-  flex:0 1 270px;
-  overflow-wrap:anywhere;
+  flex:0 1 auto;
+}
+@media (max-width:480px) {
+  .booking-heading #msg { white-space:normal; overflow-wrap:anywhere; }
 }
 
 #msg:empty {
