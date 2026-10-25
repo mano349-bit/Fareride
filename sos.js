@@ -9,7 +9,8 @@ const buttons = serviceButtons.length ? serviceButtons : (legacyButton ? [legacy
 const result = document.getElementById(driver ? 'sosResult' : 'riderSosResult');
 const fallback = document.createElement('a');
 fallback.href = 'tel:911';
-fallback.textContent = 'Call 911 now';
+fallback.textContent = driver ? '☎' : 'Call 911 now';
+fallback.ariaLabel = 'Call 911 now';
 fallback.style.cssText = 'display:inline-block;padding:12px 18px;background:#b42318;color:white;border-radius:8px;font-weight:bold;margin:12px';
 (document.querySelector('.sos-services') || legacyButton)?.after(fallback);
 result?.setAttribute('role', 'status');

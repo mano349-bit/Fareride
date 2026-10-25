@@ -13,10 +13,10 @@ function render(){
  for(const driver of nearby){const item=document.createElement('li');item.style.cssText='padding:12px;border-bottom:1px solid #cbd5e1';item.textContent=`${driver.driverName} — ${[driver.vehicleYear,driver.vehicleMake,driver.vehicleModel].filter(Boolean).join(' ')} — ${driver.miles.toFixed(1)} miles`;list.append(item);}
 }
 function search(point,label){
- if(!validCoordinates(point))return;origin=point;mode=label;stop?.();drivers=[];if(!uid)return;
+ if(!validCoordinates(point))return;origin=point;mode=label;stop?.();drivers=[];render();if(!uid)return;
  const radius=20/69;
  message.textContent='Finding nearby available drivers…';
- stop=onSnapshot(query(collection(db,'driverPresence'),where('lat','>=',Math.max(-90,point.lat-radius)),where('lat','<=',Math.min(90,point.lat+radius))),snapshot=>{drivers=snapshot.docs.map(doc=>({id:doc.id,...doc.data()}));render();},()=>{message.textContent='Nearby driver access is not enabled yet. Firebase rules need publishing.';list.replaceChildren();});
+ stop=onSnapshot(query(collection(db,'driverPresence'),where('lat','>=',Math.max(-90,point.lat-radius)),where('lat','<=',Math.min(90,point.lat+radius))),snapshot=>{drivers=snapshot.docs.map(doc=>({id:doc.id,...doc.data()}));render();},()=>{drivers=[];render();message.textContent='Nearby driver access is unavailable. Check your connection and published Firebase rules.';});
 }
 window.addEventListener('fareride-rider-position',event=>search(event.detail,'GPS location'));
 window.addEventListener('fareride-pickup-location',event=>search(event.detail,'pickup location'));

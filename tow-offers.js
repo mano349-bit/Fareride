@@ -1,3 +1,4 @@
+import {isDriverOnline, observeDriverOnline} from './driver-availability.js';
 import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
 import {towJobWindow, filterTowJobs} from './tow-job-filter.js';
 import {auth,db,doc,getDoc,collection,query,where,onSnapshot,onAuthStateChanged,addDoc,serverTimestamp} from './firebase-session.js';
@@ -52,7 +53,7 @@ function refreshTowPicker(){
 }
 
 function ref(rideId,driverId){return doc(db,'rides',rideId,'towOffers',driverId);}
-function jobs(){return [...new Map([...pending,...assigned]).values()].filter(ride=>ride.serviceType==='tow'&&['requested','accepted','started','arrived'].includes(ride.status));}
+function jobs(){return [...new Map([...pending,...assigned]).values()].filter(ride=>(!driver||isDriverOnline()||ride.driverId===uid)&&ride.serviceType==='tow'&&['requested','accepted','started','arrived'].includes(ride.status));}
 function fail(error){status.textContent=error.code==='permission-denied'?'Towing offers or messages were blocked. The updated Firebase rules must be published.':error.message||'Unable to save. Please retry.';}
 async function action(work){if(busy)return;busy=true;render();try{const result=await work();if(result!==false)status.textContent='Saved. Updates appear live.';}catch(error){fail(error);}finally{busy=false;render();}}
 function add(parent,tag,text,className){const el=document.createElement(tag);if(text!=null)el.textContent=text;if(className)el.className=className;parent.append(el);return el;}
@@ -63,6 +64,7 @@ function field(parent,key,label,value,textarea=false){
 }
 function button(parent,label,work){const b=add(parent,'button',label);b.type='button';b.disabled=busy;b.onclick=()=>action(work);return b;}
 async function propose(ride,cached,amount){
+ if(!isDriverOnline())throw new Error('Go online before sending a towing offer.');
  const value=offerAmount(amount),actor=uid;if(!actor||auth.currentUser?.uid!==actor)throw new Error('Sign in again.');
  const driverFields=driverDetails(application,actor);
  await runTransaction(db,async tx=>{
@@ -70,6 +72,7 @@ async function propose(ride,cached,amount){
   const current=await tx.get(rideRef),previous=await tx.get(offerRef);
   if(!current.exists())throw new Error('Tow request no longer exists.');checkTowOpen(current.data());checkOfferVersion(previous.exists()?previous.data():null,cached);
   if(auth.currentUser?.uid!==actor)throw new Error('Account changed.');
+  if(!isDriverOnline())throw new Error('Go online before sending a towing offer.');
   tx.set(offerRef,{...driverFields,
    amount:value,counterAmount:null,status:'pending',revision:(previous.data()?.revision||0)+1,updatedAt:serverTimestamp()});
  });
@@ -178,7 +181,18 @@ onAuthStateChanged(auth,async user=>{
   if(driver){const app=await getDoc(doc(db,'driverApplications','driver_'+user.uid));if(current!==epoch||app.data()?.status!=='approved')return;application=app.data();}
   uid=user.uid;
   const watch=(q,target)=>stops.push(liveSnapshot(q,snapshot=>{if(current!==epoch)return;target.clear();for(const d of snapshot.docs)target.set(d.id,{...d.data(),id:d.id});reconcile();},fail));
-  if(driver){watch(query(collection(db,'rides'),where('status','==','requested')),pending);watch(query(collection(db,'rides'),where('driverId','==',uid)),assigned);}
+  if(driver){
+   let stopPending,revision=0;
+   stops.push(observeDriverOnline(online=>{
+    const requestRevision=++revision;stopPending?.();stopPending=null;pending.clear();reconcile();
+    if(online)stopPending=liveSnapshot(query(collection(db,'rides'),where('status','==','requested')),snapshot=>{
+     if(current!==epoch||requestRevision!==revision||!isDriverOnline())return;
+     pending.clear();for(const d of snapshot.docs)pending.set(d.id,{...d.data(),id:d.id});reconcile();
+    },fail);
+   }));
+   stops.push(()=>{revision++;stopPending?.();});
+   watch(query(collection(db,'rides'),where('driverId','==',uid)),assigned);
+  }
   else watch(query(collection(db,'rides'),where('riderId','==',uid)),pending);
  }catch(error){fail(error);}
 });

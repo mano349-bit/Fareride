@@ -7,6 +7,11 @@ service cloud.firestore {
       return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
         && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active == true;
     }
+    function driverAvailable(uid) {
+      let presence = get(/databases/$(database)/documents/driverPresence/$(uid)).data;
+      return presence.available == true && presence.updatedAt <= request.time
+        && presence.updatedAt > request.time - duration.value(90, 's');
+    }
     match /admins/{uid} {
       allow get: if owner(uid);
       allow list, write: if false;
@@ -78,7 +83,7 @@ service cloud.firestore {
         && request.resource.data.driverId == null && request.resource.data.driverName == null
         && request.resource.data.driverLocation == null;
       allow update: if admin() || (
-        approved('driver') && resource.data.status == 'requested' && resource.data.driverId == null
+        approved('driver') && driverAvailable(request.auth.uid) && resource.data.status == 'requested' && resource.data.driverId == null
         && (!('serviceType' in resource.data) || resource.data.serviceType != 'tow')
         && resource.data.pricingStatus != 'quote_required'
         && request.resource.data.status == 'accepted' && request.resource.data.driverId == request.auth.uid
@@ -149,7 +154,7 @@ service cloud.firestore {
           && next.vehicleYear == app.vehicleYear && next.vehicleMake == app.vehicleMake && next.vehicleModel == app.vehicleModel;
       }
       allow read: if admin() || rider() || (driver() && (towOpen(rideId) || towRide(rideId).driverId == driverUid));
-      allow create: if driver() && towOpen(rideId) && detailsMatch()
+      allow create: if driver() && driverAvailable(driverUid) && towOpen(rideId) && detailsMatch()
         && request.resource.data.keys().hasOnly(['driverId','driverName','driverPhone','vehicleYear','vehicleMake','vehicleModel','amount','counterAmount','status','revision','updatedAt'])
         && request.resource.data.driverId == driverUid && towPrice(request.resource.data.amount)
         && request.resource.data.counterAmount == null && request.resource.data.status == 'pending'
@@ -158,7 +163,7 @@ service cloud.firestore {
         && request.resource.data.revision == resource.data.revision + 1
         && request.resource.data.updatedAt == request.time
         && (
-          (driver() && resource.data.status in ['pending','countered','declined']
+          (driver() && driverAvailable(driverUid) && resource.data.status in ['pending','countered','declined']
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['amount','counterAmount','status','revision','updatedAt'])
             && request.resource.data.status == 'pending' && request.resource.data.counterAmount == null && towPrice(request.resource.data.amount))
           || (rider() && resource.data.status in ['pending','countered']
@@ -202,6 +207,7 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','pricingStatus','fare','tipAmount','totalFare','driverId','driverName','driverPhone','vehicleYear','vehicleMake','vehicleModel','acceptedAt'])
         && request.resource.data.status == 'accepted' && request.resource.data.pricingStatus == 'agreed'
         && request.resource.data.driverId is string
+        && driverAvailable(request.resource.data.driverId)
         && get(/databases/$(database)/documents/rides/$(rideId)/towOffers/$(request.resource.data.driverId)).data.status == 'pending'
         && chosenOffer().status == 'accepted' && chosenOffer().updatedAt == request.time
         && get(/databases/$(database)/documents/users/$(request.resource.data.driverId)).data.role == 'driver'

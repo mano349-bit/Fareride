@@ -12,3 +12,8 @@ test('an already assigned requested job is not offered to other drivers',()=>{
  assert.equal(visibleDriverJobs([{id:'claimed',status:'requested',driverId:'other',serviceType:'tow'}],'d').length,0);
  assert.equal(visibleDriverJobs([{id:'legacy',status:'requested'}],'d','ride').length,1);
 });
+test('offline drivers see no new ride, towing or delivery requests but retain their current trip',()=>{
+ assert.deepEqual(visibleDriverJobs(jobs,'d','all',false).map(job=>job.id),['own']);
+ assert.deepEqual(visibleDriverJobs(jobs,'d','tow',false).map(job=>job.id),['own']);
+ assert.equal(visibleDriverJobs(jobs,null,'all',false).length,0);
+});

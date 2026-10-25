@@ -14,7 +14,7 @@
 <link
   rel="stylesheet"
   href="styles.css">
-<link rel="stylesheet" href="sos-ui.css">
+<link rel="stylesheet" href="sos-ui.css?v=20261025-icons">
 
 <style>
 
@@ -442,45 +442,24 @@
      EMERGENCY SOS
 ======================================================= -->
 
-<section class="emergency-card">
-
-    <h2>
-        🚨 Emergency SOS
-    </h2>
-
-    <p class="emergency-warning">
-        If you are in immediate danger, choose an SOS service to
-        record your current GPS location with FareRide.
-        After the SOS is recorded, you can call 911 directly
-        from your phone.
-    </p>
+<section class="emergency-card driver-sos-compact" aria-label="Emergency SOS">
 
     <div class="sos-services" role="group" aria-label="Choose SOS service">
       <button class="sos-service-button" type="button" data-sos-service="police" aria-label="Send Police SOS to FareRide Admin">
-        <img class="sos-icon-animated" src="assets/sos-police.gif" width="64" height="48" alt="" aria-hidden="true">
-        <img class="sos-icon-still" src="assets/sos-police.png" width="64" height="48" alt="" aria-hidden="true">
-        <span>Police SOS</span>
+        <img class="sos-icon-animated" src="assets/sos-police.gif" width="16" height="12" alt="" aria-hidden="true">
+        <img class="sos-icon-still" src="assets/sos-police.png" width="16" height="12" alt="" aria-hidden="true">
       </button>
       <button class="sos-service-button" type="button" data-sos-service="ambulance" aria-label="Send Ambulance SOS to FareRide Admin">
-        <img class="sos-icon-animated" src="assets/sos-ambulance.gif" width="64" height="48" alt="" aria-hidden="true">
-        <img class="sos-icon-still" src="assets/sos-ambulance.png" width="64" height="48" alt="" aria-hidden="true">
-        <span>Ambulance SOS</span>
+        <img class="sos-icon-animated" src="assets/sos-ambulance.gif" width="16" height="12" alt="" aria-hidden="true">
+        <img class="sos-icon-still" src="assets/sos-ambulance.png" width="16" height="12" alt="" aria-hidden="true">
       </button>
       <button class="sos-service-button" type="button" data-sos-service="fire" aria-label="Send Fire Department SOS to FareRide Admin">
-        <img class="sos-icon-animated" src="assets/sos-fire.gif" width="64" height="48" alt="" aria-hidden="true">
-        <img class="sos-icon-still" src="assets/sos-fire.png" width="64" height="48" alt="" aria-hidden="true">
-        <span>Fire Department SOS</span>
+        <img class="sos-icon-animated" src="assets/sos-fire.gif" width="16" height="12" alt="" aria-hidden="true">
+        <img class="sos-icon-still" src="assets/sos-fire.png" width="16" height="12" alt="" aria-hidden="true">
       </button>
     </div>
-    <p class="sos-service-note">Sends your selected SOS and GPS location to FareRide Admin. Call 911 directly for emergency services.</p>
 
     <div id="sosResult"></div>
-
-    <p class="emergency-note">
-        FareRide records the SOS and GPS location for the
-        FareRide emergency/admin system. The 911 call itself
-        is placed through your phone.
-    </p>
 
 </section>
 
@@ -558,7 +537,7 @@
 
 <script
   type="module"
-  src="driver.js?v=20261013-live-sync">
+  src="driver.js?v=20261025-availability">
 </script>
 
 <script
@@ -566,8 +545,8 @@
   src="driver-location.js">
 </script>
 
-<script type="module" src="ride-live.js?v=20261013-live-sync"></script><script type="module" src="driver-history.js"></script><script type="module" src="ride-reviews.js"></script><script type="module" src="sos.js"></script><script type="module" src="driver-navigation.js?v=20261013-live-sync"></script><script type="module" src="connection-status.js"></script><script type="module" src="ride-logout.js"></script><script type="module" src="driver-presence.js"></script><script type="module" src="table-fit.js"></script>
-<script type="module" src="tow-offers.js?v=20261013-live-sync"></script>
+<script type="module" src="ride-live.js?v=20261013-live-sync"></script><script type="module" src="driver-history.js"></script><script type="module" src="ride-reviews.js"></script><script type="module" src="sos.js?v=20261025-icons"></script><script type="module" src="driver-navigation.js?v=20261013-live-sync"></script><script type="module" src="connection-status.js"></script><script type="module" src="ride-logout.js"></script><script type="module" src="driver-presence.js?v=20261025-availability"></script><script type="module" src="table-fit.js"></script>
+<script type="module" src="tow-offers.js?v=20261025-availability"></script>
 </body>
 
 </html>
