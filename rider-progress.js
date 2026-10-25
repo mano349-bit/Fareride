@@ -1,5 +1,5 @@
 export function riderProgress(status) {
-  const steps = [['accepted','Accept Job'],['arrived','Arrive at Pickup'],['started','Start Ride'],['completed','Completed Ride']];
+  const steps = [['accepted','Accept Job'],['started','Start Ride'],['arrived','Arrive at Pickup'],['completed','Complete Ride']];
   const current = steps.findIndex(([value]) => value === status);
   return '<div role="group" aria-label="Driver progress" style="display:flex;flex-wrap:wrap;gap:6px;margin:12px 0">'+steps.map(([value,label],index)=>{
     const reached=current>=index && current>=0;
