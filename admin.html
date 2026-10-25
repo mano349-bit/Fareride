@@ -733,7 +733,17 @@ td{
 }
 
 
-.app-shell > .admin-content-frame { max-width:2187.5px; }
+body.app-shell > .admin-content-frame { max-width:1150px; }
+body #fr7-fixed-host {
+  box-sizing:border-box;
+  width:calc(100% - 24px);
+  max-width:1150px;
+  margin:16px auto;
+  padding:0;
+}
+@media(max-width:600px) {
+  body #fr7-fixed-host { width:calc(100% - 12px); }
+}
 #adminApp { padding:0; }
 
 body table.operations-table th:nth-child(1) { width:11%; }
