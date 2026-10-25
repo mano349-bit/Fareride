@@ -21,6 +21,7 @@ function playRecording(accepted=false) {
  playing?.catch(()=>{status.textContent='Tap Replay voice alert to hear the message. Check your phone media volume.';});
 }
 const controls = document.createElement('div');
+controls.className='rider-voice-controls';
 controls.style.cssText = 'padding:10px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap';
 const toggle = document.createElement('button');
 toggle.type = 'button';toggle.textContent = 'Enable rider voice alerts';
