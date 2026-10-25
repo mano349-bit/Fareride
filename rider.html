@@ -311,6 +311,40 @@
     font-size:22px;
   }
 }
+
+.app-content-frame > .rider-page-header {
+  justify-content:center;
+  gap:16px;
+  text-align:center;
+}
+.app-content-frame > .rider-page-header h1 {
+  color:#087443;
+  font-size:30px;
+  line-height:1.3;
+}
+.app-content-frame > .rider-page-header a,
+.app-content-frame > .rider-page-header button {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:120px;
+  min-height:50px !important;
+  margin:0 !important;
+  padding:12px 20px !important;
+  border:0;
+  border-radius:10px;
+  background:#0875e1 !important;
+  color:white;
+  font-family:Arial,sans-serif;
+  font-size:18px !important;
+  line-height:1.35 !important;
+  font-weight:700;
+  text-decoration:none;
+}
+.app-content-frame > .rider-page-header button[hidden] { display:none; }
+.app-content-frame > .rider-page-header a:hover,
+.app-content-frame > .rider-page-header button:hover { background:#0754b6 !important; }
+.app-content-frame > .rider-page-header span:empty { display:none; }
 </style>
 
 <script
@@ -330,7 +364,7 @@
 
 <body class="app-shell">
 <div class="app-content-frame">
-<header>
+<header class="rider-page-header">
   <h1>FareRide Rider</h1>
   <a href="index.html">Home</a>
 </header>
