@@ -337,6 +337,28 @@
     }
 }
 
+
+/* Center the primary job controls and use the full card width. */
+section[aria-label="Driver job controls"] > h2,
+#driverControlsStatus { text-align:center; }
+#driverControls { width:100%; }
+#driverControls .ride-actions {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+  width:100%;
+}
+#driverControls .ride-actions button {
+  width:100%;
+  min-width:0;
+  height:100%;
+  margin:0;
+  text-align:center;
+  padding:12px 8px !important;
+}
+@media(max-width:480px) {
+  #driverControls .ride-actions { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
 </style>
 
 
