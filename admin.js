@@ -1,4 +1,5 @@
-import {adminRecords, onAdminCalendar} from './admin-calendar.js';
+import {rideTableTotals} from './admin-table-totals.js';
+import {adminRecords, onAdminCalendar, mountAdminCalendar} from './admin-calendar.js';
 import { amounts, report360, dailyAccounts } from './admin-financials.js';
 import { serviceName, priceLabel } from './services.js';
 ﻿import {
@@ -25,6 +26,8 @@ import {
 const $ = id =>
   document.getElementById(id);
 
+
+mountAdminCalendar($('ridesCalendar'),'rides');
 
 let rides = [];
 let applicants = [];
@@ -535,6 +538,9 @@ function renderRides() {
 
   const table =
     $('ridesTable');
+  const totals=rideTableTotals(filtered);
+  $('ridesTotals').innerHTML='<tr><th scope="row" colspan="4">Shown jobs totals ('+totals.count+')</th><td>'+money(totals.fare)+'</td><td>'+money(totals.tip)+'</td><td>'+(totals.rate===null?'-':money(totals.rate)+'/mi')+'</td><td>'+money(totals.rider)+'</td><td>'+money(totals.driver)+(totals.estimated?' (estimate)':'')+'</td><td colspan="3">Fare/mile is a mileage-weighted average.'+(totals.unpriced?' '+totals.unpriced+' unpriced jobs excluded.':'')+'</td></tr>';
+
 
 
   if (!filtered.length) {

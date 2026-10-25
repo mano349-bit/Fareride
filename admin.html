@@ -759,6 +759,9 @@ body table.operations-table th:nth-child(11), body table.operations-table th:nth
 @media(max-width:600px) {
   #ridesTable td:last-child .requested-actions { grid-column:2; }
 }
+
+#ridesTotals { background:#eaf2ff; color:#075fd8; font-weight:700; }
+#ridesTotals th, #ridesTotals td { border-top:2px solid #1677ff; }
 </style>
 
 <link rel="stylesheet" href="./admin-status-manager-v7.css?v=20260814-172125">
@@ -1052,6 +1055,7 @@ body table.operations-table th:nth-child(11), body table.operations-table th:nth
 
     <section class="card"><h3>Selected period totals</h3><p id="financialSummary">Waiting for ride data...</p><p>Completed rides only, by completion date. Driver estimates use the saved share or 75% of fare plus tips when no payout is recorded. These are ride totals, not confirmed payments. Effective rate includes the base fare.</p><div class="table-wrap"><table><thead><tr><th>Account</th><th>Name / ID</th><th>Completed rides</th><th>Total</th></tr></thead><tbody id="financialPeople"></tbody></table></div></section>
     <section class="card"><h3>Daily rider and driver jobs</h3><input id="dailyReportDays" type="hidden" value="365"><p>Pending and active jobs use their request date. Completed jobs use completion date; cancellations use cancellation date. Financial totals include completed jobs only. Unassigned jobs appear under their rider until a driver accepts.</p><div class="table-wrap"><table><thead><tr><th>Date</th><th>Account</th><th>Name / ID</th><th>Pending</th><th>Active</th><th>Completed</th><th>Cancelled</th><th>Daily total</th></tr></thead><tbody id="dailyAccounts"></tbody></table></div></section>
+    <div id="ridesCalendar" aria-label="Filter jobs by date"></div>
     <div class="toolbar">
 
       <input
@@ -1116,6 +1120,7 @@ body table.operations-table th:nth-child(11), body table.operations-table th:nth
         </thead>
 
         <tbody id="ridesTable"></tbody>
+        <tfoot id="ridesTotals"></tfoot>
 
       </table>
 
@@ -1340,7 +1345,7 @@ body table.operations-table th:nth-child(11), body table.operations-table th:nth
 
 <script
   type="module"
-  src="admin.js?v=20261025-fare-tip-details">
+  src="admin.js?v=20261025-job-column-totals">
 </script>
 
 
