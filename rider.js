@@ -102,7 +102,7 @@ function updateService() {
   const specialty = type === 'tow' && $('towVehicleClass')?.value === 'specialty';
   $('estimateBtn').textContent = specialty ? 'Review quote request' : type === 'tow' ? 'Calculate towing mileage & fare' : 'Calculate mileage & fare';
   $('requestBtn').textContent = specialty ? 'Request towing quote' : SERVICES[type].action;
-  $('serviceNote').textContent = type !== 'tow' ? 'Choose your service and calculate an estimate. Bike delivery uses Economy sedan rates.'
+  $('serviceNote').textContent = type !== 'tow' ? 'Choose your service and calculate an estimate. Bike delivery costs 15% less than Economy sedan rates.'
     : specialty ? 'Heavy vehicles and recovery require a provider quote before dispatch.' : 'Standard light-duty towing uses $112 hookup + $6 per loaded mile. Final price and availability must be confirmed with the tow driver.';
   invalidateEstimate();
 }
@@ -466,7 +466,9 @@ async function calculateEstimate() {
 
     const fare = serviceType === 'tow'
       ? calculateTowFare(Number(miles.toFixed(2)))
-      : calculateFare(miles, serviceType === 'messenger' ? 'economy' : $('rideType').value);
+      : serviceType === 'messenger'
+        ? calculateFare(miles, 'economy') * 0.85
+        : calculateFare(miles, $('rideType').value);
 
     if (version !== estimateVersion) return;
     estimate = {
