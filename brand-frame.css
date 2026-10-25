@@ -13,6 +13,21 @@ body.app-frame {
     inset 0 0 0 10px #ffffff,
     0 6px 24px rgba(0, 130, 235, .12);
 }
+/* Keep the rider and driver frame close to their centered app column. */
+body.app-frame.app-shell {
+  width: calc(100% - 2 * var(--frame-gutter));
+  max-width: 980px;
+  margin: var(--frame-gutter) auto;
+}
+.app-shell > header {
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-inline: clamp(16px, 4%, 36px);
+}
+.app-shell > main {
+  padding-inline: clamp(12px, 3%, 28px);
+}
+.app-shell select { min-width: 0; max-width: 100%; }
 @media (max-width: 600px) {
   body.app-frame {
     --frame-gutter: 6px;
@@ -27,7 +42,10 @@ body.app-frame {
   }
 }
 @media print {
-  body.app-frame {
+  body.app-frame,
+  body.app-frame.app-shell {
+    width: auto;
+    max-width: none;
     margin: 0;
     min-height: auto;
     padding: 0;
