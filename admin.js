@@ -678,11 +678,8 @@ function renderRides() {
                   ride.requestedAt
                 )
               }
-            </td>
 
-
-            <td>
-
+              <div class="requested-actions">
               <button
                 class="action-btn view-btn"
                 data-details="${ride.id}">
@@ -702,6 +699,7 @@ function renderRides() {
                   : ''
               }
 
+              </div>
             </td>
 
           </tr>
@@ -711,7 +709,7 @@ function renderRides() {
             id="details-${ride.id}"
             class="details">
 
-            <td colspan="11">
+            <td colspan="10">
 
               <div class="details-box">
 

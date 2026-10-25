@@ -732,6 +732,15 @@ td{
   }
 }
 
+
+.app-shell > .admin-content-frame { max-width:1400px; }
+#adminApp { padding:0; }
+body table.operations-table th:nth-child(10) { width:19%; }
+.requested-actions { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
+.requested-actions button { width:100%; min-width:0; }
+@media(max-width:600px) {
+  #ridesTable td:last-child .requested-actions { grid-column:2; }
+}
 </style>
 
 <link rel="stylesheet" href="./admin-status-manager-v7.css?v=20260814-172125">
@@ -741,7 +750,8 @@ td{
 <link rel="stylesheet" href="brand-frame.css?v=20261025-header-inside">
 </head>
 
-<body class="app-frame">
+<body class="app-shell">
+<div class="app-content-frame admin-content-frame">
 
 <header class="admin-header">
 
@@ -1081,7 +1091,7 @@ td{
             <th>Fare</th><th>Effective fare / mile</th><th>Rider total</th><th>Driver earnings</th>
             <th>Status</th>
             <th>Requested</th>
-            <th>Actions</th>
+            
           </tr>
 
         </thead>
@@ -1306,11 +1316,12 @@ td{
   </section>
 
 </main>
+</div>
 
 
 <script
   type="module"
-  src="admin.js">
+  src="admin.js?v=20261025-details-under-date">
 </script>
 
 
