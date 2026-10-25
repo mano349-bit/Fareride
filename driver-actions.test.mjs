@@ -24,7 +24,7 @@ test('buttons follow Accept, Start, Arrive, Complete order', () => {
   assert.deepEqual(labels, ['+ Accept Job', 'Start Ride', 'Arrive at Pickup', 'Complete Ride']);
 });
 
-test('requested towing jobs require rider offer acceptance rather than direct driver acceptance',()=>{
+test('requested towing jobs use the offer controls rather than direct Accept Job',()=>{
  assert.match(actionButtons({id:'tow',serviceType:'tow',status:'requested',pricingStatus:'estimated'},'driver'),/acceptRide[^>]*disabled/);
 });
 

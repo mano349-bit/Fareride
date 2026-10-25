@@ -77,12 +77,20 @@ match /rides/{rideId} {
           && next.driverName == app.fullName && next.driverPhone == app.phone
           && next.vehicleYear == app.vehicleYear && next.vehicleMake == app.vehicleMake && next.vehicleModel == app.vehicleModel;
       }
+      function assignedAtPrice(amount) {
+        let assigned = getAfter(/databases/$(database)/documents/rides/$(rideId)).data;
+        return assigned.status == 'accepted' && assigned.driverId == driverUid
+          && assigned.pricingStatus == 'agreed' && assigned.fare == amount;
+      }
       allow read: if admin() || rider() || (driver() && (towOpen(rideId) || towRide(rideId).driverId == driverUid));
       allow create: if driver() && towOpen(rideId) && detailsMatch()
         && request.resource.data.keys().hasOnly(['driverId','driverName','driverPhone','vehicleYear','vehicleMake','vehicleModel','amount','counterAmount','status','revision','updatedAt'])
         && request.resource.data.driverId == driverUid && towPrice(request.resource.data.amount)
-        && request.resource.data.counterAmount == null && request.resource.data.status == 'pending'
-        && request.resource.data.revision == 1 && request.resource.data.updatedAt == request.time;
+        && request.resource.data.counterAmount == null && request.resource.data.revision == 1
+        && request.resource.data.updatedAt == request.time
+        && (request.resource.data.status == 'pending'
+          || (request.resource.data.status == 'accepted' && towRide(rideId).pricingStatus != 'quote_required'
+            && request.resource.data.amount == towRide(rideId).fare && assignedAtPrice(request.resource.data.amount)));
       allow update: if towOpen(rideId)
         && request.resource.data.revision == resource.data.revision + 1
         && request.resource.data.updatedAt == request.time
@@ -90,25 +98,20 @@ match /rides/{rideId} {
           (driver() && resource.data.status in ['pending','countered','declined']
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['amount','counterAmount','status','revision','updatedAt'])
             && request.resource.data.status == 'pending' && request.resource.data.counterAmount == null && towPrice(request.resource.data.amount))
-          || (driver() && resource.data.status == 'countered'
+          || (driver() && resource.data.status in ['pending','countered','declined']
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['amount','status','revision','updatedAt'])
-            && request.resource.data.status == 'accepted' && towPrice(resource.data.counterAmount)
-            && request.resource.data.amount == resource.data.counterAmount
-            && getAfter(/databases/$(database)/documents/rides/$(rideId)).data.status == 'accepted'
-            && getAfter(/databases/$(database)/documents/rides/$(rideId)).data.driverId == driverUid
-            && getAfter(/databases/$(database)/documents/rides/$(rideId)).data.pricingStatus == 'agreed'
-            && getAfter(/databases/$(database)/documents/rides/$(rideId)).data.fare == resource.data.counterAmount)
+            && request.resource.data.status == 'accepted' && towPrice(request.resource.data.amount)
+            && (resource.data.status == 'countered'
+              ? request.resource.data.amount == resource.data.counterAmount
+              : (towRide(rideId).pricingStatus != 'quote_required' && request.resource.data.amount == towRide(rideId).fare))
+            && assignedAtPrice(request.resource.data.amount))
           || (rider() && resource.data.status in ['pending','countered']
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['counterAmount','status','revision','updatedAt'])
             && (
               (request.resource.data.status == 'countered' && towPrice(request.resource.data.counterAmount))
               || (request.resource.data.status == 'declined' && request.resource.data.counterAmount == resource.data.counterAmount)
               || (resource.data.status == 'pending' && request.resource.data.status == 'accepted'
-                && request.resource.data.counterAmount == resource.data.counterAmount
-                && getAfter(/databases/$(database)/documents/rides/$(rideId)).data.status == 'accepted'
-                && getAfter(/databases/$(database)/documents/rides/$(rideId)).data.driverId == driverUid
-                && getAfter(/databases/$(database)/documents/rides/$(rideId)).data.pricingStatus == 'agreed'
-                && getAfter(/databases/$(database)/documents/rides/$(rideId)).data.fare == resource.data.amount)
+                && request.resource.data.counterAmount == resource.data.counterAmount && assignedAtPrice(resource.data.amount))
             ))
         );
       allow delete: if false;
@@ -131,33 +134,37 @@ match /rides/{rideId} {
       allow update, delete: if false;
     }
     match /rides/{rideId} {
-      function chosenOffer() {
-        return getAfter(/databases/$(database)/documents/rides/$(rideId)/towOffers/$(request.resource.data.driverId)).data;
+      function validTowAcceptance() {
+        let next = request.resource.data;
+        let offerPath = /databases/$(database)/documents/rides/$(rideId)/towOffers/$(next.driverId);
+        let previous = exists(offerPath) ? get(offerPath).data : null;
+        let chosen = getAfter(offerPath).data;
+        let actor = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+        let driverProfile = get(/databases/$(database)/documents/users/$(next.driverId)).data;
+        let application = get(/databases/$(database)/documents/driverApplications/$('driver_' + next.driverId)).data;
+        return actor.accountStatus in ['approved','active']
+          && ((actor.role == 'rider' && resource.data.riderId == request.auth.uid && previous != null && previous.status == 'pending')
+            || (actor.role == 'driver' && next.driverId == request.auth.uid
+              && (previous != null && previous.status == 'countered'
+                ? next.fare == previous.counterAmount
+                : ((previous == null || previous.status in ['pending','declined'])
+                  && resource.data.pricingStatus != 'quote_required' && towPrice(resource.data.fare) && next.fare == resource.data.fare))))
+          && next.diff(resource.data).affectedKeys().hasOnly(['status','pricingStatus','fare','tipAmount','totalFare','driverId','driverName','driverPhone','vehicleYear','vehicleMake','vehicleModel','acceptedAt'])
+          && next.pricingStatus == 'agreed'
+          && chosen.status == 'accepted' && chosen.updatedAt == request.time
+          && chosen.driverId == next.driverId && towPrice(chosen.amount) && next.fare == chosen.amount
+          && driverProfile.role == 'driver' && driverProfile.accountStatus in ['approved','active'] && application.status == 'approved'
+          && next.driverName == chosen.driverName && next.driverPhone == chosen.driverPhone
+          && next.vehicleYear == chosen.vehicleYear && next.vehicleMake == chosen.vehicleMake && next.vehicleModel == chosen.vehicleModel
+          && resource.data.tipPercent is number && resource.data.tipPercent >= 0 && resource.data.tipPercent <= 100
+          && next.tipAmount is number && next.tipAmount >= 0
+          && next.tipAmount >= next.fare * resource.data.tipPercent / 100 - 0.011
+          && next.tipAmount <= next.fare * resource.data.tipPercent / 100 + 0.011
+          && next.totalFare is number && next.totalFare >= next.fare + next.tipAmount - 0.011
+          && next.totalFare <= next.fare + next.tipAmount + 0.011 && next.acceptedAt is string;
       }
-      allow update: if (
-          (towApproved('rider') && resource.data.riderId == request.auth.uid
-            && get(/databases/$(database)/documents/rides/$(rideId)/towOffers/$(request.resource.data.driverId)).data.status == 'pending')
-          || (towApproved('driver') && request.resource.data.driverId == request.auth.uid
-            && get(/databases/$(database)/documents/rides/$(rideId)/towOffers/$(request.auth.uid)).data.status == 'countered'
-            && request.resource.data.fare == get(/databases/$(database)/documents/rides/$(rideId)/towOffers/$(request.auth.uid)).data.counterAmount)
-        )
-        && resource.data.serviceType == 'tow' && resource.data.status == 'requested' && resource.data.driverId == null
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','pricingStatus','fare','tipAmount','totalFare','driverId','driverName','driverPhone','vehicleYear','vehicleMake','vehicleModel','acceptedAt'])
-        && request.resource.data.status == 'accepted' && request.resource.data.pricingStatus == 'agreed'
-        && request.resource.data.driverId is string
-        && chosenOffer().status == 'accepted' && chosenOffer().updatedAt == request.time
-        && get(/databases/$(database)/documents/users/$(request.resource.data.driverId)).data.role == 'driver'
-        && get(/databases/$(database)/documents/users/$(request.resource.data.driverId)).data.accountStatus in ['approved','active']
-        && get(/databases/$(database)/documents/driverApplications/$('driver_' + request.resource.data.driverId)).data.status == 'approved'
-        && chosenOffer().driverId == request.resource.data.driverId && request.resource.data.fare == chosenOffer().amount
-        && request.resource.data.driverName == chosenOffer().driverName && request.resource.data.driverPhone == chosenOffer().driverPhone
-        && request.resource.data.vehicleYear == chosenOffer().vehicleYear && request.resource.data.vehicleMake == chosenOffer().vehicleMake && request.resource.data.vehicleModel == chosenOffer().vehicleModel
-        && request.resource.data.tipAmount is number && request.resource.data.tipAmount >= 0
-        && request.resource.data.tipAmount >= request.resource.data.fare * resource.data.tipPercent / 100 - 0.011
-        && request.resource.data.tipAmount <= request.resource.data.fare * resource.data.tipPercent / 100 + 0.011
-        && request.resource.data.totalFare >= request.resource.data.fare + request.resource.data.tipAmount - 0.011
-        && request.resource.data.totalFare <= request.resource.data.fare + request.resource.data.tipAmount + 0.011
-        && request.resource.data.acceptedAt is string;
+      allow update: if signedIn() && resource.data.serviceType == 'tow' && resource.data.status == 'requested' && resource.data.driverId == null
+        && request.resource.data.status == 'accepted' && request.resource.data.driverId is string && validTowAcceptance();
     }
 
 match /emergencies/{emergencyId} {

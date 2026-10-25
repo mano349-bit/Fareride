@@ -4,12 +4,12 @@ import {towJobWindow, filterTowJobs} from './tow-job-filter.js';
 import {auth,db,doc,getDoc,collection,query,where,onSnapshot,onAuthStateChanged,addDoc,serverTimestamp} from './firebase-session.js';
 import {runTransaction} from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 import {driverDetails} from './ride-details.js';
-import {offerAmount,checkTowOpen,checkOfferVersion,offerResponse,acceptedTowFields} from './tow-offer-state.js?v=20261025-two-sided-accept';
+import {offerAmount,checkTowOpen,checkOfferVersion,offerResponse,acceptedTowFields,driverOfferAmount,driverAcceptanceFields} from './tow-offer-state.js?v=20261025-two-sided-accept';
 const driver=location.pathname.endsWith('/driver.html'),role=driver?'driver':'rider';
 const queue=document.getElementById('jobServiceFilter') || document.getElementById('providerService');
 const panel=document.createElement('section');panel.className='tow-offers';document.querySelector('main').prepend(panel);
 const heading=document.createElement('h2');heading.textContent=driver?'Tow offers & rider issues':'Tow driver offers & live messages';
-const note=document.createElement('p');note.textContent=driver?'Send your towing price or accept the rider’s counteroffer. After acceptance, use Driver Job Controls to start and complete the job.':'Compare driver offers. Accept a price, send a counteroffer, or decline. Accepting assigns that tow driver. Messages appear live after sending.';
+const note=document.createElement('p');note.textContent=driver?'Accept the rider’s current price or send a counteroffer. After acceptance, use Driver Job Controls to start and complete the job.':'Compare driver offers. Accept a price, send a counteroffer, or decline. Accepting assigns that tow driver. Messages appear live after sending.';
 const status=document.createElement('p');status.setAttribute('role','status');const cards=document.createElement('div');cards.className='tow-conversations';cards.tabIndex=0;cards.setAttribute('role','region');cards.setAttribute('aria-label','Towing offers and conversations; scroll up or down');const content=document.createElement('div');content.append(heading,note,status,cards);panel.append(content);panel.hidden=true;
 if(driver){const links=document.getElementById('driverPageLinks');if(links){links.classList.add('driver-page-links');panel.prepend(links);}}
 let uid=null,epoch=0,application=null,pending=new Map(),assigned=new Map(),stops=[],busy=false;
@@ -79,6 +79,23 @@ async function propose(ride,cached,amount){
  });
  drafts.delete(ride.id+':'+actor+':price');
 }
+async function acceptDriverOffer(ride,cached){
+ const actor=uid;if(!actor||auth.currentUser?.uid!==actor)throw new Error('Sign in again.');
+ if(!isDriverOnline())throw new Error('Go online before accepting a towing job.');
+ const details=driverDetails(application,actor),preview=driverAcceptanceFields(ride,cached,details,new Date().toISOString());
+ if(!confirm('Accept the rider’s '+money(preview.ride.fare)+' offer and take this towing job?'))return false;
+ await runTransaction(db,async tx=>{
+  const rideRef=doc(db,'rides',ride.id),offerRef=ref(ride.id,actor);
+  const current=await tx.get(rideRef),previous=await tx.get(offerRef);
+  if(!current.exists())throw new Error('Tow request no longer exists.');
+  const existing=previous.exists()?previous.data():null;checkOfferVersion(existing,cached);
+  const plan=driverAcceptanceFields(current.data(),existing,details,new Date().toISOString());
+  if(plan.ride.fare!==preview.ride.fare||current.data().tipPercent!==ride.tipPercent)throw new Error('The rider’s offer changed. Review the new price and try again.');
+  if(auth.currentUser?.uid!==actor||!isDriverOnline())throw new Error('Go online with the same driver account before accepting.');
+  tx.update(rideRef,plan.ride);tx.set(offerRef,{...plan.offer,updatedAt:serverTimestamp()});
+ });
+ drafts.delete(ride.id+':'+actor+':price');
+}
 async function respond(ride,cached,choice,value){
  const actor=uid;if(!actor||auth.currentUser?.uid!==actor)throw new Error('Sign in again.');
  if(driver&&(!isDriverOnline()||cached?.driverId!==actor))throw new Error('Go online with the driver account for this offer.');
@@ -127,7 +144,7 @@ function render(){
  cards.replaceChildren();refreshTowPicker();const all=selectedTowJobs(),active=jobs();cards.dataset.empty=String(!all.length);content.hidden=!uid||!active.length||(driver&&queue&&!['all','tow'].includes(queue.value)&&!active.some(ride=>ride.driverId===uid));panel.hidden=driver?!uid:content.hidden;
  if(!all.length){add(cards,'p',driver?'No tow requests match these dates. Choose a wider range up to 30 days.':'No active tow requests.');return;}
  for(const ride of all){
-  const card=add(cards,'div',null,'tow-offer-card');add(card,'h3',ride.pickup+' → '+ride.dropoff);add(card,'p','Job: '+ride.id);
+  const card=add(cards,'div',null,'tow-offer-card');card.dataset.towRide=ride.id;add(card,'h3',ride.pickup+' → '+ride.dropoff);add(card,'p','Job: '+ride.id);
   add(card,'p','Vehicle: '+(ride.serviceDetails?.vehicle||'Not specified'));add(card,'p','Rider’s issue: '+(ride.serviceDetails?.issue||'Not specified'),'tow-offer-issue');
   const items=(offers.get(ride.id)||[]).filter(o=>ride.status==='requested'||o.driverId===ride.driverId);
   if(driver&&ride.status==='requested'){
@@ -136,13 +153,15 @@ function render(){
    if(own?.status==='countered'){
     add(card,'p','Rider’s counteroffer: '+money(own.counterAmount));
    }
-   const accept=button(card,'Accept offer',()=>respond(ride,own,'accept'));accept.disabled=busy||own?.status!=='countered';if(own?.status!=='countered')accept.title='Send your price first; you can accept a rider counteroffer.';
-   button(card,own?'Send revised offer':'Send offer',()=>propose(ride,own,price.value));
+   let currentPrice=null,priceMessage='';try{currentPrice=driverOfferAmount(ride,own);add(card,'p','Rider’s current offer: '+money(currentPrice));}catch(error){priceMessage=error.message;}
+   const actions=add(card,'div',null,'tow-offer-actions'),accept=button(actions,'Accept offer',()=>acceptDriverOffer(ride,own));
+   accept.disabled=busy||currentPrice===null;accept.title=currentPrice===null?priceMessage:'Accept the rider’s '+money(currentPrice)+' price';
+   button(actions,'Send counteroffer',()=>propose(ride,own,price.value));
    if(own)chat(card,ride,own);
   }else{
    if(!items.length)add(card,'p','Waiting for tow driver offers.');
    for(const offer of items){
-    const item=add(card,'div',null,'tow-offer-card');add(item,'h3',offer.driverName+' — '+money(offer.amount));add(item,'p','Offer: '+offer.status,'tow-offer-status');
+    const item=add(card,'div',null,'tow-offer-card');item.dataset.towDriver=offer.driverId;add(item,'h3',offer.driverName+' — '+money(offer.amount));add(item,'p','Offer: '+offer.status,'tow-offer-status');
     if(offer.status==='countered')add(item,'p','Your counteroffer: '+money(offer.counterAmount)+' — waiting for driver acceptance or a revised offer.');
     if(!driver&&ride.status==='requested'&&['pending','countered'].includes(offer.status)){
      const actions=add(item,'div',null,'tow-offer-actions');
@@ -166,8 +185,14 @@ function reconcile(){
   const target=driver?ref(ride.id,uid):collection(db,'rides',ride.id,'towOffers');
   offerStops.set(ride.id,liveSnapshot(target,snapshot=>{
    if(epoch!==expected)return;
-   offers.set(ride.id,driver?(snapshot.exists()?[snapshot.data()]:[]):snapshot.docs.map(d=>d.data()));
-   syncChats();render();
+   const previous=offers.get(ride.id),next=driver?(snapshot.exists()?[snapshot.data()]:[]):snapshot.docs.map(d=>d.data());
+   const incoming=!driver&&previous?next.find(offer=>offer.status==='pending'&&!previous.some(old=>old.driverId===offer.driverId&&old.revision===offer.revision&&old.status===offer.status)):null;
+   const editing=cards.contains(document.activeElement);
+   offers.set(ride.id,next);syncChats();render();
+   if(incoming){
+    status.textContent='New offer from '+incoming.driverName+': '+money(incoming.amount)+'. Accept it or send a counteroffer below.';
+    if(!editing){const card=[...cards.querySelectorAll('[data-tow-ride]')].find(card=>card.dataset.towRide===ride.id),item=card&&[...card.querySelectorAll('[data-tow-driver]')].find(item=>item.dataset.towDriver===incoming.driverId);if(item)cards.scrollTop=Math.max(0,cards.scrollTop+item.getBoundingClientRect().top-cards.getBoundingClientRect().top-12);}
+   }
   },fail));
  }
  syncChats();render();

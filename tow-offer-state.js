@@ -35,3 +35,20 @@ export function acceptedTowFields(ride,offer,acceptedAt,actor='rider') {
  vehicleYear:offer.vehicleYear,vehicleMake:offer.vehicleMake,vehicleModel:offer.vehicleModel,acceptedAt};
 }
 
+
+
+export function driverOfferAmount(ride,offer) {
+ checkTowOpen(ride);
+ if(offer?.status==='countered')return offerAmount(offer.counterAmount);
+ if(offer&&!['pending','declined'].includes(offer.status))throw new Error('This offer is no longer open.');
+ if(ride.pricingStatus==='quote_required')throw new Error('The rider has not offered a price. Send a counteroffer first.');
+ return offerAmount(ride.fare);
+}
+export function driverAcceptanceFields(ride,offer,details,acceptedAt) {
+ const amount=driverOfferAmount(ride,offer);
+ if(!details?.driverId||(offer&&offer.driverId!==details.driverId))throw new Error('This offer belongs to another driver.');
+ const identity=offer||details;
+ const accepted={driverId:identity.driverId,driverName:identity.driverName,driverPhone:identity.driverPhone,vehicleYear:identity.vehicleYear,vehicleMake:identity.vehicleMake,vehicleModel:identity.vehicleModel,
+  amount,counterAmount:offer?.counterAmount??null,status:'accepted',revision:(offer?.revision||0)+1};
+ return {ride:acceptedTowFields(ride,{...accepted,status:'pending'},acceptedAt),offer:accepted};
+}

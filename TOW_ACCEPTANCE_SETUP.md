@@ -1,8 +1,9 @@
 # Two-sided towing acceptance
 
 - A rider can accept a driver's pending price.
-- A driver can accept that rider's counteroffer directly.
-- A participant cannot accept their own proposed price on behalf of the other person.
+- A driver always sees Accept offer and Send counteroffer. Accept uses the rider's current counteroffer, or the original requested price when no rider counteroffer exists.
+- An unpriced specialty quote still needs a price from negotiation; the Accept offer button stays visible but disabled until a rider price exists.
+- A driver cannot substitute their own pending price for the rider's amount; a rider cannot approve their own counteroffer on the driver's behalf.
 - Acceptance atomically assigns the driver, sets the agreed fare and tip, and marks the offer accepted.
 - The assigned driver then uses the existing Start Ride → Arrive at Pickup → Complete Ride controls.
 

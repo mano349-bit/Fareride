@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {initializeTestEnvironment,assertSucceeds,assertFails} from '@firebase/rules-unit-testing';
 import {doc,setDoc,updateDoc,getDoc,writeBatch,serverTimestamp,Timestamp} from 'firebase/firestore';
-import {offerResponse,acceptedTowFields} from '../../tow-offer-state.js';
+import {offerResponse,acceptedTowFields,driverAcceptanceFields} from '../../tow-offer-state.js';
 if(!process.env.FIRESTORE_EMULATOR_HOST)throw Error('Run with firebase emulators:exec. No production access is supported.');
 let env;
 const baseRide={id:'tow',serviceType:'tow',riderId:'r',riderName:'Rider',riderPhone:'555',status:'requested',driverId:null,driverName:null,driverLocation:null,fare:200,tipPercent:15,tipAmount:30,totalFare:230,pricingStatus:'estimated',pickup:'Pickup',dropoff:'Shop',acceptedAt:null,requestedAt:'2026-10-25T12:00:00Z'};
@@ -39,7 +39,7 @@ test('driver accepts the rider counteroffer atomically at its exact price',async
  assert.equal(ride.status,'accepted');assert.equal(ride.fare,150);assert.equal(ride.tipAmount,22.5);assert.equal(ride.totalFare,172.5);assert.equal(ride.driverId,'d');assert.equal(offer.amount,150);assert.equal(offer.status,'accepted');assert.equal(offer.counterAmount,150);
 });
 test('rider can still accept a pending driver offer',async()=>{await seed(pending);await assertSucceeds(acceptance('r',pending,'rider'));assert.equal((await getDoc(doc(db('r'),'rides','tow'))).data().fare,200);});
-test('driver cannot accept its own pending price without rider agreement',async()=>{await seed(pending);await assertFails(acceptance('d',pending,'rider'));});
+test('driver cannot substitute its own higher pending price for the rider offer',async()=>{const higher={...pending,amount:250};await seed(higher);await assertFails(acceptance('d',higher,'rider'));});
 test('rider cannot accept its own counteroffer on behalf of the driver',async()=>{await assertFails(acceptance('r',counter,'driver'));});
 test('another driver or unrelated rider cannot accept this counteroffer',async()=>{await assertFails(acceptance('d2',counter,'driver'));await assertFails(acceptance('r2',counter,'driver'));});
 test('the accepted offer and assignment must be written together',async()=>{
@@ -76,4 +76,17 @@ test('competing acceptances cannot assign the tow to two drivers',async()=>{
  await env.withSecurityRulesDisabled(context=>setDoc(doc(context.firestore(),'rides','tow','towOffers','d2'),{...other,updatedAt:Timestamp.now()}));
  const results=await Promise.allSettled([acceptance('d',counter,'driver'),acceptance('d2',other,'driver')]);assert.equal(results.filter(r=>r.status==='fulfilled').length,1);
  const stored=(await getDoc(doc(db('r'),'rides','tow'))).data();assert.ok(['d','d2'].includes(stored.driverId));
+});
+
+
+test('driver accepts the original rider price without a prior driver quote',async()=>{
+ await seed(null);const store=db('d'),batch=writeBatch(store),plan=driverAcceptanceFields(baseRide,null,driverFields,new Date().toISOString());
+ batch.update(doc(store,'rides','tow'),plan.ride);batch.set(doc(store,'rides','tow','towOffers','d'),{...plan.offer,updatedAt:serverTimestamp()});await assertSucceeds(batch.commit());assert.equal((await getDoc(doc(store,'rides','tow'))).data().fare,200);
+});
+test('driver original-price acceptance ignores its own different pending quote',async()=>{
+ const higher={...pending,amount:250};await seed(higher);const store=db('d'),batch=writeBatch(store),plan=driverAcceptanceFields(baseRide,higher,driverFields,new Date().toISOString());
+ batch.update(doc(store,'rides','tow'),plan.ride);batch.set(doc(store,'rides','tow','towOffers','d'),{...plan.offer,updatedAt:serverTimestamp()});await assertSucceeds(batch.commit());assert.equal((await getDoc(doc(store,'rides','tow'))).data().fare,200);
+});
+test('an unpriced quote cannot be accepted as an original rider price',async()=>{
+ await seed(pending,{fare:null,pricingStatus:'quote_required',tipAmount:0,totalFare:null});await assertFails(acceptance('d',pending,'rider'));
 });
