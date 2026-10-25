@@ -50,8 +50,8 @@ match /rides/{rideId} {
  || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['driverRating','driverComment','tipPercent','tipAmount','totalFare'])
  && request.resource.data.tipPercent is number && request.resource.data.tipPercent >= 0 && request.resource.data.tipPercent <= 100
  && request.resource.data.tipAmount is number && request.resource.data.tipAmount >= 0
- && request.resource.data.tipAmount >= resource.data.fare * request.resource.data.tipPercent / 100 - 0.011
- && request.resource.data.tipAmount <= resource.data.fare * request.resource.data.tipPercent / 100 + 0.011
+ && request.resource.data.tipAmount >= resource.data.fare * request.resource.data.tipPercent / 100.0 - 0.011
+ && request.resource.data.tipAmount <= resource.data.fare * request.resource.data.tipPercent / 100.0 + 0.011
  && request.resource.data.totalFare >= resource.data.fare + request.resource.data.tipAmount - 0.011
  && request.resource.data.totalFare <= resource.data.fare + request.resource.data.tipAmount + 0.011)))
  );
@@ -159,8 +159,8 @@ match /rides/{rideId} {
           && next.vehicleYear == chosen.vehicleYear && next.vehicleMake == chosen.vehicleMake && next.vehicleModel == chosen.vehicleModel
           && resource.data.tipPercent is number && resource.data.tipPercent >= 0 && resource.data.tipPercent <= 100
           && next.tipAmount is number && next.tipAmount >= 0
-          && next.tipAmount >= next.fare * resource.data.tipPercent / 100 - 0.011
-          && next.tipAmount <= next.fare * resource.data.tipPercent / 100 + 0.011
+          && next.tipAmount >= next.fare * resource.data.tipPercent / 100.0 - 0.011
+          && next.tipAmount <= next.fare * resource.data.tipPercent / 100.0 + 0.011
           && next.totalFare is number && next.totalFare >= next.fare + next.tipAmount - 0.011
           && next.totalFare <= next.fare + next.tipAmount + 0.011 && next.acceptedAt is string;
       }
