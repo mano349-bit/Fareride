@@ -46,3 +46,41 @@
 .tow-offers .driver-page-links { justify-content:center; align-items:center; text-align:center; width:100%; margin:0 0 16px; padding:0 0 12px; border-bottom:1px solid #dbe3ee; }
 .tow-offers .driver-page-links a { display:inline-flex; align-items:center; min-height:32px; max-width:100%; padding:4px 0; color:#075fd8; font-weight:700; font-size:16px; overflow-wrap:anywhere; }
 .tow-offers .driver-page-links a:focus-visible { outline:2px solid #1677ff; outline-offset:3px; }
+
+/* Equal navigation buttons across the driver panel. */
+#driverPageLinks,
+.tow-offers .driver-page-links {
+  display:grid !important;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px !important;
+  align-items:stretch;
+  width:100%;
+}
+#driverPageLinks a,
+.tow-offers .driver-page-links a {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-width:0;
+  min-height:60px;
+  padding:12px 10px;
+  border:1px solid #075fd8;
+  border-radius:10px;
+  background:#0875e1;
+  color:#fff;
+  font-family:Arial,sans-serif;
+  font-size:15px;
+  font-weight:700;
+  line-height:1.35;
+  text-align:center;
+  text-decoration:none;
+  overflow-wrap:anywhere;
+}
+#driverPageLinks a:hover { background:#0754b6; }
+#driverPageLinks a:focus-visible { outline:3px solid #075fd8; outline-offset:3px; }
+@media(max-width:420px) {
+  #driverPageLinks,
+  .tow-offers .driver-page-links { gap:7px !important; }
+  #driverPageLinks a,
+  .tow-offers .driver-page-links a { padding:10px 6px; font-size:14px; }
+}
