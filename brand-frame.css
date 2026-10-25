@@ -13,22 +13,31 @@ body.app-frame {
     inset 0 0 0 10px #ffffff,
     0 6px 24px rgba(0, 130, 235, .12);
 }
-/* Keep the rider and driver frame close to their centered app column. */
-body.app-frame.app-shell {
-  width: calc(100% - 2 * var(--frame-gutter));
-  max-width: 980px;
-  margin: var(--frame-gutter) auto;
-}
-.app-shell > header {
-  flex-wrap: wrap;
-  gap: 12px;
-  padding-inline: clamp(16px, 4%, 36px);
-}
-.app-shell > main {
-  padding-inline: clamp(12px, 3%, 28px);
+/* Frame only the rider/driver content column; leave the page header outside. */
+.app-shell > main.app-content-frame {
+  box-sizing: border-box;
+  width: calc(100% - 24px);
+  max-width: 900px;
+  margin: 24px auto;
+  padding: 24px;
+  border: 4px solid #009ff5;
+  border-radius: 12px;
+  box-shadow:
+    inset 0 0 0 3px #ffffff,
+    inset 0 0 0 7px #16bf4a,
+    inset 0 0 0 10px #ffffff,
+    0 6px 24px rgba(0, 130, 235, .12);
 }
 .app-shell select { min-width: 0; max-width: 100%; }
 @media (max-width: 600px) {
+  .app-shell > main.app-content-frame {
+    width: calc(100% - 12px);
+    margin: 12px auto;
+    padding: 14px;
+    border-width: 3px;
+    border-radius: 10px;
+    box-shadow: inset 0 0 0 2px #ffffff, inset 0 0 0 5px #16bf4a, inset 0 0 0 8px #ffffff;
+  }
   body.app-frame {
     --frame-gutter: 6px;
     padding: 10px;
@@ -43,7 +52,8 @@ body.app-frame.app-shell {
 }
 @media print {
   body.app-frame,
-  body.app-frame.app-shell {
+  body.app-frame.app-shell,
+  .app-shell > main.app-content-frame {
     width: auto;
     max-width: none;
     margin: 0;
