@@ -10,7 +10,8 @@ const queue=document.getElementById('jobServiceFilter') || document.getElementBy
 const panel=document.createElement('section');panel.className='tow-offers';document.querySelector('main').prepend(panel);
 const heading=document.createElement('h2');heading.textContent=driver?'Tow offers & rider issues':'Tow driver offers & live messages';
 const note=document.createElement('p');note.textContent=driver?'Send your towing price before accepting the job. Review the rider’s issue and messages here.':'Compare driver offers. Accept a price, send a counteroffer, or decline. Accepting assigns that tow driver. Messages appear live after sending.';
-const status=document.createElement('p');status.setAttribute('role','status');const cards=document.createElement('div');cards.className='tow-conversations';cards.tabIndex=0;cards.setAttribute('role','region');cards.setAttribute('aria-label','Towing offers and conversations; scroll up or down');panel.append(heading,note,status,cards);panel.hidden=true;
+const status=document.createElement('p');status.setAttribute('role','status');const cards=document.createElement('div');cards.className='tow-conversations';cards.tabIndex=0;cards.setAttribute('role','region');cards.setAttribute('aria-label','Towing offers and conversations; scroll up or down');const content=document.createElement('div');content.append(heading,note,status,cards);panel.append(content);panel.hidden=true;
+if(driver){const links=document.getElementById('driverPageLinks');if(links){links.classList.add('driver-page-links');panel.prepend(links);}}
 let uid=null,epoch=0,application=null,pending=new Map(),assigned=new Map(),stops=[],busy=false;
 const chatPositions=new Map();
 const offers=new Map(),offerStops=new Map(),chats=new Map(),chatStops=new Map(),drafts=new Map();
@@ -29,7 +30,7 @@ if(driver){
  filterDays.min='1';filterDays.max='30';filterDays.step='1';
  for(const count of [1,2,3]){const option=document.createElement('option');option.value=String(count);option.textContent=String(count)+(count===1?' job':' jobs');filterLimit.append(option);}
  const today=document.createElement('button');today.type='button';today.textContent='Today';filterControls.append(today);
- panel.insertBefore(filterControls,status);panel.insertBefore(filterSummary,status);
+ content.insertBefore(filterControls,status);content.insertBefore(filterSummary,status);
  const change=()=>{cards.scrollTop=0;filterJob.value='';reconcile();};
  filterDays.onchange=()=>{const range=towJobWindow(filterDays.valueAsNumber);if(!range){filterDays.setCustomValidity('Enter a whole number from 1 to 30.');filterDays.reportValidity();return;}filterDays.setCustomValidity('');filterStart.value=range.start;filterEnd.value=range.end;change();};
  filterStart.onchange=filterEnd.onchange=()=>{filterDays.value='';filterDays.setCustomValidity('');change();};
@@ -120,7 +121,7 @@ function render(){
  const scrollTop=cards.scrollTop;
  chatPositions.clear();for(const log of cards.querySelectorAll('[data-tow-chat]'))chatPositions.set(log.dataset.towChat,{top:log.scrollTop,atBottom:log.scrollHeight-log.clientHeight-log.scrollTop<30});
  const focus=document.activeElement,key=focus?.dataset?.towDraft,start=focus?.selectionStart,end=focus?.selectionEnd;
- cards.replaceChildren();refreshTowPicker();const all=selectedTowJobs(),active=jobs();cards.dataset.empty=String(!all.length);panel.hidden=!uid||(!driver&&!active.length)||(driver&&queue&&!['all','tow'].includes(queue.value)&&!active.some(ride=>ride.driverId===uid));
+ cards.replaceChildren();refreshTowPicker();const all=selectedTowJobs(),active=jobs();cards.dataset.empty=String(!all.length);content.hidden=!uid||(!driver&&!active.length)||(driver&&queue&&!['all','tow'].includes(queue.value)&&!active.some(ride=>ride.driverId===uid));panel.hidden=driver?!uid:content.hidden;
  if(!all.length){add(cards,'p',driver?'No tow requests match these dates. Choose a wider range up to 30 days.':'No active tow requests.');return;}
  for(const ride of all){
   const card=add(cards,'div',null,'tow-offer-card');add(card,'h3',ride.pickup+' → '+ride.dropoff);add(card,'p','Job: '+ride.id);
