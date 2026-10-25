@@ -14,19 +14,30 @@
   href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 <style>
+.booking-heading {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px 16px;
+  flex-wrap:wrap;
+  margin:18px 0;
+}
+.booking-heading h2 { margin:0; }
 #msg {
-  margin-top:18px;
-  padding:14px 20px;
-  border:3px solid #1677ff;
-  border-radius:12px;
+  margin:0 0 0 auto;
+  padding:6px 10px;
+  border:1px solid #1677ff;
+  border-radius:8px;
   background:#eef6ff;
   color:#075fd8;
-  font-size:28px;
-  font-weight:900;
-  text-align:center;
-  box-shadow:0 4px 12px rgba(22,119,255,.15);
-  width:fit-content;
+  font-size:13px;
+  line-height:1.4;
+  font-weight:700;
+  text-align:right;
+  box-sizing:border-box;
   max-width:100%;
+  flex:0 1 270px;
+  overflow-wrap:anywhere;
 }
 
 #msg:empty {
@@ -357,7 +368,10 @@
     </label>
   </fieldset>
 
-  <h2>Where are you going?</h2>
+  <div class="booking-heading">
+    <h2>Where are you going?</h2>
+    <div id="msg" role="status" aria-live="polite"></div>
+  </div>
 
   <label>
     Pickup
@@ -375,7 +389,6 @@
       placeholder="Destination address or US ZIP, e.g. 11201">
   </label>
 
-  <div id="msg"></div>
   <div id="riderMapSlot" aria-label="Rider map"></div>
 
   <label>
