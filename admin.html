@@ -746,13 +746,6 @@ body #fr7-fixed-host {
 }
 #adminApp { padding:0; }
 
-body table.operations-table th:nth-child(1) { width:11%; }
-body table.operations-table th:nth-child(2), body table.operations-table th:nth-child(3) { width:9%; }
-body table.operations-table th:nth-child(4) { width:12%; }
-body table.operations-table th:nth-child(5), body table.operations-table th:nth-child(6) { width:3.5%; }
-body table.operations-table th:nth-child(7), body table.operations-table th:nth-child(8) { width:7%; }
-body table.operations-table th:nth-child(9), body table.operations-table th:nth-child(10) { width:8%; }
-body table.operations-table th:nth-child(11), body table.operations-table th:nth-child(12) { width:11%; }
 
 .requested-actions { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
 .requested-actions button { width:100%; min-width:0; }
@@ -773,6 +766,28 @@ body #panel-rides table.operations-table thead th {
   word-break:normal;
   hyphens:none;
 }
+
+/* One information box per ride; financial columns remain plain text. */
+body #panel-rides table.operations-table th:nth-child(1) { width:30%; }
+body #panel-rides table.operations-table th:nth-child(2),
+body #panel-rides table.operations-table th:nth-child(3) { width:6%; }
+body #panel-rides table.operations-table th:nth-child(4),
+body #panel-rides table.operations-table th:nth-child(5),
+body #panel-rides table.operations-table th:nth-child(6) { width:10%; }
+body #panel-rides table.operations-table th:nth-child(7) { width:9%; }
+body #panel-rides table.operations-table th:nth-child(8) { width:10%; }
+body #panel-rides table.operations-table th:nth-child(9) { width:9%; }
+body table.operations-table .ride-info-box {
+  max-height:220px;
+  padding:12px;
+  border:1px solid #dbe3ee;
+  border-radius:8px;
+  background:#f8fafc;
+  color:#075fd8;
+  overflow-y:auto;
+}
+.ride-info-box p { margin:0 0 10px; }
+.ride-info-box p:last-child { margin-bottom:0; }
 </style>
 
 <link rel="stylesheet" href="./admin-status-manager-v7.css?v=20260814-172125">
@@ -1117,10 +1132,7 @@ body #panel-rides table.operations-table thead th {
         <thead>
 
           <tr>
-            <th>Ride ID</th>
-            <th>Rider</th>
-            <th>Driver</th>
-            <th>Trip</th>
+            <th>Ride information</th>
             <th>Fare</th><th>Tip</th><th>Effective fare / mile</th><th>Rider total</th><th>Driver earnings</th>
             <th>Status</th>
             <th>Requested</th>
@@ -1356,7 +1368,7 @@ body #panel-rides table.operations-table thead th {
 
 <script
   type="module"
-  src="admin.js?v=20261025-job-column-totals">
+  src="admin.js?v=20261026-combined-ride-info">
 </script>
 
 
@@ -1372,7 +1384,7 @@ body #panel-rides table.operations-table thead th {
 </script>
 
 <script type="module" src="./admin-status-manager-v7.js?v=20260814-172125"></script>
-<script type="module" src="table-fit.js"></script>
+<script type="module" src="table-fit.js?v=20261026-plain-admin-cells"></script>
 <script>
 
 // Double only neutral dark text, using original computed sizes to avoid nested scaling.
