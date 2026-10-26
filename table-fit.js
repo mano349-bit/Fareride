@@ -47,6 +47,7 @@ function fit(){
         if(cell.dataset.fitText==='true')continue;cell.dataset.fitText='true';
         const details=cell.querySelector('.details-box');
         if(details){addBox(details,'Ride details',table);continue;}
+        if(table.classList.contains('operations-table'))continue;
         if(cell.querySelector('button,select,textarea,label'))continue;
         const box=document.createElement('div');
         for(const node of [...cell.childNodes])if(!(node.nodeType===1 && node.matches('input')))box.append(node);
