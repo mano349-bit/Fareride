@@ -2,7 +2,6 @@ import {openCompletedTip} from './rider-tip-prompt.js?v=20261023-permitted-feedb
 import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
 import {phoneNumber} from './ride-ui.js';
 import {latestCurrentRide} from './ride-recovery.js?v=20261013-live-acceptance';
-import {riderProgress} from './rider-progress.js?v=20261025-step-order';
 import {
   auth,
   db,
@@ -43,7 +42,7 @@ panel.innerHTML = `
     "
   >Call driver</a>
 
-  <div id="riderProgress"></div>
+
 
   <button type="button" id="cancelTrip">
     Cancel Ride
@@ -96,6 +95,7 @@ function watch(next) {
 
   stop = liveSnapshot(
     doc(db, 'rides', next),
+    {includeMetadataChanges:true},
     snapshot => {
       if (id !== next) return;
 
@@ -111,10 +111,11 @@ function watch(next) {
       applyRide({
         ...snapshot.data(),
         id: next
-      });
+      },!snapshot.metadata?.fromCache&&!snapshot.metadata?.hasPendingWrites);
     },
     () => {
       panel.hidden = false;
+      stage.hidden=false;
       stage.textContent =
         'Unable to load your trip. Check account approval and ride permissions.';
       cancel.hidden = true;
@@ -122,7 +123,7 @@ function watch(next) {
   );
 }
 
-function applyRide(nextRide) {
+function applyRide(nextRide,stageConfirmed=true) {
   if (
     !uid ||
     auth.currentUser?.uid !== uid ||
@@ -138,6 +139,7 @@ function applyRide(nextRide) {
 
   panel.hidden = false;
   stage.textContent = state.message;
+  stage.hidden=true;
 
   const call = panel.querySelector('#tripCallDriver');
   const number = phoneNumber(currentRide.driverPhone);
@@ -154,12 +156,11 @@ function applyRide(nextRide) {
 
   window.dispatchEvent(
     new CustomEvent('fareride-ride-restored', {
-      detail: currentRide
+      detail: {...currentRide,stageConfirmed}
     })
   );
 
-  panel.querySelector('#riderProgress').innerHTML =
-    riderProgress(currentRide.status);
+
 
   cancel.hidden = !state.canCancel;
   cancel.disabled = false;
@@ -179,6 +180,7 @@ function discover() {
       collection(db, 'rides'),
       where('riderId', '==', uid)
     ),
+    {includeMetadataChanges:true},
     snapshot => {
       if (
         auth.currentUser?.uid !== expected ||
@@ -195,12 +197,12 @@ function discover() {
       const requestedFeedback = rides.find(ride => ride.id === feedbackRide && ride.status === 'completed');
       if (requestedFeedback) {
         watch(requestedFeedback.id);
-        applyRide(requestedFeedback);
+        applyRide(requestedFeedback,!snapshot.metadata?.fromCache&&!snapshot.metadata?.hasPendingWrites);
         return;
       }
 
       const updatedCurrent = rides.find(ride => ride.id === id);
-      if (updatedCurrent) applyRide(updatedCurrent);
+      if (updatedCurrent) applyRide(updatedCurrent,!snapshot.metadata?.fromCache&&!snapshot.metadata?.hasPendingWrites);
 
       const active = latestCurrentRide(
         rides,
@@ -217,7 +219,7 @@ function discover() {
         } catch {}
 
         watch(active.id);
-        applyRide(active);
+        applyRide(active,!snapshot.metadata?.fromCache&&!snapshot.metadata?.hasPendingWrites);
       } else {
         let savedId;
         try { savedId = localStorage.getItem('fareride_last_ride_id'); } catch {}
@@ -228,7 +230,7 @@ function discover() {
           })[0];
         if (completed) {
           watch(completed.id);
-          applyRide(completed);
+          applyRide(completed,!snapshot.metadata?.fromCache&&!snapshot.metadata?.hasPendingWrites);
         } else {
           watch();
         }
@@ -236,6 +238,7 @@ function discover() {
     },
     () => {
       panel.hidden = false;
+      stage.hidden=false;
       stage.textContent =
         'Unable to restore your current job. Check your connection and retry.';
       cancel.hidden = true;

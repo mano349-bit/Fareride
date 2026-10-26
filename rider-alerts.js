@@ -1,94 +1,39 @@
-import {acceptanceTracker, acceptanceAnnouncement, arrivalEstimate} from './rider-alert-state.js';
+import {stageTracker} from './ride-stage-state.js?v=20261026-gps-stages';
 import {auth,onAuthStateChanged} from './firebase-session.js';
-const tracker = acceptanceTracker();
-let audio, enabled = false, dismissTimer, latestRide=null, latestAcceptance=null, utteranceRef, voiceTimer, voiceVersion=0;const awaitingETA=new Set();
-const recording = new Audio(new URL('./audio/rider-test.wav', import.meta.url));
-recording.preload='auto';
-function canReplayAcceptance() {
- return latestAcceptance && latestRide?.id===latestAcceptance.rideId
-  && latestRide.driverId===latestAcceptance.driverId && ['accepted','started','arrived'].includes(latestRide.status);
-}
-function stopVoice() {
- voiceVersion++; clearTimeout(voiceTimer); recording.onended=null; recording.pause();
- window.speechSynthesis?.cancel(); utteranceRef=null;
-}
-function playRecording(accepted=false) {
- if(accepted && !canReplayAcceptance())return;
- if(!accepted)recording.onended=null;
- recording.src=new URL(accepted?'./audio/rider-accepted.wav':'./audio/rider-test.wav',import.meta.url).href;
- recording.currentTime=0;
- const playing=recording.play();
- playing?.catch(()=>{status.textContent='Tap Replay voice alert to hear the message. Check your phone media volume.';});
-}
-const controls = document.createElement('div');
-controls.className='rider-voice-controls';
-controls.style.cssText = 'padding:10px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap';
-const toggle = document.createElement('button');
-toggle.type = 'button';toggle.textContent = 'Enable rider voice alerts';
-toggle.style.cssText = 'background:#1473e6;color:white;padding:10px;border:0;border-radius:8px';
-const status = document.createElement('span');status.textContent = 'Tap to test voice alerts. Requesting a ride also enables them; keep this page open.';
+const tracker=stageTracker();
+let enabled=false,audio=null,latest=null,hideTimer;
+const controls=document.createElement('div');controls.className='rider-voice-controls';controls.style.cssText='padding:10px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap';
+const toggle=document.createElement('button');toggle.type='button';toggle.textContent='Enable rider voice alerts';
 const replay=document.createElement('button');replay.type='button';replay.textContent='Replay voice alert';
-replay.onclick=()=>{enabled=true;toggle.textContent='Mute ride sounds';stopVoice();if(canReplayAcceptance())speak(latestAcceptance.message);else playRecording();};
-recording.onplaying=()=>{status.textContent='Voice audio is playing. Adjust your phone media volume if silent.';};
-controls.append(toggle,replay,status);
-document.querySelector('main')?.prepend(controls);
-const popup = document.createElement('aside');popup.hidden = true;popup.setAttribute('role','status');popup.setAttribute('aria-live','polite');
-popup.style.cssText = 'position:fixed;right:16px;bottom:20px;z-index:9999;max-width:min(360px,calc(100vw - 32px));padding:16px;background:white;border:2px solid #1473e6;border-radius:12px;box-shadow:0 5px 24px #0003';
-const text = document.createElement('p');text.style.margin = '0 0 12px';
-const view = document.createElement('button');view.type='button';view.textContent='View my trip';view.onclick=()=>{document.getElementById('tripDetails')?.closest('section')?.scrollIntoView({behavior:'smooth',block:'start'});popup.hidden=true;};
-const close = document.createElement('button');close.type='button';close.textContent='Dismiss';close.style.marginLeft='8px';close.onclick=()=>popup.hidden=true;
-popup.append(text,view,close);document.body.append(popup);
-function chime() {
- if (!audio || audio.state !== 'running') return;
- const now = audio.currentTime;
- for(const [frequency,offset] of [[660,0],[880,0.18]]) {
-  const oscillator=audio.createOscillator(), gain=audio.createGain();oscillator.type='sine';oscillator.frequency.value=frequency;
-  gain.gain.setValueAtTime(0,now+offset);gain.gain.linearRampToValueAtTime(0.045,now+offset+0.025);gain.gain.exponentialRampToValueAtTime(0.001,now+offset+0.28);
-  oscillator.connect(gain);gain.connect(audio.destination);oscillator.start(now+offset);oscillator.stop(now+offset+0.3);oscillator.onended=()=>{oscillator.disconnect();gain.disconnect();};
- }
+const status=document.createElement('span');status.textContent='Enable sound once for live job-stage alerts. Keep this page open.';
+controls.append(toggle,replay,status);document.querySelector('main')?.prepend(controls);
+const popup=document.createElement('aside');popup.className='rider-stage-popup';popup.hidden=true;popup.setAttribute('role','status');popup.setAttribute('aria-live','polite');popup.setAttribute('aria-atomic','true');
+const text=document.createElement('p'),close=document.createElement('button');close.type='button';close.textContent='Dismiss';close.onclick=()=>popup.hidden=true;popup.append(text,close);document.body.append(popup);
+const style=document.createElement('style');style.textContent=`
+.rider-stage-popup{position:fixed;top:22vh;left:50%;transform:translateX(-50%);z-index:10000;width:max-content;max-width:calc(100vw - 32px);padding:22px 26px;background:#f6fbff;border:2px solid #1677ff;border-radius:16px;text-align:center;box-shadow:0 0 22px #1677ff70,0 0 38px #16b66b40;animation:rider-stage-pop .35s ease-out}
+.rider-stage-popup[hidden]{display:none}.rider-stage-popup p{margin:0 0 14px;color:#075fd8;font-size:clamp(22px,4vw,32px);line-height:1.4;font-weight:800;text-shadow:0 0 10px #1677ff45}.rider-stage-popup button{min-height:44px;padding:10px 18px;background:#0875e1;color:white;border:0;border-radius:8px;font-weight:700}
+@keyframes rider-stage-pop{from{opacity:0;transform:translateX(-50%) scale(.92)}to{opacity:1;transform:translateX(-50%) scale(1)}}
+@media(prefers-reduced-motion:reduce){.rider-stage-popup{animation:none}}
+`;document.head.append(style);
+function chime(){
+ if(!enabled||audio?.state!=='running')return;
+ for(const [hz,delay] of [[660,0],[880,.18]]){const oscillator=audio.createOscillator(),gain=audio.createGain(),at=audio.currentTime+delay;oscillator.type='sine';oscillator.frequency.value=hz;gain.gain.setValueAtTime(0,at);gain.gain.linearRampToValueAtTime(.06,at+.025);gain.gain.exponentialRampToValueAtTime(.001,at+.28);oscillator.connect(gain);gain.connect(audio.destination);oscillator.start(at);oscillator.stop(at+.3);oscillator.onended=()=>{oscillator.disconnect();gain.disconnect();};}
 }
-function speak(message) {
- if(!enabled || !canReplayAcceptance())return;
- const version=voiceVersion;
- clearTimeout(voiceTimer);
- if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) {playRecording(true);return;}
- const utterance = new window.SpeechSynthesisUtterance(message);utteranceRef=utterance;utterance.lang='en-US';utterance.volume=1;utterance.rate=0.95;
- let started=false;
- utterance.onstart=()=>{started=true;clearTimeout(voiceTimer);status.textContent='Voice announcement is playing.';};
- utterance.onend=()=>{if(utteranceRef===utterance)utteranceRef=null;};
- utterance.onerror=event=>{if(version!==voiceVersion)return;clearTimeout(voiceTimer);if(event.error==='canceled'||event.error==='interrupted')return;playRecording(true);};
- window.speechSynthesis.resume();window.speechSynthesis.speak(utterance);
- voiceTimer=setTimeout(()=>{if(!started && enabled && version===voiceVersion && canReplayAcceptance()){window.speechSynthesis.cancel();playRecording(true);}},2500);
+function speak(message){
+ if(!enabled)return;chime();
+ if(window.speechSynthesis&&window.SpeechSynthesisUtterance){window.speechSynthesis.cancel();const voice=new SpeechSynthesisUtterance(message);voice.lang='en-US';voice.rate=.95;voice.onerror=()=>{status.textContent='Stage updated. Tap Replay voice alert if sound was blocked.';};window.speechSynthesis.speak(voice);}
 }
-toggle.onclick = async () => {
- if(enabled) {enabled=false;stopVoice();toggle.textContent='Enable rider voice alerts';status.textContent='Ride pop-ups remain on. Sounds muted.';return;}
+function enable(){
  enabled=true;toggle.textContent='Mute ride sounds';
- // Enabling sounds is a test, never an acceptance announcement.
- stopVoice(); playRecording();
- try {
-  const Audio = window.AudioContext || window.webkitAudioContext;
-  if(Audio) audio ||= new Audio();
-  // Start both APIs in the tap handler required by mobile browsers.
-  audio?.resume()?.then(()=>chime()).catch(()=>{});
- } catch { /* Voice playback remains independent of the chime API. */ }
-};
-function notifyAccepted(ride) {
- if(!ride || ride.riderId !== auth.currentUser?.uid) return;
- latestRide=ride;
- if(latestAcceptance && !canReplayAcceptance()){latestAcceptance=null;stopVoice();popup.hidden=true;}
- if(!ride.driverId || !['accepted','started','arrived'].includes(ride.status))awaitingETA.delete(ride.id);
- const accepted=tracker.update(ride);
- const etaReady=awaitingETA.has(ride.id) && ['accepted','started'].includes(ride.status) && arrivalEstimate(ride);
- if(!accepted && !etaReady)return;
- if(accepted && !arrivalEstimate(ride) && ride.status!=='arrived')awaitingETA.add(ride.id);else awaitingETA.delete(ride.id);
- const message=acceptanceAnnouncement(ride);latestAcceptance={rideId:ride.id,driverId:ride.driverId,message};text.textContent=message;popup.hidden=false;
- clearTimeout(dismissTimer);dismissTimer=setTimeout(()=>popup.hidden=true,20000);
- if(enabled){try{stopVoice();chime();const version=voiceVersion;recording.onended=()=>{recording.onended=null;if(enabled && version===voiceVersion && canReplayAcceptance())speak(message);};playRecording(true);}catch{status.textContent='Driver accepted your ride. Tap Replay voice alert to hear it.';}}
+ try{const Context=window.AudioContext||window.webkitAudioContext;if(Context){audio ||= new Context();audio.resume().then(chime).catch(()=>{});}}catch{}
+ status.textContent='Job-stage sounds enabled.';
 }
-window.addEventListener('fareride-ride-restored',event=>notifyAccepted(event.detail));
-document.getElementById('requestBtn')?.addEventListener('click',()=>{
- // A new request must not replay a previous ride or its delayed ETA callback.
- latestAcceptance=null;awaitingETA.clear();stopVoice();popup.hidden=true;
- if(!enabled)toggle.onclick();
+toggle.onclick=()=>{if(enabled){enabled=false;toggle.textContent='Enable rider voice alerts';window.speechSynthesis?.cancel();status.textContent='Pop-ups remain enabled. Sound muted.';}else enable();};
+replay.onclick=()=>{enable();if(latest)speak(latest);};
+window.addEventListener('fareride-ride-restored',event=>{
+ const ride=event.detail;if(!ride||ride.riderId!==auth.currentUser?.uid||ride.stageConfirmed===false)return;
+ const message=tracker.update(ride);if(!message)return;
+ latest=message;text.textContent=message;popup.hidden=true;void popup.offsetWidth;popup.hidden=false;clearTimeout(hideTimer);hideTimer=setTimeout(()=>popup.hidden=true,15000);speak(message);
 });
-onAuthStateChanged(auth,user=>{latestRide=null;latestAcceptance=null;awaitingETA.clear();tracker.reset();popup.hidden=true;clearTimeout(dismissTimer);stopVoice();controls.hidden=!user;controls.style.display=user?"flex":"none";window.speechSynthesis?.cancel();});
+document.getElementById('requestBtn')?.addEventListener('click',()=>{latest=null;popup.hidden=true;if(!enabled)enable();});
+onAuthStateChanged(auth,user=>{tracker.reset();latest=null;popup.hidden=true;clearTimeout(hideTimer);window.speechSynthesis?.cancel();enabled=false;toggle.textContent='Enable rider voice alerts';controls.style.display=user?'flex':'none';});

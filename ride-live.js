@@ -1,3 +1,5 @@
+import {gpsStageTracker} from './driver-gps-stages.js?v=20261026-gps-stages';
+import {runTransaction} from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
 import {latestCurrentRide} from './ride-recovery.js?v=20261013-live-acceptance';
 import {locationNotice} from './ride-location-notice.js';
@@ -5,6 +7,24 @@ import { auth, db, doc, getDoc, updateDoc, onAuthStateChanged, onSnapshot, serve
 import { ACTIVE_STATUSES, validCoordinates } from './ride-details.js';
 import { phoneNumber, vehicleIcon } from './ride-ui.js';
 const isDriver = location.pathname.endsWith('/driver.html');
+const gpsStages=gpsStageTracker();let writingStage=false;
+async function advanceGpsStage(position,id,uid){
+ if(!isDriver||writingStage||rideId!==id||auth.currentUser?.uid!==uid||ride?.driverId!==uid)return;
+ const nextStage=gpsStages.update({...ride,id},position);if(!nextStage)return;
+ const previous=ride.status;writingStage=true;
+ try{
+  await runTransaction(db,async transaction=>{
+   const ref=doc(db,'rides',id),snapshot=await transaction.get(ref);
+   if(auth.currentUser?.uid!==uid||rideId!==id||!snapshot.exists()||snapshot.data().driverId!==uid||snapshot.data().status!==previous)return;
+   const at=new Date().toISOString(),changes={status:nextStage};
+   if(nextStage==='started'){changes.startedAt=at;changes.estimatedFinishAt=new Date(Date.now()+Math.max(0,Number(snapshot.data().durationMinutes)||0)*60000).toISOString();}
+   if(nextStage==='arrived')changes.arrivedAt=at;
+   if(nextStage==='completed')changes.completedAt=at;
+   transaction.update(ref,changes);
+  });
+ }catch(error){status.textContent='GPS stage update could not be saved. Use Driver Job Controls or retry when connected.';console.warn('GPS stage update failed',error);}
+ finally{writingStage=false;}
+}
 const section = document.createElement('section');
 section.style.cssText = 'max-width:900px;margin:20px auto;padding:20px;background:white;border:1px solid #ccc;border-radius:12px';
 section.hidden = true;
@@ -18,7 +38,7 @@ let user=null, profile=null, ride=null, rideId=null, stop=null, discovery=null, 
 let heartbeat=null,positionHandler=null,sharingPaused=false;
 let map=null, riderMarker=null, driverMarker=null, pickupMarker=null, contactAttempted=false, locationError='';
 function stopGPS(){if(heartbeat!==null)clearInterval(heartbeat);heartbeat=null;positionHandler=null;if(gps!==null) navigator.geolocation.clearWatch(gps);gps=null;button.disabled=false;}
-function reset(){stopGPS();stop?.();stop=null;ride=null;rideId=null;section.hidden=true;attempted=false;contactAttempted=false;lastSent=0;locationError='';button.hidden=true;map?.remove();map=riderMarker=driverMarker=pickupMarker=null;}
+function reset(){gpsStages.reset();stopGPS();stop?.();stop=null;ride=null;rideId=null;section.hidden=true;attempted=false;contactAttempted=false;lastSent=0;locationError='';button.hidden=true;map?.remove();map=riderMarker=driverMarker=pickupMarker=null;}
 function marker(current,point,label,type){
  if(!validCoordinates(point))return current;
  const text=document.createElement('span');text.textContent=label;
@@ -100,7 +120,7 @@ function startLocation(){
   if(!ACTIVE_STATUSES.includes(ride?.status)){stopGPS();return;}
   if(Date.now()-lastSent<3000)return;lastSent=Date.now();const point={lat:position.coords.latitude,lng:position.coords.longitude,accuracy:position.coords.accuracy};if(!validCoordinates(point))return;
   ride[isDriver?'driverLocation':'riderLocation']=point;render();
-  try{await updateDoc(doc(db,'rides',id),{[isDriver?'driverLocation':'riderLocation']:point,[isDriver?'driverLocationUpdatedAt':'riderLocationUpdatedAt']:serverTimestamp()});if(auth.currentUser?.uid!==uid||rideId!==id)return;locationError='';}
+  try{await updateDoc(doc(db,'rides',id),{[isDriver?'driverLocation':'riderLocation']:point,[isDriver?'driverLocationUpdatedAt':'riderLocationUpdatedAt']:serverTimestamp()});if(auth.currentUser?.uid!==uid||rideId!==id)return;locationError='';if(isDriver)await advanceGpsStage(position,id,uid);}
   catch{if(auth.currentUser?.uid!==uid||rideId!==id)return;locationError='Location could not be shared. Check ride access.';status.textContent=locationError;stopGPS();button.hidden=false;}
  };
  gps=navigator.geolocation.watchPosition(positionHandler,error=>{if(auth.currentUser?.uid!==uid||rideId!==id)return;locationError=error.code===1?'Location permission denied. Allow location for this site, then retry.':'Location unavailable. Check device location settings and retry.';status.textContent=locationError;stopGPS();button.hidden=false;if(error.code!==1)setTimeout(()=>{if(auth.currentUser?.uid===uid&&rideId===id&&ACTIVE_STATUSES.includes(ride?.status)&&!document.hidden&&!sharingPaused)startLocation();},10000);},{enableHighAccuracy:true,maximumAge:0,timeout:15000});

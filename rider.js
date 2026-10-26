@@ -190,9 +190,9 @@ function showRideStatus(ride) {
   showSummary(ride);
   const messages = {
     requested: 'Ride requested. Waiting for a driver.',
-    accepted: 'Ride accepted. Your driver is on the way.',
-    arrived: 'Your driver has arrived at pickup.',
-    started: 'Your ride is in progress.',
+    accepted: '',
+    arrived: '',
+    started: '',
     completed: '',
     cancelled: 'Ride cancelled. You can request another ride.'
   };
