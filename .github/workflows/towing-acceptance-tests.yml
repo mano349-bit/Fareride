@@ -1,10 +1,11 @@
 name: Towing acceptance rules tests
 on:
   push:
-    branches: [codex/two-sided-tow-acceptance]
+    branches: [codex/two-sided-tow-acceptance, codex/live-trip-chat]
   pull_request:
     paths:
       - 'tow-offer-state.js'
+      - 'ride-chat*.js'
       - 'firestore*.rules'
       - 'tests/towing-rules/**'
       - 'firebase.test.json'
@@ -27,9 +28,9 @@ jobs:
       - name: Install test tooling
         run: npm install --prefix tests/towing-rules --no-package-lock --no-audit --no-fund
       - name: Test offer state and driver controls
-        run: node --test tow-offer-state.test.mjs driver-actions.test.mjs
+        run: node --test tow-offer-state.test.mjs driver-actions.test.mjs ride-chat-state.test.mjs
       - name: Test Firestore rules against local emulator
-        run: tests/towing-rules/node_modules/.bin/firebase emulators:exec --only firestore --project demo-fareride --config firebase.test.json "node --test tests/towing-rules/towing-rules.test.mjs"
+        run: tests/towing-rules/node_modules/.bin/firebase emulators:exec --only firestore --project demo-fareride --config firebase.test.json "node --test --test-concurrency=1 tests/towing-rules/*.test.mjs"
       - name: Save emulator diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4

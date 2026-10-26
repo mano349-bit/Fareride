@@ -112,6 +112,10 @@ service cloud.firestore {
     match /rides/{rideId} {
       function reviewer(role) { return signedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accountStatus in ['approved','active']; }
       function validRating(value) { return value is int && value >= 1 && value <= 5; }
+      allow update: if resource.data.status == 'completed'
+        && reviewer('rider') && resource.data.riderId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['driverComment'])
+        && request.resource.data.driverComment is string && request.resource.data.driverComment.size() <= 1000;
       allow update: if resource.data.status == 'completed' && (
         (reviewer('driver') && resource.data.driverId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['riderRating']) && validRating(request.resource.data.riderRating))
         || (reviewer('rider') && resource.data.riderId == request.auth.uid && validRating(request.resource.data.driverRating)
@@ -245,6 +249,26 @@ service cloud.firestore {
       }
       allow update: if signedIn() && resource.data.serviceType == 'tow' && resource.data.status == 'requested' && resource.data.driverId == null
         && request.resource.data.status == 'accepted' && request.resource.data.driverId is string && validTowAcceptance();
+    }
+
+
+    match /rides/{rideId}/messages/{messageId} {
+      function chatParticipant() {
+        let actor = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+        let ride = get(/databases/$(database)/documents/rides/$(rideId)).data;
+        return actor.accountStatus in ['approved','active'] && ride.driverId is string
+          && ((actor.role == 'rider' && ride.riderId == request.auth.uid)
+            || (actor.role == 'driver' && ride.driverId == request.auth.uid));
+      }
+      allow read: if admin() || (signedIn() && chatParticipant());
+      allow create: if signedIn() && chatParticipant()
+        && get(/databases/$(database)/documents/rides/$(rideId)).data.status in ['accepted','started','arrived']
+        && request.resource.data.keys().hasOnly(['senderId','senderRole','text','createdAt'])
+        && request.resource.data.senderId == request.auth.uid
+        && request.resource.data.senderRole == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 2000
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
     }
 
     match /emergencies/{emergencyId} {
