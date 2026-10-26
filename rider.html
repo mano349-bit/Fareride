@@ -7,7 +7,7 @@
 <title>FareRide Rider</title>
 
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="styles.css?v=20261025-roomier-buttons">
+<link rel="stylesheet" href="styles.css?v=20261026-compact-layout">
 <link rel="stylesheet" href="sos-ui.css?v=20261025-police-ambulance">
 <link
   rel="stylesheet"
@@ -352,7 +352,7 @@
   align-items:center;
   justify-content:space-evenly;
   gap:12px 20px;
-  flex-wrap:wrap;
+  flex-wrap:nowrap;
   color:#075fd8;
   font-size:16px;
   font-weight:700;
@@ -361,7 +361,7 @@
 }
 #summary[hidden] { display:none; }
 #summary p { margin:0; }
-#summary p:last-child { flex-basis:100%; text-align:center; }
+#summary p { flex:0 0 auto; white-space:nowrap; }
 
 #rideForm > .service-note {
   color:#075fd8;
@@ -418,7 +418,7 @@ main .rider-emergency-card {
 
 /* Emphasize the mileage, fare and route-time summary. */
 #rideForm #summary {
-  font-size:32px;
+  font-size:clamp(14px,2.6vw,20px);
   color:#075fd8;
   border:2px solid #dc2626;
   border-radius:12px;
@@ -468,6 +468,7 @@ main .rider-feedback button {
   rel="stylesheet"
   href="tow-offers.css?v=20261013-message-colors">
 <link rel="stylesheet" href="brand-frame.css?v=20261025-header-inside">
+<link rel="stylesheet" href="compact-layout.css?v=20261026-compact-layout">
 </head>
 
 <body class="app-shell">
