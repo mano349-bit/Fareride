@@ -24,7 +24,7 @@ function measure(){
     const overflow=box.scrollHeight>box.clientHeight+2;
     box.dataset.overflow=String(overflow);
     if(overflow)box.dataset.resizable='true';
-    state.expand.hidden=!overflow&&!box.classList.contains('text-box-expanded');
+    state.expand.hidden=true;
     if(overflow){box.tabIndex=0;box.setAttribute('role','region');box.setAttribute('aria-label',state.label+'; scroll to read all text');}
     else{box.removeAttribute('tabindex');box.removeAttribute('role');box.removeAttribute('aria-label');}
   }

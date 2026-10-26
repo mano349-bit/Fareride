@@ -50,3 +50,6 @@ body table.operations-table th:nth-child(10) { width:11%; }
 }
 .admin-readable .table-text-box p { margin:3px 0; line-height:1.2; }
 .admin-readable textarea { resize:vertical; min-height:48px; max-height:none; }
+
+/* Keep table information visible without expansion buttons. */
+.text-box-toggle { display:none !important; }
