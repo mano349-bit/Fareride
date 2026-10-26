@@ -60,10 +60,8 @@ $('jobServiceFilter')?.addEventListener('change', renderRequests);
 
 function saveLocalBackup() {
 
-  localStorage.setItem(
-    RK,
-    JSON.stringify(rides)
-  );
+  try { localStorage.setItem(RK, JSON.stringify(rides)); }
+  catch(error) { console.warn('Local job backup unavailable; live jobs remain enabled.', error); }
 
 }
 
@@ -76,10 +74,7 @@ function setActiveDriverRide(id) {
 
   if (!id) return;
 
-  localStorage.setItem(
-    ACTIVE_RIDE_KEY,
-    id
-  );
+  try { localStorage.setItem(ACTIVE_RIDE_KEY,id); } catch(error) { console.warn('Unable to cache the active ride.',error); }
 
   if (
     window.FareRideDriverLocation
@@ -96,9 +91,7 @@ function setActiveDriverRide(id) {
 
 function clearActiveDriverRide() {
 
-  localStorage.removeItem(
-    ACTIVE_RIDE_KEY
-  );
+  try { localStorage.removeItem(ACTIVE_RIDE_KEY); } catch(error) { console.warn('Unable to clear the local ride cache.',error); }
 
   if (
     window.FareRideDriverLocation
@@ -392,6 +385,8 @@ async function acceptRide(id) {
       live GPS on the phone.
     */
 
+    rides=rides.map(ride=>ride.id===id?{...ride,status:'accepted',...details,acceptedAt:now}:ride);
+    renderRequests();
     setActiveDriverRide(id);
 
 
