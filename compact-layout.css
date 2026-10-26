@@ -119,17 +119,16 @@
 }
 
 /* A single readable sentence, moving slowly left in its own full-width box. */
-.rider-feedback .rider-comment-notice {
+.rider-comment-notice {
   width:100%;
   max-width:100%;
   min-width:0;
-  container-type:inline-size;
   margin:8px 0;
   padding:8px 10px;
   overflow-x:auto;
   overflow-y:hidden;
   scrollbar-width:thin;
-  border:1px solid #075fd8;
+  border:2px solid #075fd8;
   border-radius:6px;
   color:#075fd8;
   font-size:31.5px;
@@ -146,8 +145,8 @@
 .rider-comment-notice:focus-visible { outline:2px solid #075fd8; outline-offset:2px; }
 .rider-comment-notice:focus-within > span { animation:none; transform:none; }
 @keyframes rider-comment-scroll-left {
-  0%,5% { transform:translateX(0); }
-  90%,100% { transform:translateX(min(0px,calc(100cqw - 100%))); }
+  0% { transform:translateX(0); }
+  100% { transform:translateX(-100%); }
 }
 @media(prefers-reduced-motion:reduce) {
   .rider-comment-notice > span { animation:none; transform:none; }
