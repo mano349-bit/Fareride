@@ -712,6 +712,8 @@ function renderRides() {
                 <br><br>
 
 
+                <strong>Rider rating of driver:</strong> ${ride.driverRating ? escapeHtml(ride.driverRating)+' / 5' : 'Not rated'}<br>
+                <strong>Rider comment:</strong> <span style="white-space:pre-wrap;overflow-wrap:anywhere">${escapeHtml(ride.driverComment || 'No comment')}</span><br><br>
                 <strong>Service:</strong> ${serviceName(ride.serviceType)}<br>
                 ${Object.entries(ride.serviceDetails || {}).map(([key, value]) => '<strong>' + escapeHtml(key) + ':</strong> ' + escapeHtml(value)).join('<br>')}<br>
                 <strong>
