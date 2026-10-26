@@ -423,6 +423,36 @@ main .rider-emergency-card {
   border:2px solid #dc2626;
   border-radius:12px;
 }
+
+/* Larger blue text in the booking fields and completed-ride feedback. */
+#rideForm > label:has(#pickup),
+#rideForm > label:has(#dropoff),
+#rideForm > label:has(#rideType),
+.rider-feedback {
+  font-size:24px;
+  color:#075fd8;
+}
+#rideForm :is(#pickup, #dropoff, #rideType),
+.rider-feedback :is(input, select, textarea) {
+  font:inherit;
+  color:#075fd8;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+}
+#rideForm :is(#pickup, #dropoff)::placeholder,
+.rider-feedback input::placeholder {
+  color:#075fd8;
+  opacity:1;
+}
+.rider-feedback h3 { font-size:1.17em; color:#075fd8; }
+.rider-feedback fieldset { min-width:0; }
+main .rider-feedback button {
+  font-size:22.5px !important;
+  color:#075fd8;
+  background:#eaf2ff;
+  border:1px solid #075fd8;
+}
 </style>
 
 <script
