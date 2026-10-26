@@ -51,8 +51,8 @@ function fit(){
         const label=headers[column] || 'Details';column+=cell.colSpan;
         cell.dataset.columnLabel=label;
         if(cell.dataset.fitText==='true')continue;cell.dataset.fitText='true';
-        const details=cell.querySelector('.details-box');
-        if(details){addBox(details,'Ride details',table);continue;}
+        const details=cell.querySelector('.details-box,.earnings-job-summary');
+        if(details){addBox(details,details.classList.contains('earnings-job-summary')?'Job information':'Ride details',table);continue;}
         if(table.classList.contains('operations-table'))continue;
         if(cell.querySelector('button,select,textarea,label'))continue;
         const box=document.createElement('div');
