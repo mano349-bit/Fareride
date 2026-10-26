@@ -1,3 +1,4 @@
+import {observeSessionLocation} from './session-location.js';
 import {gpsStageTracker} from './driver-gps-stages.js?v=20261026-gps-stages';
 import {runTransaction} from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
@@ -35,9 +36,9 @@ else document.querySelector('main').prepend(section);
 const status = section.querySelector('#liveMapStatus'), button = section.querySelector('button');
 {button.textContent='Retry location';button.hidden=true;button.style.cssText='padding:12px 16px;background:#0875e1;color:white;border:0;border-radius:8px;font-weight:700';}
 let user=null, profile=null, ride=null, rideId=null, stop=null, discovery=null, gps=null, lastSent=0, attempted=false;
-let heartbeat=null,positionHandler=null,sharingPaused=false;
+let heartbeat=null,positionHandler=null;
 let map=null, riderMarker=null, driverMarker=null, pickupMarker=null, contactAttempted=false, locationError='';
-function stopGPS(){if(heartbeat!==null)clearInterval(heartbeat);heartbeat=null;positionHandler=null;if(gps!==null) navigator.geolocation.clearWatch(gps);gps=null;button.disabled=false;}
+function stopGPS(){if(heartbeat!==null)clearInterval(heartbeat);heartbeat=null;positionHandler=null;if(gps!==null)gps();gps=null;button.disabled=false;}
 function reset(){gpsStages.reset();stopGPS();stop?.();stop=null;ride=null;rideId=null;section.hidden=true;attempted=false;contactAttempted=false;lastSent=0;locationError='';button.hidden=true;map?.remove();map=riderMarker=driverMarker=pickupMarker=null;}
 function marker(current,point,label,type){
  if(!validCoordinates(point))return current;
@@ -95,7 +96,7 @@ function applyRide(next,id){
    const name=profile.fullName||user.displayName||'Rider',phone=String(profile.phone||'');
    if(ride.riderName!==name||ride.riderPhone!==phone)updateDoc(doc(db,'rides',id),{riderName:name,riderPhone:phone}).catch(()=>{status.textContent='Unable to share your contact details. Retry after checking your profile.';});
   }
-  if(!attempted&&ACTIVE_STATUSES.includes(ride.status))startLocation();
+  if(!attempted&&(ACTIVE_STATUSES.includes(ride.status)||(!isDriver&&ride.status==='requested')))startLocation();
 }
 function discover(){
  discovery?.();if(!user)return;const discoveryUID=user.uid;
@@ -106,33 +107,37 @@ function discover(){
  },()=>{status.textContent='Unable to find your active ride.';});
 }
 onAuthStateChanged(auth,async next=>{
- discovery?.();discovery=null;reset();sharingPaused=false;user=null;profile=null;if(!next)return;
+ discovery?.();discovery=null;reset();user=null;profile=null;if(!next)return;
  const saved=await getDoc(doc(db,'users',next.uid)).catch(()=>null);if(auth.currentUser?.uid!==next.uid||!saved?.exists())return;
- profile=saved.data();if(profile.role!==(isDriver?'driver':'rider')||!['approved','active'].includes(profile.accountStatus))return;
+ profile=saved.data();if(profile.role!==(isDriver?'driver':'rider'))return;
  user=next;discover();
 });
 function startLocation(){
- if(!user||!ride||!ACTIVE_STATUSES.includes(ride.status)||gps!==null||sharingPaused)return;attempted=true;
- if(!navigator.geolocation){locationError='Location is unavailable on this device.';status.textContent=locationError;button.hidden=false;return;}
+ if(!user||!ride||(!ACTIVE_STATUSES.includes(ride.status)&&(isDriver||ride.status!=='requested'))||gps!==null)return;attempted=true;
+ if(!navigator.geolocation){locationError='Location is unavailable on this device.';status.textContent=locationError;button.hidden=true;return;}
  const id=rideId,uid=user.uid;button.disabled=true;button.hidden=true;locationError='';
  positionHandler=async position=>{
   if(auth.currentUser?.uid!==uid||rideId!==id)return;
-  if(!ACTIVE_STATUSES.includes(ride?.status)){stopGPS();return;}
+  if(!ACTIVE_STATUSES.includes(ride?.status)&&(isDriver||ride?.status!=='requested')){stopGPS();return;}
   if(Date.now()-lastSent<3000)return;lastSent=Date.now();const point={lat:position.coords.latitude,lng:position.coords.longitude,accuracy:position.coords.accuracy};if(!validCoordinates(point))return;
   ride[isDriver?'driverLocation':'riderLocation']=point;render();
+  // Before assignment the rider position stays on this device, not in a public job.
+  if(!ACTIVE_STATUSES.includes(ride.status))return;
   try{await updateDoc(doc(db,'rides',id),{[isDriver?'driverLocation':'riderLocation']:point,[isDriver?'driverLocationUpdatedAt':'riderLocationUpdatedAt']:serverTimestamp()});if(auth.currentUser?.uid!==uid||rideId!==id)return;locationError='';if(isDriver)await advanceGpsStage(position,id,uid);}
-  catch{if(auth.currentUser?.uid!==uid||rideId!==id)return;locationError='Location could not be shared. Check ride access.';status.textContent=locationError;stopGPS();button.hidden=false;}
+  catch{if(auth.currentUser?.uid!==uid||rideId!==id)return;locationError='Location could not be shared. Retrying automatically; contact FareRide Admin if this continues.';status.textContent=locationError;button.hidden=true;}
  };
- gps=navigator.geolocation.watchPosition(positionHandler,error=>{if(auth.currentUser?.uid!==uid||rideId!==id)return;locationError=error.code===1?'Location permission denied. Allow location for this site, then retry.':'Location unavailable. Check device location settings and retry.';status.textContent=locationError;stopGPS();button.hidden=false;if(error.code!==1)setTimeout(()=>{if(auth.currentUser?.uid===uid&&rideId===id&&ACTIVE_STATUSES.includes(ride?.status)&&!document.hidden&&!sharingPaused)startLocation();},10000);},{enableHighAccuracy:true,maximumAge:0,timeout:15000});
- heartbeat=setInterval(()=>{if(!document.hidden&&positionHandler&&rideId===id){render();navigator.geolocation.getCurrentPosition?.(positionHandler,()=>{render();},{enableHighAccuracy:true,maximumAge:0,timeout:10000});}},10000);
+ gps=observeSessionLocation(state=>{
+  if(state.uid!==uid||auth.currentUser?.uid!==uid||rideId!==id)return;
+  if(state.position){positionHandler?.(state.position);return;}
+  if(state.error){locationError=state.error.code===1?'Allow location permission in your browser or device settings. Sharing resumes automatically.':'Location unavailable. Sharing retries automatically.';status.textContent=locationError;button.hidden=true;}
+ });
+ heartbeat=setInterval(()=>{if(!document.hidden&&rideId===id)render();},10000);
 }
-button.onclick=()=>{sharingPaused=false;stopGPS();lastSent=0;startLocation();};
+button.onclick=()=>{stopGPS();lastSent=0;startLocation();};
 window.addEventListener('pageshow',event=>{if(event.persisted&&user)discover();});
 window.addEventListener('pagehide',()=>{discovery?.();discovery=null;reset();});
 
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!sharingPaused&&user&&ride&&ACTIVE_STATUSES.includes(ride.status)){stopGPS();lastSent=0;startLocation();}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&user&&ride&&ACTIVE_STATUSES.includes(ride.status)){stopGPS();lastSent=0;startLocation();}});
 
-window.addEventListener('fareride-start-location',()=>{if(!isDriver)return;sharingPaused=false;if(user&&ride&&ACTIVE_STATUSES.includes(ride.status)){stopGPS();lastSent=0;startLocation();render();section.scrollIntoView?.({behavior:'smooth',block:'start'});}else{const message=document.getElementById('locationStatus');if(message)message.textContent='Accept a job first. The live map will show you and the rider until completion.';if(user)discover();}});
-window.addEventListener('fareride-stop-location',()=>{if(isDriver){sharingPaused=true;stopGPS();locationError='Driver location sharing stopped. Click Start Live Location to resume.';if(ride)render();}});
 
-window.addEventListener('online',()=>{if(user&&ride&&!sharingPaused&&ACTIVE_STATUSES.includes(ride.status)){stopGPS();lastSent=0;startLocation();}});
+window.addEventListener('online',()=>{if(user&&ride&&ACTIVE_STATUSES.includes(ride.status)){stopGPS();lastSent=0;startLocation();}});

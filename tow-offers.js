@@ -1,4 +1,4 @@
-import {isDriverOnline, observeDriverOnline} from './driver-availability.js';
+import {isDriverOnline, observeDriverOnline} from './driver-availability.js?v=20261026-auto-online';
 import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
 import {towJobWindow, filterTowJobs} from './tow-job-filter.js';
 import {auth,db,doc,getDoc,collection,query,where,onSnapshot,onAuthStateChanged,addDoc,serverTimestamp} from './firebase-session.js';

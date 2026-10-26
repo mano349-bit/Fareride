@@ -7,7 +7,13 @@ particular pricing status. Assignment cannot change the fare or other booking
 fields. The transaction and Firestore rules both prevent a second driver from
 claiming the same job. Cancelled and finished jobs cannot be reopened.
 
-Offline mode still pauses new job queues and rider visibility. Towing still uses
+Drivers become online automatically while signed in. GPS permission, a failed
+presence write, or an active trip does not disable the job queue. Manual online,
+offline, and location start/stop controls have been removed. GPS starts
+automatically for both participants, subject to device permission and foreground
+execution. The Accept button is disabled when there is no unassigned job.
+Registered Driver accounts can read jobs and complete their assigned trip without
+application approval or GPS prerequisites. Towing still uses
 the existing price-offer process, including agreed prices and atomic offer/ride
 updates. GPS presence freshness no longer vetoes the agreed towing assignment.
 Existing sign-in/role checks and other database permissions remain in place.

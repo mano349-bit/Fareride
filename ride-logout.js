@@ -1,3 +1,4 @@
+import {prepareDriverSignOut,resumeDriverSession} from './driver-availability.js?v=20261026-auto-online';
 import {auth,signOut,onAuthStateChanged} from './firebase-session.js';
 const role=location.pathname.split('/').pop().toLowerCase().startsWith('driver')?'driver':'rider';
 const header=document.querySelector('header');
@@ -8,6 +9,12 @@ header.append(button,message);
 onAuthStateChanged(auth,user=>{button.hidden=!user;});
 button.onclick=async()=>{
  button.disabled=true;message.textContent='';
- try{await signOut(auth);location.replace(role+'-login.html');}
- catch{message.textContent='Unable to log out. Please retry.';button.disabled=false;}
+ try{
+  if(role==='driver'){
+   const cleanup=prepareDriverSignOut();
+   if(cleanup){let timer;try{await Promise.race([cleanup,new Promise(resolve=>{timer=setTimeout(resolve,3000);})]);}catch{}finally{clearTimeout(timer);}}
+  }
+  await signOut(auth);location.replace(role+'-login.html');
+ }
+ catch{if(role==='driver')resumeDriverSession();message.textContent='Unable to log out. Please retry.';button.disabled=false;}
 };

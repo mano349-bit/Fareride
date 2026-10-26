@@ -138,3 +138,14 @@ test('claiming a passenger or delivery quote preserves all original pricing fiel
   const stored=(await getDoc(doc(db('r'),'rides','tow'))).data();assert.equal(stored.pricingStatus,'quote_required');assert.equal(stored.fare,null);
  }
 });
+
+test('all driver accounts can read available jobs and finish their claimed job without approval or GPS',async()=>{
+ await seed(null,{serviceType:'ride'});
+ await env.withSecurityRulesDisabled(async context=>{
+  const store=context.firestore();await updateDoc(doc(store,'users','d'),{accountStatus:'pending'});await deleteDoc(doc(store,'driverPresence','d'));await deleteDoc(doc(store,'driverApplications','driver_d'));
+ });
+ await assertSucceeds(getDoc(doc(db('d'),'rides','tow')));await assertSucceeds(claim('d'));
+ await assertSucceeds(updateDoc(doc(db('d'),'rides','tow'),{status:'started',startedAt:'now'}));
+ await assertSucceeds(updateDoc(doc(db('d'),'rides','tow'),{status:'arrived',arrivedAt:'now'}));
+ await assertSucceeds(updateDoc(doc(db('d'),'rides','tow'),{status:'completed',completedAt:'now'}));
+});

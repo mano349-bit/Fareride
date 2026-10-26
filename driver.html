@@ -440,29 +440,7 @@ section[aria-label="Driver job controls"] > h2,
     </h3>
 
     <div id="locationStatus">
-        Location sharing is off.
-    </div>
-
-    <div class="location-buttons">
-
-        <button
-          class="start-location"
-          type="button"
-          onclick="FareRideDriverLocation.start()">
-
-            📍 Start Live Location
-
-        </button>
-
-        <button
-          class="stop-location"
-          type="button"
-          onclick="FareRideDriverLocation.stop()">
-
-            Stop Location
-
-        </button>
-
+        Location shares automatically while signed in. Allow location access when prompted.
     </div>
 
 </section>
@@ -503,16 +481,16 @@ section[aria-label="Driver job controls"] > h2,
 
 <script
   type="module"
-  src="driver.js?v=20261026-first-claim">
+  src="driver.js?v=20261026-auto-online">
 </script>
 
 <script
   type="module"
-  src="driver-location.js">
+  src="driver-location.js?v=20261026-auto-online">
 </script>
 
-<script type="module" src="ride-live.js?v=20261026-gps-stages"></script><script type="module" src="ride-reviews.js?v=20261025-driver-rating-history"></script><script type="module" src="sos.js?v=20261025-rider-sos"></script><script type="module" src="driver-navigation.js?v=20261013-live-sync"></script><script type="module" src="connection-status.js"></script><script type="module" src="ride-logout.js"></script><script type="module" src="driver-presence.js?v=20261026-active-accept"></script><script type="module" src="table-fit.js?v=20261026-readable-resizable"></script>
-<script type="module" src="tow-offers.js?v=20261025-two-sided-accept"></script>
+<script type="module" src="ride-live.js?v=20261026-auto-location"></script><script type="module" src="ride-reviews.js?v=20261025-driver-rating-history"></script><script type="module" src="sos.js?v=20261025-rider-sos"></script><script type="module" src="driver-navigation.js?v=20261026-auto-location"></script><script type="module" src="connection-status.js"></script><script type="module" src="ride-logout.js?v=20261026-auto-online"></script><script type="module" src="driver-presence.js?v=20261026-auto-online"></script><script type="module" src="table-fit.js?v=20261026-readable-resizable"></script>
+<script type="module" src="tow-offers.js?v=20261026-auto-online"></script>
 <script type="module" src="readability.js?v=20261026-small-blue-final"></script>
 </body>
 

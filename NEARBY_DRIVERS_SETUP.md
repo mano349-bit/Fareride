@@ -1,9 +1,31 @@
-# Nearby driver availability
+# Automatic online and location availability
 
-Rider results show the nearest 10 available drivers within 20 straight-line miles, using the calculated pickup coordinates or shared GPS. Drivers must tap Go online and allow GPS. Drivers on accepted/started/arrived rides are unavailable. Updates older than 90 seconds are excluded. Only approved signed-in riders and admins can read presence records; drivers write their own validated presence record. No contact information, license images or application documents are in presence records.
+Drivers become online automatically after Driver sign-in and remain online until
+logout. There is no Go online/Go offline or Start/Stop Location control. A current
+trip, missing GPS, or failed presence update does not disable the job queue.
+Connection errors are reported separately from the signed-in online state.
 
-Going offline stops the new passenger, delivery and tow queues and clears job alerts immediately. Assigned active trips stay visible so drivers can finish them. Going online requires GPS and a successful presence write before new job listeners start. Presence writes are serialized so a pending online write cannot override a later offline write. Failed offline updates show a retry button rather than claiming the driver is hidden. Without connectivity, rider visibility expires within 90 seconds of the last update.
+A single `session-location.js` GPS controller starts for signed-in rider and driver
+pages. It shares location automatically with an assigned active trip, supplies
+nearby-driver presence, and provides local rider position before a trip starts.
+It clears GPS on logout/page exit and resumes on return, reconnection, or a site
+permission change. It retries temporary GPS errors without a manual toggle.
 
-Deploy the changed web files together, including `driver-availability.js`. The updated `firestore.rules` also requires fresh online presence before accepting passenger/delivery jobs, creating or revising tow offers, or assigning a tow offer to a driver. Merge these changes with the current deployed rules; the presence block alone is no longer sufficient. Do not overwrite unrelated live rules from a stale checkout. Firebase rules and live accounts were not deployed or validated by the local Node tests.
+GPS requires device/site permission and an available connection. Web browsers and
+the Android WebView can suspend location when the app is closed or backgrounded;
+this implementation does not provide a native background location service.
+Locations that are not refreshed expire from nearby-driver results within 90
+seconds. Drivers with active trips are hidden from nearby-driver results while
+remaining online for jobs. Only approved riders/admins can read presence records.
 
-Validate on two devices/accounts: sign in as an approved rider and approved driver; go online with GPS; confirm the driver appears and new jobs enter the queue. Go offline; confirm unassigned jobs and alerts disappear, the rider marker disappears after the database update, and no new requests arrive. Repeat with a pending tow offer, an active assigned trip, denied GPS, and a lost connection. Reconnect and retry the offline update when it was not confirmed.
+Deploy the changed web files together, including `session-location.js` and
+`driver-control-state.js`. Publish the prepared Firestore changes separately from
+the website. Preserve any additional live policy changes when merging the current
+canonical `firestore.rules`. This environment has no Firebase administrator
+connection; local emulator tests do not establish production rule publication.
+
+Validate with signed-in rider and driver accounts: verify automatic online state,
+no manual location toggles, location permission recovery, job claim by one driver,
+rejection of competing claims, and automatic GPS through accepted/started/arrived
+trip stages. Signing out should stop sharing and remove nearby-driver presence;
+failed or disconnected cleanup still relies on the 90-second freshness limit.

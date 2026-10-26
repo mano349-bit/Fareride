@@ -1,9 +1,10 @@
-import {isDriverOnline, observeDriverOnline} from './driver-availability.js';
+import {isDriverOnline, observeDriverOnline} from './driver-availability.js?v=20261026-auto-online';
 import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
 import {visibleDriverJobs, jobMatchesFilter} from './driver-jobs.js?v=20261026-first-claim';
 import {notifyNewRides, resetRideAlerts} from './driver-alerts.js?v=20261013-all-jobs';
 import { escapeHTML } from './ride-ui.js';
 import { actionButtons } from './driver-actions.js?v=20261026-first-claim';
+import {driverControlState} from './driver-control-state.js';
 import { auth, getDoc, onAuthStateChanged } from './firebase-session.js';
 import { query, where, runTransaction } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 import {claimDriverDetails} from './driver-claim.js';
@@ -33,10 +34,6 @@ let acceptingJob=false;
 function acceptFromDashboard(id) {
  if(!DRIVER_ID){setDriverMessage('Sign in as an approved driver to accept jobs.');return;}
  if(acceptingJob)return;
- if(!isDriverOnline()){
-  window.dispatchEvent(new Event('fareride-go-online'));
-  setDriverMessage('Going online. Allow location access, then choose Accept Job when a request appears.');return;
- }
  const job=rides.find(job=>job.id===id);
  if(!job){setDriverMessage('No available jobs match this filter. New requests appear automatically while you are online.');return;}
  if(job.serviceType==='tow'){
@@ -158,18 +155,19 @@ function renderRequests() {
   const selectedJob = visibleRides.find(ride => ride.driverId === DRIVER_ID && ride.status !== 'requested') || visibleRides[0];
   $('driverControls').innerHTML = actionButtons(selectedJob || { id: '', status: 'unavailable' }, DRIVER_ID);
   const primaryAccept=$('driverControls').querySelector('.acceptRide');
-  if(primaryAccept){primaryAccept.disabled=!DRIVER_ID||acceptingJob;primaryAccept.onclick=()=>acceptFromDashboard(selectedJob?.id);}
+  const controls=driverControlState(selectedJob,DRIVER_ID,isDriverOnline(),acceptingJob);
+  if(primaryAccept){primaryAccept.disabled=!controls.canAccept;primaryAccept.onclick=()=>acceptFromDashboard(selectedJob?.id);}
 
   $('driverControlsStatus').textContent = selectedJob
     ? `Controls for ${selectedJob.riderName || 'Rider'}: ${selectedJob.pickup || 'Pickup'}. Current stage: ${selectedJob.status}.`
-    : isDriverOnline() ? 'No new jobs are available right now.' : 'You are offline. Go online to receive new jobs. Your current trip remains available.';
+    : controls.status;
 
   if (!visibleRides.length) {
 
     list.innerHTML = `
       <div class="card">
         <p>
-          ${isDriverOnline() ? 'No job requests match this filter right now.' : 'You are offline. Go online to receive new job requests.'}
+          ${isDriverOnline() ? 'No job requests match this filter right now.' : 'Job requests start automatically after Driver sign-in.'}
         </p>
       </div>
     `;
@@ -351,7 +349,6 @@ function renderRequests() {
 
 async function acceptRide(id) {
   if(acceptingJob)return;
-  if (!isDriverOnline()) { setDriverMessage('Go online before accepting a new job.'); return; }
   const job = rides.find(ride => ride.id === id);
   if (!job || job.serviceType === 'tow' || job.status !== 'requested') {
     setDriverMessage('This job is not available in your service queue.');
@@ -375,7 +372,6 @@ async function acceptRide(id) {
     await runTransaction(db, async transaction => {
       const rideRef = doc(db, 'rides', id);
       const current = await transaction.get(rideRef);
-      if (!isDriverOnline()) throw new Error('You are offline. Go online before accepting a job.');
       if (!current.exists() || current.data().status !== 'requested' || current.data().driverId) {
         throw new Error('Another driver has already accepted this ride.');
       }
@@ -624,14 +620,14 @@ function startRideListener() {
  },error=>{
   if(stopped||auth.currentUser?.uid!==expected)return;
   console.error('Driver job listener failed:',error);
-  setDriverMessage(index===0?'Unable to load new job requests. Check your connection and driver approval.':'Unable to load your assigned jobs. Check your connection and driver approval.');
+  setDriverMessage(index===0?'Job requests could not load. Check your connection or ask FareRide Admin to verify job access.':'Unable to load your assigned jobs. Check your connection and driver approval.');
  });
  let stopRequests;
  const stopAssigned=listen(1,where('driverId','==',expected));
  const stopAvailability=observeDriverOnline(online=>{
   requestRevision++;stopRequests?.();stopRequests=null;parts[0].clear();ready[0]=false;
   rides=rides.filter(job=>job.driverId===expected);
-  resetRideAlerts();renderRequests();
+  resetRideAlerts();setDriverMessage(online?'Online: ready to accept available jobs.':'Signed out or checking Driver sign-in. Job requests resume automatically.');renderRequests();
   if(online)stopRequests=listen(0,where('status','==','requested'));
  });
  return ()=>{stopped=true;stopAvailability();stopRequests?.();stopAssigned();};
@@ -651,7 +647,7 @@ onAuthStateChanged(auth, async user => {
   const profile = await getDoc(doc(db, 'users', user.uid)).catch(() => null);
   if (auth.currentUser?.uid !== user.uid || !profile?.exists()) return;
   const data = profile.data();
-  if (data.role !== 'driver' || !['approved', 'active'].includes(data.accountStatus)) { setDriverMessage('An approved driver account is required to accept jobs.'); return; }
+  if (data.role !== 'driver') { setDriverMessage('Sign in with your Driver account to accept jobs.'); return; }
   setDriverMessage('');
   DRIVER_ID = user.uid; DRIVER_NAME = data.fullName || 'Driver';
   stopRides = startRideListener();

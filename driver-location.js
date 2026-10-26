@@ -106,7 +106,7 @@ async function saveDriverLocation(
   const active = await getDoc(doc(db, 'rides', rideId)).catch(() => null);
   if (!active?.exists() || active.data().driverId !== auth.currentUser.uid
       || !['accepted', 'arrived', 'started'].includes(active.data().status)) {
-    stopDriverLocationTracking(); return;
+    return;
   }
   lastSentAt = now;
 
@@ -247,19 +247,6 @@ function locationError(
 
 }
 
-
-/* =========================================================
-   START LIVE LOCATION
-========================================================= */
-
-function startDriverLocationTracking() {
- setLocationMessage('Starting live rider and driver map...');
- window.dispatchEvent(new Event('fareride-start-location'));
-}
-function stopDriverLocationTracking() {
- window.dispatchEvent(new Event('fareride-stop-location'));
- setLocationMessage('Location sharing stopped.');
-}
 
 /* =========================================================
    SOS DISPLAY
@@ -587,13 +574,6 @@ async function sendEmergencySOS() {
 ========================================================= */
 
 window.FareRideDriverLocation = {
-
-  start:
-    startDriverLocationTracking,
-
-  stop:
-    stopDriverLocationTracking,
-
   sos:
     sendEmergencySOS,
 
@@ -615,8 +595,6 @@ window.FareRideDriverLocation = {
     localStorage.removeItem(
       ACTIVE_RIDE_KEY
     );
-
-    stopDriverLocationTracking();
 
   }
 
