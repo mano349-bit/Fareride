@@ -5,7 +5,9 @@ const header=document.querySelector('header');
 const button=document.createElement('button');button.type='button';button.textContent='Log out';button.hidden=true;
 button.style.cssText='padding:10px 16px;margin-left:16px;background:#0875e1;color:white;border:0;border-radius:8px;font-weight:700;cursor:pointer';
 const message=document.createElement('span');message.setAttribute('role','status');message.style.cssText='margin-left:12px;color:#b42318';
-header.append(button,message);
+const links=document.getElementById?.('driverPageLinks');
+if(links){button.style.cssText='';links.append(button);header.append(message);}
+else header.append(button,message);
 onAuthStateChanged(auth,user=>{button.hidden=!user;});
 button.onclick=async()=>{
  button.disabled=true;message.textContent='';

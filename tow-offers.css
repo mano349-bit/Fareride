@@ -47,40 +47,47 @@
 .tow-offers .driver-page-links a { display:inline-flex; align-items:center; min-height:32px; max-width:100%; padding:4px 0; color:#075fd8; font-weight:700; font-size:16px; overflow-wrap:anywhere; }
 .tow-offers .driver-page-links a:focus-visible { outline:2px solid #1677ff; outline-offset:3px; }
 
-/* Equal navigation buttons across the driver panel. */
+/* Compact driver navigation, including the authenticated logout button. */
 #driverPageLinks,
 .tow-offers .driver-page-links {
-  display:grid !important;
-  grid-template-columns:minmax(0,.65fr) minmax(0,1.7fr) minmax(0,1fr);
-  gap:12px !important;
-  align-items:stretch;
+  display:flex !important;
+  flex-wrap:wrap;
+  justify-content:center;
+  align-items:center;
+  gap:6px !important;
   width:100%;
 }
 #driverPageLinks a,
+#driverPageLinks button,
 .tow-offers .driver-page-links a {
-  display:flex;
+  display:inline-flex;
   align-items:center;
   justify-content:center;
+  flex:0 1 auto;
   min-width:0;
-  min-height:60px;
-  padding:12px 10px;
+  min-height:36px;
+  margin:0;
+  padding:7px 12px;
   border:1px solid #075fd8;
-  border-radius:10px;
+  border-radius:6px;
   background:#0875e1;
   color:#fff;
   font-family:Arial,sans-serif;
-  font-size:15px;
+  font-size:14px;
   font-weight:700;
-  line-height:1.35;
+  line-height:1.25;
   text-align:center;
   text-decoration:none;
-  overflow-wrap:anywhere;
+  overflow-wrap:normal;
+  cursor:pointer;
 }
-#driverPageLinks a:hover { background:#0754b6; }
-#driverPageLinks a:focus-visible { outline:3px solid #075fd8; outline-offset:3px; }
+#driverPageLinks [hidden] { display:none !important; }
+#driverPageLinks a:hover,
+#driverPageLinks button:hover { background:#0754b6; }
+#driverPageLinks a:focus-visible,
+#driverPageLinks button:focus-visible { outline:3px solid #075fd8; outline-offset:3px; }
 @media(max-width:420px) {
-  #driverPageLinks,
-  .tow-offers .driver-page-links { gap:7px !important; }
   #driverPageLinks a,
-  .tow-offers .driver-page-links a { padding:10px 6px; font-size:14px; }
+  #driverPageLinks button,
+  .tow-offers .driver-page-links a { padding:7px 9px; }
 }
