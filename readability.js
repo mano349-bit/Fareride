@@ -5,7 +5,7 @@ function improve(){
  for(const element of document.body.querySelectorAll('*')){
   if(adjusted.has(element)||element.closest('script,style,svg,.leaflet-container,[aria-hidden="true"]')||!['INPUT','TEXTAREA','SELECT'].includes(element.tagName)&&![...element.childNodes].some(node=>node.nodeType===3&&node.textContent.trim()))continue;
   const style=getComputedStyle(element),size=parseFloat(style.fontSize),rgb=style.color.match(/[\d.]+/g)?.map(Number);
-  if(!rgb||rgb.length>3&&rgb[3]===0||size>16||size<8)continue;
+  if(!rgb||rgb.length>3&&rgb[3]===0||size>16||size<=0)continue;
   const channels=rgb.slice(0,3),dark=Math.max(...channels)<160&&Math.max(...channels)-Math.min(...channels)<65;
   if(dark)changes.push({element,size});
  }

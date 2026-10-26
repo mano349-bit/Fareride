@@ -12,7 +12,7 @@ const G={
  deleted:{label:"Deleted",m:s=>s==="deleted"}
 };
 const status=x=>String(x.status||x.accountStatus||"new").toLowerCase();
-const name=x=>x.fullName||x.name||x.email||x.id;
+const name=x=>x.fullName||x.name||x.email||String(x.id||"").slice(-4);
 const ids=(r,g)=>[...document.querySelectorAll(`.fr7-c[data-role="${r}"][data-group="${g}"]:checked`)].map(x=>x.dataset.id);
 
 async function move(r,id,next){
@@ -50,7 +50,7 @@ function group(r,g){
  for(const x of a){
    const row=document.createElement("label");row.className="fr7-row";
    const cb=document.createElement("input");cb.type="checkbox";cb.className="fr7-c";cb.dataset.role=r;cb.dataset.group=g;cb.dataset.id=x.id;cb.onchange=count;
-   const sp=document.createElement("span");sp.textContent=[name(x),x.email||"",x.phone||x.phoneNumber||"",status(x)].filter(Boolean).join(" — ");
+   const sp=document.createElement("span");sp.textContent=[name(x)+" (ID: "+String(x.uid||x.id||"").slice(-4)+")",x.email||"",x.phone||x.phoneNumber||"",status(x)].filter(Boolean).join(" — ");
    row.append(cb,sp);p.append(row);
  }
  all.onchange=()=>{p.querySelectorAll(".fr7-c").forEach(x=>x.checked=all.checked);count()};
