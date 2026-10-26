@@ -1,5 +1,5 @@
 import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
-import './ride-live.js?v=20261026-map-under-controls';
+import './ride-live.js?v=20261026-people-outside-map';
 import {latestCurrentRide} from './ride-recovery.js';
 import {auth,db,collection,query,where,onSnapshot,onAuthStateChanged} from './firebase-session.js';
 import {ACTIVE_STATUSES} from './ride-details.js';

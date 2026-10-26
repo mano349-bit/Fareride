@@ -28,7 +28,7 @@ async function advanceGpsStage(position,id,uid){
 const section = document.createElement('section');
 section.style.cssText = 'max-width:900px;margin:20px auto;padding:20px;background:white;border:1px solid #ccc;border-radius:12px';
 section.hidden = true;
-section.innerHTML = '<h2>Rider and driver live map</h2><p id="liveDriverDetails"></p><a id="liveDriverPhone" hidden></a><p id="liveMapStatus" role="status" style="margin:0"></p><button type="button" hidden>Retry location</button><div style="position:relative;margin-top:16px"><div id="rideLiveMap" style="height:360px"></div><div id="rideMapPeople" aria-label="Rider and driver information" style="position:absolute;top:10px;right:10px;z-index:1000;max-width:75%;padding:10px 12px;background:white;border:1px solid #aac8e6;border-radius:8px;box-shadow:0 2px 8px #0002;white-space:pre-line;font-size:14px;pointer-events:none"></div></div>';
+section.innerHTML = '<h2>Rider and driver live map</h2><p id="liveDriverDetails"></p><a id="liveDriverPhone" hidden></a><p id="liveMapStatus" role="status" style="margin:0"></p><button type="button" hidden>Retry location</button><div id="rideMapPeople" aria-label="Rider and driver information" style="margin:8px 0;padding:8px 10px;background:#eff6ff;border:1px solid #aac8e6;border-radius:8px;white-space:pre-line;overflow-wrap:anywhere;font-size:14px"></div><div id="rideLiveMap" style="height:360px;margin-top:8px"></div>';
 if(isDriver){
  const controls=document.querySelector('section[aria-label="Driver job controls"]');
  if(controls)controls.after(section);else document.querySelector('main').append(section);
