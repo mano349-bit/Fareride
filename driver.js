@@ -166,7 +166,7 @@ function renderRequests() {
 
     list.innerHTML = `
       <div class="card">
-        <p>
+        <p class="driver-empty-jobs">
           ${isDriverOnline() ? 'No job requests match this filter right now.' : 'Job requests start automatically after Driver sign-in.'}
         </p>
       </div>

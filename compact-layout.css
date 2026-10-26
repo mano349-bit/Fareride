@@ -31,6 +31,24 @@
     margin-bottom:8px !important;
   }
   body main p { margin-block:6px; }
+  body.driver-readable-text .app-content-frame > header h1 {
+    font-size:33px;
+    font-weight:700;
+    color:#075fd8;
+  }
+  body.driver-readable-text :is(.navigation-label,.driver-empty-jobs) {
+    font-size:36px;
+    font-weight:600;
+    line-height:1.3;
+    color:#075fd8;
+  }
+  body.driver-readable-text .location-card > h3 {
+    font-size:28.08px;
+    font-weight:700;
+    line-height:1.3;
+    color:#075fd8;
+  }
+
   .rider-feedback .rider-feedback-info {
     height:calc(2.8em + 14px);
     overflow-y:auto;

@@ -1,5 +1,8 @@
-/* App canvas stays yellow while content cards retain their own backgrounds. */
-body.app-button-upgrade { background:#ffeb3b !important; }
+/* Neutral outer canvas; yellow stays inside rider/driver app borders. */
+html { background:#f4f7fb; }
+body.app-button-upgrade { background:#f4f7fb !important; }
+body.yellow-app-panel > .app-content-frame { background:#ffeb3b; }
+body.yellow-app-panel.app-frame { background:#ffeb3b !important; }
 
 /* Latest button sizing: 30% taller, with large yellow labels across the app. */
 @layer app-button-upgrade {
