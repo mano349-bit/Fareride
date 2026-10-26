@@ -11,14 +11,20 @@ function addBox(element,label,table=null){
   element.addEventListener('wheel',()=>{state.manual=true;},{passive:true});
   element.addEventListener('touchstart',()=>{state.manual=true;},{passive:true});
   element.addEventListener('keydown',()=>{state.manual=true;});
+  const expand=document.createElement('button');expand.type='button';expand.className='text-box-toggle';expand.textContent='Expand text';expand.setAttribute('aria-expanded','false');expand.hidden=true;
+  expand.onclick=()=>{const open=element.classList.toggle('text-box-expanded');if(open){state.collapsedHeight=element.style.height||getComputedStyle(element).height;element.style.height='auto';}else element.style.height=state.collapsedHeight||'96px';expand.textContent=open?'Collapse text':'Expand text';expand.setAttribute('aria-expanded',String(open));state.manual=true;measure();};
+  element.after(expand);state.expand=expand;
   state.label=label;boxes.set(element,state);resize.observe(element);
 }
 function measure(){
   for(const [box,state] of boxes){
-    if(!box.isConnected){resize.unobserve(box);boxes.delete(box);continue;}
+    if(!box.isConnected){resize.unobserve(box);state.expand.remove();boxes.delete(box);continue;}
     if(!box.getClientRects().length)continue;
+    if(document.body.classList.contains('admin-readable')&&!state.sized){state.sized=true;box.style.height=Math.min(96,Math.max(26,box.scrollHeight))+'px';box.style.maxHeight='none';}
     const overflow=box.scrollHeight>box.clientHeight+2;
     box.dataset.overflow=String(overflow);
+    if(overflow)box.dataset.resizable='true';
+    state.expand.hidden=!overflow&&!box.classList.contains('text-box-expanded');
     if(overflow){box.tabIndex=0;box.setAttribute('role','region');box.setAttribute('aria-label',state.label+'; scroll to read all text');}
     else{box.removeAttribute('tabindex');box.removeAttribute('role');box.removeAttribute('aria-label');}
   }

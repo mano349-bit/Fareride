@@ -2162,11 +2162,11 @@ function renderFinancials() {
  const days = Number($('dailyReportDays').value);
  if($('dailyReportDays').checkValidity()) {
  const rows = dailyAccounts(adminRecords(rides,'rides'), 365);
- $('dailyAccounts').innerHTML = rows.length ? rows.map(row => '<tr><td>'+row.day+'</td><td>'+escapeHtml(row.role)+'</td><td>'+escapeHtml(row.name)+'<br>'+escapeHtml(row.id)+'</td><td>'+row.pending+'</td><td>'+row.active+'</td><td>'+row.completed+'</td><td>'+row.cancelled+'</td><td>'+money(row.total)+(row.estimated?' (estimate)':'')+(row.unpriced?' / '+row.unpriced+' unpriced':'')+'</td></tr>').join('') : '<tr><td colspan="8">No jobs in this period.</td></tr>';
+ $('dailyAccounts').innerHTML = rows.length ? rows.map(row => '<tr><td>'+row.day+'</td><td>'+escapeHtml(row.role)+'</td><td>'+escapeHtml(row.name)+'<br>'+escapeHtml(String(row.id || '').slice(-4))+'</td><td>'+row.pending+'</td><td>'+row.active+'</td><td>'+row.completed+'</td><td>'+row.cancelled+'</td><td>'+money(row.total)+(row.estimated?' (estimate)':'')+(row.unpriced?' / '+row.unpriced+' unpriced':'')+'</td></tr>').join('') : '<tr><td colspan="8">No jobs in this period.</td></tr>';
  }
  const summary = report360(adminRecords(rides,'rides'), Date.now(), 365);
  $('financialSummary').textContent = 'Selected dates: ' + summary.count + ' completed rides | Rider charges: ' + money(summary.rider) + ' | Driver earnings: ' + money(summary.driver) + (summary.excluded ? ' | Unpriced rides excluded: ' + summary.excluded : '');
- $('financialPeople').innerHTML = summary.people.map(person => '<tr><td>' + escapeHtml(person.role) + '</td><td>' + escapeHtml(person.name) + '<br>' + escapeHtml(person.id) + '</td><td>' + person.count + '</td><td>' + money(person.total) + (person.estimated ? ' (estimate)' : '') + '</td></tr>').join('');
+ $('financialPeople').innerHTML = summary.people.map(person => '<tr><td>' + escapeHtml(person.role) + '</td><td>' + escapeHtml(person.name) + '<br>' + escapeHtml(String(person.id || '').slice(-4)) + '</td><td>' + person.count + '</td><td>' + money(person.total) + (person.estimated ? ' (estimate)' : '') + '</td></tr>').join('');
 }
 
 $('dailyReportDays').addEventListener('change', () => { if ($('dailyReportDays').reportValidity()) renderFinancials(); });
