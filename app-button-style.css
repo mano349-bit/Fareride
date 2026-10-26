@@ -103,10 +103,10 @@ body.yellow-app-panel :is(table,thead,tbody,tfoot,tr,th,td,#liveDriverDetails,#r
   body.app-button-upgrade :is(button,a)[hidden] { display:none !important; }
 }
 
-/* Light-blue lettering on rider and driver pages; retain readability sizing. */
+/* Deep-blue lettering on rider and driver pages; retain readability sizing. */
 body.yellow-app-panel {
-  -webkit-text-fill-color:#65b5ff !important;
-  text-shadow:0 1px 1px rgb(0 45 90 / 70%);
+  -webkit-text-fill-color:#003399 !important;
+  text-shadow:none;
 }
 body.driver-readable-text main :is(h1,h2,h3,h4,p,label,span,strong,b,small,legend,li,a,button,div):not(:where(#driverPageLinks,#driverPageLinks *,.leaflet-container,.leaflet-container *)) {
   font-weight:700 !important;

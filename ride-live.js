@@ -28,7 +28,7 @@ async function advanceGpsStage(position,id,uid){
 const section = document.createElement('section');
 section.style.cssText = 'max-width:900px;margin:20px auto;padding:20px;background:white;border:1px solid #ccc;border-radius:12px';
 section.hidden = true;
-section.innerHTML = '<h2>Rider and driver live map</h2><p id="liveDriverDetails"></p><a id="liveDriverPhone" hidden></a><p id="liveMapStatus" role="status" style="margin:0"></p><button type="button" hidden>Retry location</button><div id="rideMapPeople" aria-label="Rider and driver information" style="margin:8px 0;padding:8px 10px;background:#eff6ff;border:1px solid #aac8e6;border-radius:8px;white-space:pre-line;overflow-wrap:anywhere;font-size:14px"></div><div id="rideLiveMap" style="height:360px;margin-top:8px"></div>';
+section.innerHTML = '<h2>Rider and driver live map</h2><p id="liveDriverDetails"></p><a id="liveDriverPhone" hidden></a><p id="liveMapStatus" role="status" style="margin:0"></p><button type="button" hidden>Retry location</button><div id="rideLiveMap" style="height:360px;margin-top:8px"></div>';
 if(isDriver){
  const controls=document.querySelector('section[aria-label="Driver job controls"]');
  if(controls)controls.after(section);else document.querySelector('main').append(section);
@@ -51,14 +51,15 @@ function marker(current,point,label,type){
 }
 function render(){
  const active=ACTIVE_STATUSES.includes(ride.status), waiting=!isDriver&&ride.status==='requested';section.hidden=!(active||waiting);if(!active&&!waiting){stopGPS();return;}
+ const rawPhone=isDriver?ride.riderPhone:ride.driverPhone;
+ const contact=String(rawPhone??'').trim();
+ const number=/^[+\d().\s-]+$/.test(contact)?phoneNumber(contact):'';
  const details=section.querySelector('#liveDriverDetails');details.style.cssText='white-space:pre-line;padding:14px;background:#eff6ff;border:1px solid #aac8e6;border-radius:8px;font-weight:700';
- details.textContent=isDriver ? 'Rider: '+(ride.riderName||'Rider') : 'Driver: '+(ride.driverName||'Waiting for a driver to accept')+'\nVehicle: '+([ride.vehicleYear,ride.vehicleMake,ride.vehicleModel].filter(Boolean).join(' ')||'Waiting for vehicle details')+'\nTelephone: '+(ride.driverPhone||'Not provided')+'\nLocation: '+(validCoordinates(ride.driverLocation)?ride.driverLocation.lat.toFixed(5)+', '+ride.driverLocation.lng.toFixed(5):'Waiting for driver GPS — driver must allow location access and keep FareRide open.');
+ details.textContent=isDriver ? 'Rider: '+(ride.riderName||'Rider') : 'Driver: '+(ride.driverName||'Waiting for a driver to accept')+'\nVehicle: '+([ride.vehicleYear,ride.vehicleMake,ride.vehicleModel].filter(Boolean).join(' ')||'Waiting for vehicle details')+'\nTelephone: '+(number?contact:'Not provided')+'\nLocation: '+(validCoordinates(ride.driverLocation)?ride.driverLocation.lat.toFixed(5)+', '+ride.driverLocation.lng.toFixed(5):'Waiting for driver GPS — driver must allow location access and keep FareRide open.');
  const riderName = (!isDriver && profile?.fullName) || ride.riderName || 'Rider';
  const driverName = (isDriver && profile?.fullName) || ride.driverName || 'Driver';
- const vehicle = [ride.vehicleYear,ride.vehicleMake,ride.vehicleModel].filter(Boolean).join(' ');
- section.querySelector('#rideMapPeople').textContent = `Rider: ${riderName}\nDriver: ${driverName}${vehicle ? '\nVehicle: ' + vehicle : ''}`;
- const phone=section.querySelector('a'),raw=isDriver?ride.riderPhone:ride.driverPhone,number=phoneNumber(raw);
- phone.hidden=!number;phone.textContent=`Call ${isDriver?'rider':'driver'}: ${raw || ''}`;phone.style.cssText='padding:12px 16px;margin:10px 0;background:#0875e1;color:white;border-radius:8px;font-weight:700;text-decoration:none';if(number)phone.href=`tel:${number}`;else phone.removeAttribute('href');
+ const phone=section.querySelector('#liveDriverPhone');
+ phone.hidden=!number;phone.textContent=`Call ${isDriver?'rider':'driver'}: ${contact}`;phone.style.cssText='padding:12px 16px;margin:10px 0;background:#0875e1;color:white;border-radius:8px;font-weight:700;text-decoration:none';if(number)phone.href=`tel:${number}`;else phone.removeAttribute('href');
  const point=validCoordinates(ride.riderLocation)?ride.riderLocation:ride.pickupLocation;
  const center=validCoordinates(point)?point:ride.driverLocation;
  if(window.L){
