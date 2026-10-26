@@ -28,6 +28,28 @@ const $ = id =>
   document.getElementById(id);
 
 let rides = [];
+let acceptingJob=false;
+
+function acceptFromDashboard(id) {
+ if(!DRIVER_ID){setDriverMessage('Sign in as an approved driver to accept jobs.');return;}
+ if(acceptingJob)return;
+ if(rides.some(job=>job.driverId===DRIVER_ID&&['accepted','started','arrived'].includes(job.status))){setDriverMessage('Finish your current job before accepting another.');return;}
+ if(!isDriverOnline()){
+  window.dispatchEvent(new Event('fareride-go-online'));
+  setDriverMessage('Going online. Allow location access, then choose Accept Job when a request appears.');return;
+ }
+ const job=rides.find(job=>job.id===id);
+ if(!job){setDriverMessage('No available jobs match this filter. New requests appear automatically while you are online.');return;}
+ if(job.serviceType==='tow'){
+  const card=[...document.querySelectorAll('[data-tow-ride]')].find(card=>card.dataset.towRide===id);
+  const accept=card&&[...card.querySelectorAll('button')].find(button=>button.textContent==='Accept offer');
+  if(accept&&!accept.disabled){accept.click();return;}
+  card?.scrollIntoView({behavior:'smooth',block:'center'});
+  setDriverMessage('Review this job in Tow offers & rider issues. Accept the rider’s price there, or send a counteroffer.');return;
+ }
+ acceptRide(id);
+}
+
 const jobFilter=()=> $('jobServiceFilter')?.value || 'all';
 $('jobServiceFilter')?.addEventListener('change', renderRequests);
 
@@ -143,6 +165,9 @@ function renderRequests() {
 
   const selectedJob = visibleRides.find(ride => ride.driverId === DRIVER_ID && ride.status !== 'requested') || visibleRides[0];
   $('driverControls').innerHTML = actionButtons(selectedJob || { id: '', status: 'unavailable' }, DRIVER_ID);
+  const primaryAccept=$('driverControls').querySelector('.acceptRide');
+  if(primaryAccept){primaryAccept.disabled=!DRIVER_ID||acceptingJob;primaryAccept.onclick=()=>acceptFromDashboard(selectedJob?.id);}
+
   $('driverControlsStatus').textContent = selectedJob
     ? `Controls for ${selectedJob.riderName || 'Rider'}: ${selectedJob.pickup || 'Pickup'}. Current stage: ${selectedJob.status}.`
     : isDriverOnline() ? 'No new jobs are available right now.' : 'You are offline. Go online to receive new jobs. Your current trip remains available.';
@@ -250,6 +275,7 @@ function renderRequests() {
     .forEach(
       button => {
 
+        if($('driverControls').contains(button))return;
         button.onclick = () => {
 
           acceptRide(
@@ -332,6 +358,7 @@ function renderRequests() {
 ======================================== */
 
 async function acceptRide(id) {
+  if(acceptingJob)return;
   if (!isDriverOnline()) { setDriverMessage('Go online before accepting a new job.'); return; }
   const job = rides.find(ride => ride.id === id);
   if (!job || job.serviceType === 'tow' || job.status !== 'requested' || job.pricingStatus === 'quote_required' || !jobMatchesFilter(job, jobFilter())) {
@@ -345,6 +372,7 @@ async function acceptRide(id) {
 
   try {
 
+    acceptingJob=true;renderRequests();
     const uid = auth.currentUser?.uid;
     if (!uid) throw new Error('Sign in as an approved driver.');
     const application = await getDoc(doc(db, 'driverApplications', 'driver_' + uid));
@@ -380,11 +408,12 @@ async function acceptRide(id) {
     );
 
     setDriverMessage(
-      'Unable to accept ride.'
+      error.code==='permission-denied' ? 'Unable to accept: check driver approval and the published Firebase rules.' : (error.message || 'Unable to accept ride. Please retry.')
     );
 
   }
 
+  finally {acceptingJob=false;renderRequests();}
 }
 
 

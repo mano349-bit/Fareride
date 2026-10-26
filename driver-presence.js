@@ -80,3 +80,5 @@ document.getElementById('providerService')?.addEventListener('change',()=>{if(en
 window.addEventListener('pagehide',stop);
 window.addEventListener('offline',()=>{setDriverOnline(false);message.textContent='Connection lost. New jobs are paused. Nearby visibility expires within 90 seconds.';});
 window.addEventListener('online',()=>publish(enabled&&!busy));
+
+window.addEventListener('fareride-go-online',()=>{if(!enabled&&!button.disabled)button.click();});
