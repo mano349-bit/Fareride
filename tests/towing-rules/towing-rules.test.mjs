@@ -2,7 +2,7 @@ import {test,before,beforeEach,after} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile,writeFile} from 'node:fs/promises';
 import {initializeTestEnvironment,assertSucceeds,assertFails} from '@firebase/rules-unit-testing';
-import {doc,setDoc,updateDoc,getDoc,writeBatch,serverTimestamp,Timestamp} from 'firebase/firestore';
+import {doc,setDoc,updateDoc,getDoc,writeBatch,serverTimestamp,Timestamp,deleteDoc} from 'firebase/firestore';
 import {offerResponse,acceptedTowFields,driverAcceptanceFields} from '../../tow-offer-state.js';
 if(!process.env.FIRESTORE_EMULATOR_HOST)throw Error('Run with firebase emulators:exec. No production access is supported.');
 let env;
@@ -30,7 +30,7 @@ function acceptance(uid,offer,actor,overrideRide={},overrideOffer={}){
  batch.update(doc(store,'rides','tow','towOffers',offer.driverId),{...offerResponse(offer,'accept',undefined,actor),updatedAt:serverTimestamp(),...overrideOffer});
  return batch.commit();
 }
-before(async()=>{env=await initializeTestEnvironment({projectId:'demo-fareride',firestore:{host:'127.0.0.1',port:8080,rules:await readFile(new URL('../../firestore.rules',import.meta.url),'utf8')}});});
+before(async()=>{env=await initializeTestEnvironment({projectId:'demo-fareride',firestore:{host:'127.0.0.1',port:8080,rules:await readFile(new URL(process.env.FARERIDE_RULES_FILE || '../../firestore.rules',import.meta.url),'utf8')}});});
 beforeEach(()=>seed());after(async()=>{try{const coverage=await fetch('http://127.0.0.1:8080/emulator/v1/projects/demo-fareride:ruleCoverage');await writeFile(new URL('rules-coverage.json',import.meta.url),await coverage.text());}catch{}await env?.cleanup();});
 
 test('driver accepts the rider counteroffer atomically at its exact price',async()=>{
@@ -56,8 +56,8 @@ test('stale revisions and changed rider counteroffers are rejected',async()=>{
  await assertFails(acceptance('d',counter,'driver',{}, {revision:2}));
  await seed({...counter,counterAmount:160,revision:3});await assertFails(acceptance('d',counter,'driver'));
 });
-test('offline and suspended drivers cannot accept',async()=>{
- await env.withSecurityRulesDisabled(context=>updateDoc(doc(context.firestore(),'driverPresence','d'),{available:false}));await assertFails(acceptance('d',counter,'driver'));
+test('presence is not an acceptance gate, while suspended tow accounts remain blocked',async()=>{
+ await env.withSecurityRulesDisabled(context=>updateDoc(doc(context.firestore(),'driverPresence','d'),{available:false}));await assertSucceeds(acceptance('d',counter,'driver'));
  await seed();await env.withSecurityRulesDisabled(context=>updateDoc(doc(context.firestore(),'users','d'),{accountStatus:'suspended'}));await assertFails(acceptance('d',counter,'driver'));
 });
 test('a cancelled or assigned tow cannot be accepted',async()=>{await seed(counter,{status:'cancelled'});await assertFails(acceptance('d',counter,'driver'));await seed(counter,{status:'accepted',driverId:'d2'});await assertFails(acceptance('d',counter,'driver'));});
@@ -98,4 +98,43 @@ test('passenger acceptance and start controls remain permitted',async()=>{
 test('rider cancellation and live location updates remain permitted',async()=>{
  await assertSucceeds(updateDoc(doc(db('r'),'rides','tow'),{status:'cancelled',cancelledAt:'now'}));
  await seed(counter,{status:'accepted',driverId:'d'});await assertSucceeds(updateDoc(doc(db('r'),'rides','tow'),{riderLocation:{lat:40,lng:-73},riderLocationUpdatedAt:serverTimestamp()}));
+});
+
+const claim = (uid, extra = {}) => updateDoc(doc(db(uid),'rides','tow'),{status:'accepted',...driverFields,driverId:uid,acceptedAt:'now',...extra});
+test('passenger and delivery claims do not require presence, approval or an application record',async()=>{
+ for(const serviceType of ['ride','messenger']){
+  await seed(null,{serviceType});
+  await env.withSecurityRulesDisabled(async context=>{
+   const store=context.firestore();await deleteDoc(doc(store,'driverApplications','driver_d'));await deleteDoc(doc(store,'driverPresence','d'));
+   await updateDoc(doc(store,'users','d'),{accountStatus:'pending'});
+  });
+  await assertSucceeds(claim('d'));
+ }
+});
+test('legacy jobs without pricingStatus can be claimed',async()=>{
+ await seed(null,{serviceType:'ride'});
+ await env.withSecurityRulesDisabled(async context=>{
+  const store=context.firestore(),ref=doc(store,'rides','tow'),data=(await getDoc(ref)).data();delete data.pricingStatus;await setDoc(ref,data);
+ });
+ await assertSucceeds(claim('d'));
+});
+test('only the first driver can claim a passenger or delivery job',async()=>{
+ for(const serviceType of ['ride','messenger']){
+  await seed(null,{serviceType});
+  const results=await Promise.allSettled([claim('d'),claim('d2')]);assert.equal(results.filter(result=>result.status==='fulfilled').length,1);
+  const job=(await getDoc(doc(db('r'),'rides','tow'))).data();const loser=job.driverId==='d'?'d2':'d';await assertFails(claim(loser));
+ }
+});
+test('claiming does not permit impersonation, rider writes, changed fares or reopening cancelled jobs',async()=>{
+ await seed(null,{serviceType:'ride'});
+ await assertFails(claim('r'));await assertFails(claim('d',{driverId:'d2'}));await assertFails(claim('d',{fare:1}));
+ await assertFails(updateDoc(doc(env.unauthenticatedContext().firestore(),'rides','tow'),{status:'accepted',...driverFields,acceptedAt:'now'}));
+ await seed(null,{serviceType:'ride',status:'cancelled'});await assertFails(claim('d'));
+});
+
+test('claiming a passenger or delivery quote preserves all original pricing fields',async()=>{
+ for(const serviceType of ['ride','messenger']){
+  await seed(null,{serviceType,pricingStatus:'quote_required',fare:null,totalFare:null});await assertSucceeds(claim('d'));
+  const stored=(await getDoc(doc(db('r'),'rides','tow'))).data();assert.equal(stored.pricingStatus,'quote_required');assert.equal(stored.fare,null);
+ }
 });

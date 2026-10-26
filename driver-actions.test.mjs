@@ -11,8 +11,8 @@ for (const [status, expected] of [['requested', 'acceptRide'], ['accepted', 'sta
     assert.ok(enabled[0].includes(expected));
   });
 }
-test('another driver, completed jobs and unpriced quotes have no enabled actions', () => {
-  for (const ride of [{ status: 'accepted', driverId: 'other' }, { status: 'completed', driverId: 'driver' }, { status: 'requested', driverId: null, pricingStatus: 'quote_required' }]) {
+test('another driver and completed jobs have no enabled actions', () => {
+  for (const ride of [{ status: 'accepted', driverId: 'other' }, { status: 'completed', driverId: 'driver' }]) {
     assert.equal((actionButtons({ id: 'job', ...ride }, 'driver').match(/ disabled/g) || []).length, 4);
   }
 });
@@ -36,4 +36,8 @@ test('an agreed towing job follows the passenger start, arrive, complete sequenc
   assert.equal(enabled.length,1);assert.ok(enabled[0].includes(expected));
  }
  assert.equal((actionButtons({id:'tow',serviceType:'tow',status:'accepted',driverId:'other',pricingStatus:'agreed'},'driver').match(/ disabled/g)||[]).length,4);
+});
+
+test('unassigned passenger and delivery jobs can be claimed regardless of legacy pricing status',()=>{
+ for(const serviceType of ['ride','messenger'])assert.match(actionButtons({id:'q',serviceType,status:'requested',driverId:null,pricingStatus:'quote_required'},'driver'),/class="rideAction acceptRide" data-id="q" >/);
 });

@@ -1,7 +1,6 @@
 import {matchesService} from './services.js';
 export function isOpenDriverJob(job) {
- return job.status === 'requested' && !job.driverId
-  && (job.pricingStatus !== 'quote_required' || ['tow','messenger'].includes(job.serviceType));
+ return job.status === 'requested' && !job.driverId;
 }
 export function jobMatchesFilter(job, filter='all') {
  return filter === 'all' || matchesService(job,filter);

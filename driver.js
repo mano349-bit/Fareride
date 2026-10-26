@@ -1,12 +1,12 @@
 import {isDriverOnline, observeDriverOnline} from './driver-availability.js';
 import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
-import {visibleDriverJobs, jobMatchesFilter} from './driver-jobs.js';
+import {visibleDriverJobs, jobMatchesFilter} from './driver-jobs.js?v=20261026-first-claim';
 import {notifyNewRides, resetRideAlerts} from './driver-alerts.js?v=20261013-all-jobs';
 import { escapeHTML } from './ride-ui.js';
-import { actionButtons } from './driver-actions.js';
+import { actionButtons } from './driver-actions.js?v=20261026-first-claim';
 import { auth, getDoc, onAuthStateChanged } from './firebase-session.js';
 import { query, where, runTransaction } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
-import { driverDetails } from './ride-details.js';
+import {claimDriverDetails} from './driver-claim.js';
 import { serviceName, priceLabel } from './services.js';
 import {
   db,
@@ -33,7 +33,6 @@ let acceptingJob=false;
 function acceptFromDashboard(id) {
  if(!DRIVER_ID){setDriverMessage('Sign in as an approved driver to accept jobs.');return;}
  if(acceptingJob)return;
- if(rides.some(job=>job.driverId===DRIVER_ID&&['accepted','started','arrived'].includes(job.status))){setDriverMessage('Finish your current job before accepting another.');return;}
  if(!isDriverOnline()){
   window.dispatchEvent(new Event('fareride-go-online'));
   setDriverMessage('Going online. Allow location access, then choose Accept Job when a request appears.');return;
@@ -354,7 +353,7 @@ async function acceptRide(id) {
   if(acceptingJob)return;
   if (!isDriverOnline()) { setDriverMessage('Go online before accepting a new job.'); return; }
   const job = rides.find(ride => ride.id === id);
-  if (!job || job.serviceType === 'tow' || job.status !== 'requested' || job.pricingStatus === 'quote_required' || !jobMatchesFilter(job, jobFilter())) {
+  if (!job || job.serviceType === 'tow' || job.status !== 'requested') {
     setDriverMessage('This job is not available in your service queue.');
     return;
   }
@@ -368,9 +367,11 @@ async function acceptRide(id) {
     acceptingJob=true;renderRequests();
     const uid = auth.currentUser?.uid;
     if (!uid) throw new Error('Sign in as an approved driver.');
-    const application = await getDoc(doc(db, 'driverApplications', 'driver_' + uid));
-    if (!application.exists()) throw new Error('Driver application is missing.');
-    const details = driverDetails(application.data(), uid);
+    // Application data enriches the trip; it must not veto an otherwise valid claim.
+    const application = await getDoc(doc(db, 'driverApplications', 'driver_' + uid)).catch(() => null);
+    const profile = await getDoc(doc(db, 'users', uid));
+    if (!profile.exists() || profile.data().role !== 'driver') throw new Error('Sign in with your Driver account.');
+    const details = claimDriverDetails(uid, profile.data(), application?.exists() ? application.data() : {});
     await runTransaction(db, async transaction => {
       const rideRef = doc(db, 'rides', id);
       const current = await transaction.get(rideRef);
@@ -403,7 +404,7 @@ async function acceptRide(id) {
     );
 
     setDriverMessage(
-      error.code==='permission-denied' ? 'Unable to accept: check driver approval and the published Firebase rules.' : (error.message || 'Unable to accept ride. Please retry.')
+      error.code==='permission-denied' ? 'Job assignment was blocked by the server. Contact FareRide Admin (permission-denied).' : (error.message || 'Unable to accept ride. Please retry.')
     );
 
   }
