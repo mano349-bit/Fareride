@@ -166,6 +166,27 @@ match /rides/{rideId} {
         && request.resource.data.status == 'accepted' && request.resource.data.driverId is string && validTowAcceptance();
     }
 
+    // One shared, append-only conversation for the rider, assigned driver and active admins.
+    match /rides/{rideId}/messages/{messageId} {
+      function chatRide() { return get(/databases/$(database)/documents/rides/$(rideId)).data; }
+      function chatMember() {
+        return signedIn() && (admin() || chatRide().riderId == request.auth.uid
+          || chatRide().get('driverId', null) == request.auth.uid);
+      }
+      function chatRole() {
+        return (admin() && request.resource.data.senderRole == 'admin')
+          || (chatRide().riderId == request.auth.uid && request.resource.data.senderRole == 'rider')
+          || (chatRide().get('driverId', null) == request.auth.uid && request.resource.data.senderRole == 'driver');
+      }
+      allow read: if chatMember();
+      allow create: if chatMember() && chatRide().status in ['requested', 'accepted', 'started', 'arrived']
+        && request.resource.data.keys().hasOnly(['senderId', 'senderRole', 'text', 'createdAt'])
+        && request.resource.data.senderId == request.auth.uid && chatRole()
+        && request.resource.data.text is string && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 2000 && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+    }
+
 match /emergencies/{emergencyId} {
  allow create: if signedIn()
  && request.resource.data.keys().hasOnly(['type','emergencyService','source','reporterId','riderId','riderName','driverId','driverName','rideId','status','latitude','longitude','accuracy','mapUrl','createdAt'])

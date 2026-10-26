@@ -111,3 +111,12 @@ body.yellow-app-panel {
 body.driver-readable-text main :is(h1,h2,h3,h4,p,label,span,strong,b,small,legend,li,a,button,div):not(:where(#driverPageLinks,#driverPageLinks *,.leaflet-container,.leaflet-container *)) {
   font-weight:700 !important;
 }
+
+/* Rider and driver action labels remain white and bold against colored buttons. */
+@layer app-button-upgrade {
+  body.yellow-app-panel :is(button,input[type="submit"],input[type="button"],header nav a,header > a,a[role="button"],a.button,a.btn,a[data-app],#liveDriverPhone,.call-911-button,.rider-call-911,.sos-map-link,a[href="tel:911"],.leaflet-control-zoom a,.leaflet-popup-close-button) {
+    color:#fff !important;
+    -webkit-text-fill-color:#fff !important;
+    font-weight:700 !important;
+  }
+}

@@ -1,0 +1,25 @@
+#jobChat {
+  margin:10px 0;
+  padding:12px;
+  border:1px solid #87a8d6;
+  border-radius:10px;
+  color:#003399;
+  min-width:0;
+}
+#jobChat h2 {margin:0 0 6px;font-size:22px;}
+#jobChat p {margin:6px 0;}
+#jobChat label {display:block;font-weight:700;margin:6px 0 3px;}
+#jobChat select, #jobChat textarea {width:100%;max-width:100%;min-width:0;box-sizing:border-box;font:inherit;color:#003399;}
+#jobChat select {padding:8px;}
+#jobChat textarea {display:block;resize:vertical;min-height:76px;padding:10px;background:#fff;}
+#jobChat .job-chat-log {
+  height:220px;overflow-y:auto;overflow-x:hidden;overflow-wrap:anywhere;
+  padding:8px;margin-top:8px;border:1px solid #87a8d6;border-radius:6px;
+  background:#fffde0;color:#003399;
+}
+#jobChat .job-chat-message {padding:8px 2px;border-bottom:1px solid #c2cfe2;}
+#jobChat .job-chat-message p {white-space:pre-wrap;}
+#jobChat .job-chat-message small {display:block;font-size:13px;}
+#jobChat .job-chat-form {margin:8px 0 0;padding:0;border:0;}
+#jobChat .job-chat-status {font-size:15px;overflow-wrap:anywhere;}
+#jobChat button {margin-top:6px;}
