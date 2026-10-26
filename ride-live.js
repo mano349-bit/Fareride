@@ -3,7 +3,6 @@ import {gpsStageTracker} from './driver-gps-stages.js?v=20261026-gps-stages';
 import {runTransaction} from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
 import {latestCurrentRide} from './ride-recovery.js?v=20261013-live-acceptance';
-import {locationNotice} from './ride-location-notice.js';
 import { auth, db, doc, getDoc, updateDoc, onAuthStateChanged, onSnapshot, serverTimestamp, collection, query, where } from './firebase-session.js';
 import { ACTIVE_STATUSES, validCoordinates } from './ride-details.js';
 import { phoneNumber, vehicleIcon } from './ride-ui.js';
@@ -29,8 +28,11 @@ async function advanceGpsStage(position,id,uid){
 const section = document.createElement('section');
 section.style.cssText = 'max-width:900px;margin:20px auto;padding:20px;background:white;border:1px solid #ccc;border-radius:12px';
 section.hidden = true;
-section.innerHTML = '<h2>Rider and driver live map</h2><p id="liveDriverDetails"></p><a id="liveDriverPhone" hidden></a><p id="liveMapStatus" role="status"></p><p>Location shares automatically while this page is open. Allow location access when asked.</p><button type="button" hidden>Retry location</button><div style="position:relative;margin-top:16px"><div id="rideLiveMap" style="height:360px"></div><div id="rideMapPeople" aria-label="Rider and driver information" style="position:absolute;top:10px;right:10px;z-index:1000;max-width:75%;padding:10px 12px;background:white;border:1px solid #aac8e6;border-radius:8px;box-shadow:0 2px 8px #0002;white-space:pre-line;font-size:14px;pointer-events:none"></div></div>';
-if(isDriver)document.querySelector('main').append(section);
+section.innerHTML = '<h2>Rider and driver live map</h2><p id="liveDriverDetails"></p><a id="liveDriverPhone" hidden></a><p id="liveMapStatus" role="status" style="margin:0"></p><button type="button" hidden>Retry location</button><div style="position:relative;margin-top:16px"><div id="rideLiveMap" style="height:360px"></div><div id="rideMapPeople" aria-label="Rider and driver information" style="position:absolute;top:10px;right:10px;z-index:1000;max-width:75%;padding:10px 12px;background:white;border:1px solid #aac8e6;border-radius:8px;box-shadow:0 2px 8px #0002;white-space:pre-line;font-size:14px;pointer-events:none"></div></div>';
+if(isDriver){
+ const controls=document.querySelector('section[aria-label="Driver job controls"]');
+ if(controls)controls.after(section);else document.querySelector('main').append(section);
+}
 else if(document.getElementById('riderMapSlot'))document.getElementById('riderMapSlot').append(section);
 else document.querySelector('main').prepend(section);
 const status = section.querySelector('#liveMapStatus'), button = section.querySelector('button');
@@ -73,9 +75,8 @@ function render(){
   if(visible.length>1)map.fitBounds(L.latLngBounds(visible.map(marker=>marker.getLatLng())),{paddingTopLeft:[55,100],paddingBottomRight:[55,65],maxZoom:16});
  }
  if(waiting){status.textContent='Finding a driver. Your accepted driver will appear here automatically.';return;}
- const age=stamp=>{const time=stamp?.toMillis?.()||0;return !time?'waiting for GPS':Date.now()-time>30000?'location stale — waiting for an update':'live';};
- status.textContent=locationError||'Rider: '+age(ride.riderLocationUpdatedAt)+' | Driver: '+age(ride.driverLocationUpdatedAt);const notice=locationNotice(ride);if(notice)status.textContent+=' | '+notice;
- if(isDriver){const message=document.getElementById('locationStatus');if(message)message.textContent=status.textContent;}
+ status.textContent=locationError;
+ if(isDriver){const message=document.getElementById('locationStatus');if(message)message.textContent=locationError||'Live location active';}
 }
 function watch(id){
  if(!user||!id||id===rideId)return;reset();rideId=id;const expected=user.uid;
