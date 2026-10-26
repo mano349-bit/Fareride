@@ -53,3 +53,17 @@ body table.operations-table th:nth-child(10) { width:11%; }
 
 /* Keep table information visible without expansion buttons. */
 .text-box-toggle { display:none !important; }
+
+/* Admin information is plain text, without resize handles or clipped boxes. */
+.admin-readable .table-text-box,
+.admin-readable .fit-table .details-box {
+  resize:none !important;
+  height:auto !important;
+  max-height:none !important;
+  min-height:0;
+  overflow:visible;
+  padding:0;
+  border:0;
+  background:transparent;
+}
+.admin-readable textarea { resize:none; }
