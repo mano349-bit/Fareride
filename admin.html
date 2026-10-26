@@ -1362,6 +1362,59 @@ body table.operations-table th:nth-child(11), body table.operations-table th:nth
 
 <script type="module" src="./admin-status-manager-v7.js?v=20260814-172125"></script>
 <script type="module" src="table-fit.js"></script>
+<script>
+
+// Double only neutral dark text, using original computed sizes to avoid nested scaling.
+(() => {
+  const overrides = new Map();
+  let pending = false;
+  function refresh() {
+    pending = false;
+    for (const [element, original] of overrides) {
+      for (const property of ['color', 'font-size']) {
+        const saved = original[property];
+        if (saved.value) element.style.setProperty(property, saved.value, saved.priority);
+        else element.style.removeProperty(property);
+      }
+    }
+    overrides.clear();
+    const changes = [];
+    for (const element of document.body.querySelectorAll('*')) {
+      if (element.matches('script, style, svg, svg *, option')) continue;
+      const hasText = [...element.childNodes].some(node => node.nodeType === 3 && node.textContent.trim());
+      if (!hasText && !element.matches('input, select, textarea')) continue;
+      const style = getComputedStyle(element);
+      const rgb = style.color.match(/[\d.]+/g)?.map(Number);
+      if (!rgb || rgb.length < 3) continue;
+      const channels = rgb.slice(0, 3);
+      if (Math.max(...channels) > 90 || Math.max(...channels) - Math.min(...channels) > 40) continue;
+      const size = parseFloat(style.fontSize);
+      if (!Number.isFinite(size)) continue;
+      const original = {};
+      for (const property of ['color', 'font-size']) {
+        original[property] = {value:element.style.getPropertyValue(property), priority:element.style.getPropertyPriority(property)};
+      }
+      changes.push({element, original, size});
+    }
+    for (const {element, original, size} of changes) {
+      overrides.set(element, original);
+      element.style.setProperty('color', '#075fd8', 'important');
+      element.style.setProperty('font-size', (size * 2) + 'px', 'important');
+    }
+  }
+  function schedule() {
+    if (!pending) { pending = true; requestAnimationFrame(refresh); }
+  }
+  function start() {
+    refresh();
+    new MutationObserver(schedule).observe(document.body, {
+      childList:true, subtree:true, attributes:true, attributeFilter:['class']
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once:true});
+  else start();
+})();
+</script>
 </body>
 </html>
 
