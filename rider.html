@@ -645,34 +645,7 @@ main .rider-emergency-card {
     </label>
   </div>
 
-  <div class="rider-scrolling-notes" data-fit-long-text tabindex="0" title="Hover or focus to pause; scroll up or down to read.">
-  <p class="service-note">
-    Enter an address or a US ZIP code in each field.
-    ZIP-only routes estimate travel between ZIP areas;
-    use street addresses for exact pickup and drop-off.
-  </p>
-
-
-
-  <p class="service-note">
-    Route estimates use
-    <a
-      href="https://www.openstreetmap.org/copyright"
-      target="_blank"
-      rel="noopener">OpenStreetMap data</a>.
-    <a
-      href="https://www.openstreetmap.org/fixthemap"
-      target="_blank"
-      rel="noopener">Report a map issue</a>.
-  </p>
-
-  <p
-    id="serviceNote"
-    class="service-note"
-    aria-live="polite">
-    Choose your ride and calculate an estimate.
-  </p>
-  </div>
+  <p id="serviceNote" hidden aria-live="polite"></p>
   <p
     id="towEstimateBreakdown"
     class="service-note"
