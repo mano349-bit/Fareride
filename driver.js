@@ -6,8 +6,8 @@ import { escapeHTML } from './ride-ui.js';
 import { actionButtons } from './driver-actions.js?v=20261026-first-claim';
 import {driverControlState} from './driver-control-state.js';
 import { auth, getDoc, onAuthStateChanged } from './firebase-session.js';
-import { query, where, runTransaction } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
-import {claimDriverDetails} from './driver-claim.js';
+import { query, where, runTransaction, getDocFromServer } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
+import {acceptDriverJob,assignDriverJob} from './driver-job-acceptance.js';
 import { serviceName, priceLabel } from './services.js';
 import {
   db,
@@ -156,7 +156,7 @@ function renderRequests() {
   $('driverControls').innerHTML = actionButtons(selectedJob || { id: '', status: 'unavailable' }, DRIVER_ID);
   const primaryAccept=$('driverControls').querySelector('.acceptRide');
   const controls=driverControlState(selectedJob,DRIVER_ID,isDriverOnline(),acceptingJob);
-  if(primaryAccept){primaryAccept.disabled=!controls.canAccept;primaryAccept.onclick=()=>acceptFromDashboard(selectedJob?.id);}
+  if(primaryAccept){primaryAccept.disabled=!controls.canAccept;if(acceptingJob)primaryAccept.textContent='Accepting…';primaryAccept.onclick=()=>acceptFromDashboard(selectedJob?.id);}
 
   $('driverControlsStatus').textContent = selectedJob
     ? `Controls for ${selectedJob.riderName || 'Rider'}: ${selectedJob.pickup || 'Pickup'}. Current stage: ${selectedJob.status}.`
@@ -265,6 +265,7 @@ function renderRequests() {
     .forEach(
       button => {
 
+        if(acceptingJob){button.disabled=true;button.textContent='Accepting…';}
         if($('driverControls').contains(button))return;
         button.onclick = () => {
 
@@ -361,28 +362,26 @@ async function acceptRide(id) {
 
   try {
 
-    acceptingJob=true;renderRequests();
+    acceptingJob=true;setDriverMessage('Accepting job. Please wait…');renderRequests();
     const uid = auth.currentUser?.uid;
     if (!uid) throw new Error('Sign in as an approved driver.');
-    // Application data enriches the trip; it must not veto an otherwise valid claim.
-    const application = await getDoc(doc(db, 'driverApplications', 'driver_' + uid)).catch(() => null);
-    const profile = await getDoc(doc(db, 'users', uid));
-    if (!profile.exists() || profile.data().role !== 'driver') throw new Error('Sign in with your Driver account.');
-    const details = claimDriverDetails(uid, profile.data(), application?.exists() ? application.data() : {});
-    await runTransaction(db, async transaction => {
-      const rideRef = doc(db, 'rides', id);
-      const current = await transaction.get(rideRef);
-      if (!current.exists() || current.data().status !== 'requested' || current.data().driverId) {
-        throw new Error('Another driver has already accepted this ride.');
-      }
-      transaction.update(rideRef, { status: 'accepted', ...details, acceptedAt: now });
+    const currentUid=()=>auth.currentUser?.uid;
+    const serverData=async reference=>{const snapshot=await getDocFromServer(reference);return snapshot.exists()?snapshot.data():null;};
+    const assignment=await acceptDriverJob({
+      uid,currentUid,
+      readProfile:()=>serverData(doc(db,'users',uid)),
+      readApplication:()=>serverData(doc(db,'driverApplications','driver_'+uid)),
+      refreshSignIn:async()=>{if(currentUid()!==uid)throw new Error('Your account changed. Sign in again.');await auth.currentUser.getIdToken(true);},
+      onRecovering:()=>setDriverMessage('Refreshing your sign-in and retrying this job. Please wait…'),
+      claim:details=>runTransaction(db,transaction=>assignDriverJob(transaction,doc(db,'rides',id),uid,details,currentUid,now))
     });
+    if(currentUid()!==uid)return;
     /*
       This is important for
       live GPS on the phone.
     */
 
-    rides=rides.map(ride=>ride.id===id?{...ride,status:'accepted',...details,acceptedAt:now}:ride);
+    rides=rides.map(ride=>ride.id===id?{...ride,...assignment,id}:ride);
     renderRequests();
     setActiveDriverRide(id);
 

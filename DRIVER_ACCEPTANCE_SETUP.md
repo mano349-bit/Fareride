@@ -51,3 +51,13 @@ After publishing live rules, refresh the driver page and accept an unassigned jo
 Confirm rider and driver see the same assignment. Attempt the same job as another
 driver and confirm it cannot be claimed a second time. Live review accounts and
 production rules have not been tested by the local emulator.
+
+## Single-click authentication recovery
+
+Acceptance reads the profile and optional application directly from the server.
+For an initial `permission-denied` or `unauthenticated` response, the client forces
+one Firebase ID-token refresh, reloads those server records, and retries once.
+All Accept buttons stay disabled during the operation. A second denial remains an
+error; this recovery cannot replace publication of the actual Firestore policy.
+The transaction treats an already committed assignment to the same driver as
+success and preserves its current stage. Another driver's claim is never replaced.

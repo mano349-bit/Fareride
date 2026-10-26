@@ -1,8 +1,9 @@
+import {assignDriverJob} from '../../driver-job-acceptance.js';
 import {test,before,beforeEach,after} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile,writeFile} from 'node:fs/promises';
 import {initializeTestEnvironment,assertSucceeds,assertFails} from '@firebase/rules-unit-testing';
-import {doc,setDoc,updateDoc,getDoc,writeBatch,serverTimestamp,Timestamp,deleteDoc} from 'firebase/firestore';
+import {doc,setDoc,updateDoc,getDoc,writeBatch,serverTimestamp,Timestamp,deleteDoc,runTransaction} from 'firebase/firestore';
 import {offerResponse,acceptedTowFields,driverAcceptanceFields} from '../../tow-offer-state.js';
 if(!process.env.FIRESTORE_EMULATOR_HOST)throw Error('Run with firebase emulators:exec. No production access is supported.');
 let env;
@@ -148,4 +149,16 @@ test('all driver accounts can read available jobs and finish their claimed job w
  await assertSucceeds(updateDoc(doc(db('d'),'rides','tow'),{status:'started',startedAt:'now'}));
  await assertSucceeds(updateDoc(doc(db('d'),'rides','tow'),{status:'arrived',arrivedAt:'now'}));
  await assertSucceeds(updateDoc(doc(db('d'),'rides','tow'),{status:'completed',completedAt:'now'}));
+});
+
+const clientClaim=uid=>{const store=db(uid);return runTransaction(store,transaction=>assignDriverJob(transaction,doc(store,'rides','tow'),uid,{...driverFields,driverId:uid},()=>uid,'original-client-acceptance'));};
+test('the website transaction is idempotent after a lost successful response',async()=>{
+ await seed(null,{serviceType:'ride'});await assertSucceeds(clientClaim('d'));
+ await assertSucceeds(updateDoc(doc(db('d'),'rides','tow'),{status:'started',startedAt:'now'}));
+ const retry=await assertSucceeds(clientClaim('d'));assert.equal(retry.status,'started');
+ const stored=(await getDoc(doc(db('r'),'rides','tow'))).data();assert.equal(stored.status,'started');assert.equal(stored.acceptedAt,'original-client-acceptance');
+});
+test('two website transactions still assign an available job to exactly one driver',async()=>{
+ await seed(null,{serviceType:'ride'});const results=await Promise.allSettled([clientClaim('d'),clientClaim('d2')]);assert.equal(results.filter(result=>result.status==='fulfilled').length,1);
+ const stored=(await getDoc(doc(db('r'),'rides','tow'))).data();assert.ok(['d','d2'].includes(stored.driverId));
 });
