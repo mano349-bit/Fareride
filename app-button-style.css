@@ -1,3 +1,6 @@
+/* App canvas stays yellow while content cards retain their own backgrounds. */
+body.app-button-upgrade { background:#ffeb3b !important; }
+
 /* Latest button sizing: 30% taller, with large yellow labels across the app. */
 @layer app-button-upgrade {
   body.app-button-upgrade :is(button,input[type="submit"],input[type="button"]) {

@@ -39,10 +39,10 @@
     border-radius:6px;
     background:#f8fafc;
     color:#075fd8;
-    font-size:14px;
+    font-size:21px;
     line-height:1.4;
   }
-  .rider-feedback .rider-feedback-info p { margin:0; }
+  .rider-feedback .rider-feedback-info p { margin:0; font-size:inherit; color:#075fd8; }
   .rider-feedback-info:focus-visible { outline:2px solid #075fd8; outline-offset:2px; }
 
   body main .card > :first-child { margin-top:0 !important; }
