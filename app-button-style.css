@@ -102,3 +102,23 @@ body.yellow-app-panel :is(table,thead,tbody,tfoot,tr,th,td,#liveDriverDetails,#r
   }
   body.app-button-upgrade :is(button,a)[hidden] { display:none !important; }
 }
+
+/* White text in the marked driver content, preserving existing readability sizing. */
+@media screen {
+body.driver-readable-text main {
+  -webkit-text-fill-color:#fff !important;
+  text-shadow:0 1px 2px rgb(0 0 0 / 80%);
+}
+body.driver-readable-text main :is(h1,h2,h3,h4,p,label,span,strong,b,small,legend,li,a,button,div):not(:where(#driverPageLinks,#driverPageLinks *,.leaflet-container,.leaflet-container *)) {
+  font-weight:700 !important;
+}
+/* Keep the top navigation, fields, and map labels in their readable original colors. */
+body.driver-readable-text main :is(#driverPageLinks,#driverPageLinks *,.leaflet-container,.leaflet-container *) {
+  -webkit-text-fill-color:currentColor !important;
+}
+body.driver-readable-text main :is(input,select,textarea,option) {
+  -webkit-text-fill-color:#075fd8 !important;
+  font-weight:400;
+  text-shadow:none;
+}
+}
