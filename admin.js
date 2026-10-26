@@ -539,7 +539,7 @@ function renderRides() {
   const table =
     $('ridesTable');
   const totals=rideTableTotals(filtered);
-  $('ridesTotals').innerHTML='<tr><th scope="row" colspan="4">Shown jobs totals ('+totals.count+')</th><td>'+money(totals.fare)+'</td><td>'+money(totals.tip)+'</td><td>'+(totals.rate===null?'-':money(totals.rate)+'/mi')+'</td><td>'+money(totals.rider)+'</td><td>'+money(totals.driver)+(totals.estimated?' (estimate)':'')+'</td><td colspan="3">Fare/mile is a mileage-weighted average.'+(totals.unpriced?' '+totals.unpriced+' unpriced jobs excluded.':'')+'</td></tr>';
+  $('ridesTotals').innerHTML='<tr><th scope="row" colspan="1">Shown jobs totals ('+totals.count+')</th><td>'+money(totals.fare)+'</td><td>'+money(totals.tip)+'</td><td>'+(totals.rate===null?'-':money(totals.rate)+'/mi')+'</td><td>'+money(totals.rider)+'</td><td>'+money(totals.driver)+(totals.estimated?' (estimate)':'')+'</td><td colspan="3">Fare/mile is a mileage-weighted average.'+(totals.unpriced?' '+totals.unpriced+' unpriced jobs excluded.':'')+'</td></tr>';
 
 
 
@@ -596,54 +596,13 @@ function renderRides() {
           <tr>
 
             <td>
-              <strong>
-                ${escapeHtml(ride.id)}<br><span class="service-badge">${serviceName(ride.serviceType)}</span>
-              </strong>
+              <div class="ride-info-box" data-fit-long-text>
+                <p><strong>Ride ID:</strong> ${escapeHtml(String(ride.id || '-').slice(-4))} <span class="service-badge">${serviceName(ride.serviceType)}</span></p>
+                <p><strong>Rider:</strong> ${escapeHtml(ride.riderName || 'Rider')}<br><strong>Rider ID:</strong> ${escapeHtml(String(ride.riderId || '-').slice(-4))}</p>
+                <p><strong>Driver:</strong> ${escapeHtml(ride.driverName || 'Not assigned')}</p>
+                <p><strong>Pickup:</strong> ${escapeHtml(ride.pickup || '-')}<br><strong>Destination:</strong> ${escapeHtml(ride.dropoff || '-')}</p>
+              </div>
             </td>
-
-
-            <td>
-              ${
-                escapeHtml(
-                  ride.riderName ||
-                  'Rider'
-                )
-              }
-            </td>
-
-
-            <td>
-              ${
-                escapeHtml(
-                  ride.driverName ||
-                  'Not assigned'
-                )
-              }
-            </td>
-
-
-            <td>
-
-              <strong>
-                ${
-                  escapeHtml(
-                    ride.pickup || ''
-                  )
-                }
-              </strong>
-
-              <br>
-
-              -
-
-              ${
-                escapeHtml(
-                  ride.dropoff || ''
-                )
-              }
-
-            </td>
-
 
             <td>
 
@@ -700,14 +659,14 @@ function renderRides() {
             id="details-${ride.id}"
             class="details">
 
-            <td colspan="12">
+            <td colspan="9">
 
               <div class="details-box">
 
                 <strong>
                   Ride ID:
                 </strong>
-                ${escapeHtml(ride.id)}
+                ${escapeHtml(String(ride.id || '-').slice(-4))}
                 <br>
 
 
@@ -727,10 +686,7 @@ function renderRides() {
                   Rider ID:
                 </strong>
                 ${
-                  escapeHtml(
-                    ride.riderId ||
-                    '-'
-                  )
+                  escapeHtml(String(ride.riderId || '-').slice(-4))
                 }
                 <br>
 
