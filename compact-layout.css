@@ -51,7 +51,19 @@
   body #driverMsg:empty { display:none; }
   body table.fit-table th,
   body table.fit-table td { padding:6px; }
-  #driverPageLinks :is(a,button) { min-height:36px !important; padding:7px 10px !important; }
+  #driverPageLinks { align-items:stretch !important; }
+  #driverPageLinks :is(a,button) {
+    flex:1 1 110px;
+    min-height:48px !important;
+    padding:9px 10px !important;
+  }
+  .app-content-frame > .rider-page-header { align-items:stretch; gap:6px !important; }
+  .app-content-frame > .rider-page-header :is(a,button) {
+    flex:1 1 110px;
+    min-width:0;
+    min-height:56px !important;
+    padding:10px 14px !important;
+  }
   #rideForm #summary {
     display:flex;
     flex-wrap:nowrap;
