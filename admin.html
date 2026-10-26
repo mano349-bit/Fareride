@@ -763,10 +763,15 @@ body table.operations-table th:nth-child(11), body table.operations-table th:nth
 #ridesTotals { background:#eaf2ff; color:#075fd8; font-weight:700; }
 #ridesTotals th, #ridesTotals td { border-top:2px solid #1677ff; }
 
-/* Operations column headings: twice the shared 11px header size. */
+/* Keep blue column labels readable and wrap between whole words. */
 body #panel-rides table.operations-table thead th {
-  font-size:22px;
-  line-height:1.35;
+  font-size:14px;
+  line-height:1.4;
+  color:#075fd8;
+  padding:10px 5px;
+  overflow-wrap:normal;
+  word-break:normal;
+  hyphens:none;
 }
 </style>
 
@@ -1112,14 +1117,14 @@ body #panel-rides table.operations-table thead th {
         <thead>
 
           <tr>
-            <th style="font-size:22px!important;line-height:1.35">Ride ID</th>
-            <th style="font-size:22px!important;line-height:1.35">Rider</th>
-            <th style="font-size:22px!important;line-height:1.35">Driver</th>
-            <th style="font-size:22px!important;line-height:1.35">Trip</th>
-            <th style="font-size:22px!important;line-height:1.35">Fare</th><th style="font-size:22px!important;line-height:1.35">Tip</th><th style="font-size:22px!important;line-height:1.35">Effective fare / mile</th><th style="font-size:22px!important;line-height:1.35">Rider total</th><th style="font-size:22px!important;line-height:1.35">Driver earnings</th>
-            <th style="font-size:22px!important;line-height:1.35">Status</th>
-            <th style="font-size:22px!important;line-height:1.35">Requested</th>
-            <th style="font-size:22px!important;line-height:1.35">Details</th>
+            <th>Ride ID</th>
+            <th>Rider</th>
+            <th>Driver</th>
+            <th>Trip</th>
+            <th>Fare</th><th>Tip</th><th>Effective fare / mile</th><th>Rider total</th><th>Driver earnings</th>
+            <th>Status</th>
+            <th>Requested</th>
+            <th>Details</th>
             
           </tr>
 
