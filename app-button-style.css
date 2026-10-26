@@ -3,6 +3,13 @@ html { background:#f4f7fb; }
 body.app-button-upgrade { background:#f4f7fb !important; }
 body.yellow-app-panel > .app-content-frame { background:#ffeb3b; }
 body.yellow-app-panel.app-frame { background:#ffeb3b !important; }
+body.yellow-app-panel :is(main,section,article,fieldset,.card,.login-card,.location-card,.service-details,.rider-feedback-info,.details-box,.table-text-box) {
+  background:#ffeb3b !important;
+}
+body.yellow-app-panel :is(table,thead,tbody,tfoot,tr,th,td,#liveDriverDetails,#rideMapPeople,#locationStatus,#driverMsg) {
+  background:#ffeb3b !important;
+}
+
 
 /* Latest button sizing: 30% taller, with large yellow labels across the app. */
 @layer app-button-upgrade {
