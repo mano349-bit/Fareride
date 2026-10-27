@@ -1,4 +1,4 @@
-/* Larger rider text: reduced by 25% and changed to blue. */
+/* Large rider text: 25% smaller and blue. */
 body:has(#rideForm) :is(
   .rider-voice-controls > span,
   #rideForm .service-picker legend,
@@ -39,6 +39,8 @@ body:has(#rideForm) :is(
   #riderMapSlot h2,
   #liveDriverDetails,
   #rideForm > label:has(#rideType),
+  #rideType,
+  #rideType option,
   #riderTripPanel > h2,
   .rider-feedback h3,
   .rider-feedback label,
@@ -47,27 +49,19 @@ body:has(#rideForm) :is(
 ) {
   color:#003399 !important;
   -webkit-text-fill-color:#003399 !important;
-  font-weight:700;
+  text-shadow:none !important;
   line-height:1.3 !important;
   overflow-wrap:anywhere;
-  text-shadow:none;
 }
 
 body:has(#rideForm) #rideType,
 body:has(#rideForm) #rideType option {
-  color:#003399 !important;
-  -webkit-text-fill-color:#003399 !important;
-  background:#fff;
-  text-shadow:none;
-}
-
-body:has(#rideForm) #rideType {
-  padding-inline:6px;
+  background:#fff !important;
 }
 
 body:has(#rideForm) .rider-feedback :is(input,select,textarea) {
   font-size:24px !important;
   color:#003399 !important;
   -webkit-text-fill-color:#003399 !important;
-  text-shadow:none;
+  text-shadow:none !important;
 }
