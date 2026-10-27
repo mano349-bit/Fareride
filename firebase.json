@@ -24,7 +24,10 @@
       "public/**",
       "*.backup",
       "users.json",
-      "firestore-towing-console.rules"
+      "firestore-towing-console.rules",
+      "storage.rules",
+      "STORAGE_UPLOAD_FIX.md",
+      "firebase.storage.test.json"
     ],
     "headers": [
       {
@@ -41,5 +44,8 @@
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
   }
 }

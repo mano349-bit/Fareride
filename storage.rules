@@ -1,0 +1,33 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() { return request.auth != null; }
+    function admin() {
+      return signedIn()
+        && firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid))
+        && firestore.get(/databases/(default)/documents/admins/$(request.auth.uid)).data.active == true;
+    }
+    function applicationOwner(folder, applicationId) {
+      return signedIn()
+        && folder in ['driverApplications', 'riderApplications']
+        && applicationId == (folder == 'driverApplications' ? 'driver_' : 'rider_') + request.auth.uid;
+    }
+    function validDocument() {
+      return request.resource.size > 0
+        && request.resource.size < 10 * 1024 * 1024
+        && (request.resource.contentType.matches('image/.*')
+          || request.resource.contentType == 'application/pdf');
+    }
+    match /{folder}/{applicationId}/{fileName} {
+      // Applicants can upload before their application is submitted or approved.
+      allow create: if applicationOwner(folder, applicationId) && validDocument();
+      allow get: if folder in ['driverApplications', 'riderApplications']
+        && (applicationOwner(folder, applicationId) || admin());
+      // Existing documents cannot be replaced or removed by an applicant.
+      allow update, delete, list: if false;
+    }
+    match /{other=**} {
+      allow read, write: if false;
+    }
+  }
+}
