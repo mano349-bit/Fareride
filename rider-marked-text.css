@@ -1,0 +1,34 @@
+/* Double the rider text marked for emphasis without changing button sizing. */
+body:has(#rideForm) :is(.rider-voice-controls > span,#rideForm .service-picker legend,#riderMapSlot h2,#liveDriverDetails,#rideForm > label:has(#rideType),#rideType,#riderTripPanel > h2,.rider-feedback label) {
+  font-size:48px !important;
+}
+body:has(#rideForm) #rideForm .service-picker label { font-size:36px !important; }
+body:has(#rideForm) .rider-feedback h3 { font-size:56.16px !important; }
+body:has(#rideForm) #jobChat > h2 { font-size:44px !important; }
+body:has(#rideForm) #jobChat > p { font-size:32px !important; }
+body:has(#rideForm) #jobChat > .job-chat-status { font-size:30px !important; }
+
+body:has(#rideForm) :is(.rider-voice-controls > span,#rideForm .service-picker legend,#rideForm .service-picker label,#riderMapSlot h2,#liveDriverDetails,#rideForm > label:has(#rideType),#riderTripPanel > h2,.rider-feedback h3,.rider-feedback label,#jobChat > h2,#jobChat > p) {
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+  font-weight:700;
+  line-height:1.3 !important;
+  overflow-wrap:anywhere;
+  text-shadow:0 1px 2px #003366,1px 0 2px #003366,-1px 0 2px #003366;
+}
+/* White selected values need a dark surface, including the native options menu. */
+body:has(#rideForm) #rideType,
+body:has(#rideForm) #rideType option {
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+  background:#003399;
+  text-shadow:none;
+}
+body:has(#rideForm) #rideType { padding-inline:6px; }
+/* Keep the unmarked feedback entry fields at their existing size and color. */
+body:has(#rideForm) .rider-feedback :is(input,select,textarea) {
+  font-size:24px !important;
+  color:#003399 !important;
+  -webkit-text-fill-color:#003399 !important;
+  text-shadow:none;
+}

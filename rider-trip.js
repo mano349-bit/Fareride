@@ -17,6 +17,7 @@ import {runTransaction} from 'https://www.gstatic.com/firebasejs/12.0.0/firebase
 import {riderTripState} from './rider-trip-state.js';
 
 const panel = document.createElement('section');
+panel.id = 'riderTripPanel';
 
 panel.style.cssText =
   'padding:20px;margin:20px 0;border:1px solid #ccc;' +
