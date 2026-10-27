@@ -624,6 +624,24 @@ textarea{
   </div>
 
 
+  <h3 class="section-title">Required Driver and Vehicle Photos</h3>
+  <div class="file-box">
+    <label for="vehicleFrontFile">A — Front Image of Vehicle</label>
+    <input id="vehicleFrontFile" type="file" accept="image/*" capture="environment" aria-describedby="vehicleFrontHelp" required>
+    <p id="vehicleFrontHelp">Upload a clear front image of your vehicle with the plate number fully visible and readable. Image files only, under 10 MB.</p>
+  </div>
+  <div class="file-box">
+    <label for="driverPortraitFile">B — Face Image (Passport-Style Photo)</label>
+    <input id="driverPortraitFile" type="file" accept="image/*" capture="user" aria-describedby="driverPortraitHelp driverPortraitSize" required>
+    <p id="driverPortraitSize"><strong>Overall size: 2 × 2 inches (51 × 51 mm).</strong></p>
+    <p id="driverPortraitHelp">Upload a square, clear photo with your face centered, looking directly at the camera. Include your head and shoulders against a plain, light background. Image files only, under 10 MB.</p>
+    <figure style="margin:16px 0;max-width:474px;">
+      <img src="assets/passport-photo-sample.png" alt="Passport-style photo example: a centered head-and-shoulders portrait with width and height marked 2 inches." width="474" height="288" style="display:block;width:100%;height:auto;border-radius:8px;">
+      <figcaption style="margin-top:8px;">Sample only — upload your own face photo. Square format: 2 × 2 inches (51 × 51 mm).</figcaption>
+    </figure>
+  </div>
+  <p>Upload your own face and vehicle photos so FareRide can review your driver application.</p>
+
   <h3 class="section-title">
     Required Documents
   </h3>
@@ -721,7 +739,7 @@ textarea{
 
 <script
   type="module"
-  src="registration.js">
+  src="registration.js?v=20261027-photos">
 </script>
 
 

@@ -1,4 +1,5 @@
-﻿import {
+import {prepareDriverPhoto} from './driver-photos.js';
+import {
   auth,
   db,
   storage,
@@ -691,6 +692,13 @@ async function submitDriver(
   }
 
 
+  const portraitFile = $("driverPortraitFile").files[0];
+  const vehicleFrontFile = $("vehicleFrontFile").files[0];
+  if ([portraitFile, vehicleFrontFile].some(file => !file || !/^image\//.test(file.type) || file.size >= 10 * 1024 * 1024)) {
+    showMessage("applicationMessage", "Both driver and vehicle photos are required. Choose images under 10 MB (PDFs are not accepted for photos).", "error");
+    return;
+  }
+
   const licenseFile =
     $("driverLicenseFile")
       .files[0];
@@ -778,6 +786,12 @@ async function submitDriver(
 
     const documents = {};
 
+
+    button.textContent = "Preparing driver and vehicle photos...";
+    const portraitImage = await prepareDriverPhoto(portraitFile);
+    const vehicleImage = await prepareDriverPhoto(vehicleFrontFile);
+    documents.driverPortrait = {...await uploadDocument("driverApplications", applicationId, "driver-portrait", portraitFile), image: portraitImage};
+    documents.vehicleFront = {...await uploadDocument("driverApplications", applicationId, "vehicle-front", vehicleFrontFile), image: vehicleImage};
 
     documents.driverLicense =
       await uploadDocument(
