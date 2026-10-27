@@ -790,8 +790,8 @@ async function submitDriver(
     button.textContent = "Preparing driver and vehicle photos...";
     const portraitImage = await prepareDriverPhoto(portraitFile);
     const vehicleImage = await prepareDriverPhoto(vehicleFrontFile);
-    documents.driverPortrait = {...await uploadDocument("driverApplications", applicationId, "driver-portrait", portraitFile), image: portraitImage};
-    documents.vehicleFront = {...await uploadDocument("driverApplications", applicationId, "vehicle-front", vehicleFrontFile), image: vehicleImage};
+    documents.driverPortrait = {originalName: portraitFile.name, contentType: "image/jpeg", image: portraitImage};
+    documents.vehicleFront = {originalName: vehicleFrontFile.name, contentType: "image/jpeg", image: vehicleImage};
 
     documents.driverLicense =
       await uploadDocument(

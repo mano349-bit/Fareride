@@ -123,6 +123,12 @@ function documentBox(documents) {
     const path =
       file.path || "";
 
+    // These bounded JPEGs live in the private application document; no public URL.
+    const inlinePhoto = typeof file.image === "string"
+      && file.image.length <= 350000
+      && /^data:image\/jpeg;base64,[A-Za-z0-9+/]+=*$/.test(file.image)
+      ? file.image : "";
+
     rows.push(`
       <div class="document-row">
         <strong>${escapeHtml(label)}:</strong><br>
@@ -130,6 +136,8 @@ function documentBox(documents) {
         <span>
           ${escapeHtml(name)}
         </span>
+
+        ${inlinePhoto ? `<br><img src="${escapeHtml(inlinePhoto)}" alt="${escapeHtml(label)}" style="display:block;max-width:100%;width:320px;height:auto;margin-top:12px;border-radius:8px;">` : ""}
 
         ${
           path
@@ -163,6 +171,9 @@ function documentBox(documents) {
     "Vehicle Registration",
     documents.vehicleRegistration
   );
+
+  documentRow("Face photo — passport-style, 2 × 2 inches", documents.driverPortrait);
+  documentRow("Front Image of Vehicle and Plate", documents.vehicleFront);
 
   if (!rows.length) {
 

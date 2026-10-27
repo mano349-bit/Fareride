@@ -5,26 +5,26 @@ import vm from 'node:vm';
 import { registrationErrorMessage } from './registration-errors.js';
 
 function harness(options = {}) {
-  const elements = new Map(), records = new Map();
+  const elements = new Map(), records = new Map(), uploads = [];
   const user = { uid: 'test-uid', emailVerified: false };
   const el = id => {
-    if (!elements.has(id)) elements.set(id, { value: id === 'ssnLast4' ? '0000' : id.includes('Password') ? 'example-password' : 'Example', files: [{ name: 'test.pdf', size: 10, type: 'application/pdf' }], textContent: '', disabled: false, classList: { add() {}, remove() {} }, addEventListener() {}, reset() {} });
+    if (!elements.has(id)) elements.set(id, { value: id === 'ssnLast4' ? '0000' : id.includes('Password') ? 'example-password' : 'Example', files: [{ name: 'test.jpg', size: 10, type: id.endsWith('PortraitFile') || id === 'vehicleFrontFile' ? 'image/jpeg' : 'application/pdf' }], textContent: '', disabled: false, classList: { add() {}, remove() {} }, addEventListener() {}, reset() {} });
     return elements.get(id);
   };
   if (options.profile) records.set('users/test-uid', options.profile);
-  const context = vm.createContext({ registrationErrorMessage, console: { log() {}, error() {} }, Date, Math, URL,
+  const context = vm.createContext({ registrationErrorMessage, prepareDriverPhoto: async () => 'data:image/jpeg;base64,YQ==', console: { log() {}, error() {} }, Date, Math, URL,
     window: { location: { href: 'https://mano349-bit.github.io/Fareride/registration.html' } },
     document: { getElementById: el }, auth: {}, db: {}, storage: {},
     doc: (_, collection, id) => `${collection}/${id}`, ref: (_, path) => path,
     getDoc: async path => ({ exists: () => records.has(path), data: () => records.get(path) }),
     setDoc: async (path, data) => { if (options.databaseError) throw Object.assign(new Error('Denied'), { code: 'permission-denied' }); records.set(path, { ...records.get(path), ...data }); },
     createUserWithEmailAndPassword: async () => ({ user }), signInWithEmailAndPassword: async () => ({ user }),
-    uploadBytes: async () => { if (options.uploadError) throw Object.assign(new Error('Denied'), { code: 'storage/unauthorized' }); },
+    uploadBytes: async (path) => { uploads.push(path); if (options.rejectPhotoUploads && /driver-portrait|vehicle-front/.test(path)) throw Object.assign(new Error('Photo denied'), {code:'storage/unauthorized'}); if (options.uploadError) throw Object.assign(new Error('Denied'), { code: 'storage/unauthorized' }); },
     sendEmailVerification: async (_, settings) => { context.returnUrl = settings.url; if (options.emailError) throw Object.assign(new Error('Domain'), { code: 'auth/unauthorized-continue-uri' }); }
   });
   const source = fs.readFileSync(new URL('./registration.js', import.meta.url), 'utf8').replace(/^\uFEFF/, '').replace(/^import[\s\S]*?from ['"][^'"]+['"];\s*/gm, '');
   vm.runInContext(source, context);
-  return { el, records, context, submit: role => vm.runInContext(role === 'driver' ? 'submitDriver({preventDefault(){}})' : 'submitRider({preventDefault(){}})', context) };
+  return { el, records, uploads, context, submit: role => vm.runInContext(role === 'driver' ? 'submitDriver({preventDefault(){}})' : 'submitRider({preventDefault(){}})', context) };
 }
 
 for (const role of ['rider', 'driver']) {
@@ -61,4 +61,23 @@ test('database failure is distinguished from an upload failure', async () => {
   const h = harness({ databaseError: true });
   await h.submit('rider');
   assert.match(h.el('riderApplicationMessage').textContent, /saving your account profile; code: permission-denied/);
+});
+
+for (const invalid of [[], [{name:'file.pdf',type:'application/pdf',size:10}], [{name:'large.jpg',type:'image/jpeg',size:10*1024*1024}]]) {
+ test('driver application rejects missing, PDF or oversized photos before account creation: '+JSON.stringify(invalid), async()=>{
+  const h=harness();h.el('driverPortraitFile').files=invalid;await h.submit('driver');
+  assert.equal(h.records.size,0);assert.match(h.el('applicationMessage').textContent,/Both driver and vehicle photos are required/);
+ });
+}
+test('driver photos save privately without requiring new Storage upload paths',async()=>{
+ const h=harness({rejectPhotoUploads:true});await h.submit('driver');const docs=h.records.get('driverApplications/driver_test-uid').documents;
+ assert.equal(docs.driverPortrait.path,undefined);assert.equal(docs.vehicleFront.path,undefined);
+ assert.equal(h.uploads.length,3);assert.ok(h.uploads.every(path=>!/driver-portrait|vehicle-front/.test(path)));
+ assert.equal(docs.vehicleFront.image,'data:image/jpeg;base64,YQ==');
+ assert.equal(docs.driverPortrait.image,'data:image/jpeg;base64,YQ==');
+});
+
+test('rider registration does not require driver or vehicle photos',async()=>{
+ const h=harness();h.el('driverPortraitFile').files=[];h.el('vehicleFrontFile').files=[];
+ await h.submit('rider');assert.equal(h.records.get('riderApplications/rider_test-uid').status,'new');
 });
