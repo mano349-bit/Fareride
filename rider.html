@@ -455,16 +455,18 @@ main .rider-feedback button {
 }
 
 #rideForm #summary {
-  font-size:clamp(28px,5.2vw,40px) !important;
+  font-size:24px !important;
   justify-content:center !important;
   align-items:center !important;
-  flex-wrap:wrap !important;
+  flex-wrap:nowrap !important;
+  gap:6px !important;
+  overflow:hidden !important;
   text-align:center !important;
 }
 #rideForm #summary p {
-  flex:1 1 180px !important;
+  flex:0 0 auto !important;
   min-width:0;
-  white-space:normal !important;
+  white-space:nowrap !important;
   text-align:center !important;
 }
 #rideForm #summary,
@@ -481,9 +483,7 @@ main .rider-feedback button {
 #rideForm #summary span {
   font-size:inherit !important;
 }
-@media(max-width:340px) {
-  #rideForm #summary { font-size:24px !important; }
-}
+
 </style>
 
 <script
@@ -1046,6 +1046,7 @@ window.FareRideRiderSOS = {
 <script type="module" src="rider-face-editor.js?v=20261028-rider-face"></script>
 <script type="module" src="rider-face-publisher.js?v=20261028-rider-face"></script>
 
+<script type="module" src="summary-fit.js?v=20261028-single-line"></script>
 </body>
 </html>
 
