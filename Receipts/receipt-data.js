@@ -1,14 +1,26 @@
-export function receiptFolders(rides, uid) {
-  return rides.filter(ride => uid && ride.driverId === uid && ride.status === 'completed')
-    .map(ride => {
-      const date = ride.completedAt?.toDate ? ride.completedAt.toDate() : new Date(ride.completedAt || NaN);
-      const amount = value => value != null && value !== '' && Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : null;
-      const fare = ride.pricingStatus === 'quote_required' ? null : amount(ride.fare);
-      const tip = amount(ride.tipAmount);
-      const total = fare === null ? null : amount(ride.totalFare) ?? (fare + (tip ?? 0));
-      return {id:String(ride.id), date:Number.isFinite(date.getTime()) ? date.toISOString() : null,
-        driver:ride.driverName || 'Driver', rider:ride.riderName || 'Rider',
-        pickup:ride.pickup || 'Not recorded', dropoff:ride.dropoff || 'Not recorded',
-        service:ride.serviceType || 'ride', miles:amount(ride.miles), fare, tip, total};
-    }).sort((a,b) => (b.date || '').localeCompare(a.date || '') || a.id.localeCompare(b.id));
+const amount=value=>value!==null&&value!==undefined&&value!==''&&Number.isFinite(Number(value))&&Number(value)>=0?Number(value):null;
+const date=value=>{const d=value?.toDate?value.toDate():new Date(value||NaN);return Number.isFinite(d.getTime())?d.toISOString():null;};
+export function receiptFolders(rides,uid,role='driver'){
+ if(!['driver','rider'].includes(role))return [];
+ return rides.filter(r=>uid&&r[role+'Id']===uid&&r.status==='completed').map(r=>{
+  const fare=r.pricingStatus==='quote_required'?null:amount(r.fare);
+  return {id:String(r.id),date:date(r.completedAt),requestedAt:date(r.requestedAt),startedAt:date(r.startedAt),
+   driver:r.driverName||'Not recorded',rider:r.riderName||'Not recorded',pickup:r.pickup||'Not recorded',dropoff:r.dropoff||'Not recorded',
+   service:r.serviceType||'ride',rideType:r.rideType||'Not recorded',miles:amount(r.miles),duration:amount(r.durationMinutes),
+   fare,tip:amount(r.tipAmount),tolls:amount(r.tollsAmount??r.tolls),tax:amount(r.taxAmount),taxRate:amount(r.taxRatePercent),
+   total:amount(r.totalFare),paymentMethod:r.paymentMethod||'Not recorded',paymentStatus:r.paymentStatus||'Not recorded',
+   vehicle:[r.vehicleYear,r.vehicleMake,r.vehicleModel].filter(Boolean).join(' ')||'Not recorded'};
+ }).sort((a,b)=>(b.date||'').localeCompare(a.date||'')||a.id.localeCompare(b.id));
 }
+const money=n=>n===null?'Not recorded':new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(n);
+const time=s=>s?new Date(s).toLocaleString('en-US',{timeZone:'America/Chicago',timeZoneName:'short'}):'Not recorded';
+export function receiptFields(r){
+ return [['Receipt / Ride ID',r.id],['Rider',r.rider],['Driver',r.driver],['Requested (Louisiana time)',time(r.requestedAt)],
+ ['Ride started (Louisiana time)',time(r.startedAt)],['Ride completed (Louisiana time)',time(r.date)],
+ ['Pickup',r.pickup],['Destination',r.dropoff],['Service',r.service],['Ride type',r.rideType],['Vehicle',r.vehicle],
+ ['Distance',r.miles===null?'Not recorded':r.miles+' miles'],['Estimated duration',r.duration===null?'Not recorded':r.duration+' minutes'],
+ ['Ride price',money(r.fare)],['Tip',money(r.tip)],['Tolls (recorded)',money(r.tolls)],
+ ['Louisiana tax / fee (recorded)',money(r.tax)],['Recorded tax rate',r.taxRate===null?'Not recorded':r.taxRate+'%'],
+ ['Recorded total ride charge',money(r.total)],['Payment method',r.paymentMethod],['Payment status',r.paymentStatus]];
+}
+export const receiptNote='Amounts reflect the saved ride record. Unrecorded tolls and taxes are not assumed to be zero or added to the recorded total. This receipt does not confirm payment collection.';
