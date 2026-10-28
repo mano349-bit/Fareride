@@ -21,6 +21,9 @@ export function receiptFields(r){
  ['Pickup',r.pickup],['Destination',r.dropoff],['Service',r.service],['Ride type',r.rideType],['Vehicle',r.vehicle],
  ['Distance',r.miles===null?'Not recorded':r.miles+' miles'],['Estimated duration',r.duration===null?'Not recorded':r.duration+' minutes'],
  ['Ride price',money(r.fare)],['Tip',money(r.tip)],['Tolls (100% reimbursed to driver)',money(r.tolls)],
+ ...(r.tollItems||[]).map((item,index)=>['Toll '+(index+1)+' — '+item.location,money(item.amount)+(item.date?' | '+time(item.date):'')]),
+ ...(r.tollDetailsError?[['Toll details','Individual entries could not be loaded. The recorded toll total above is unchanged.']]:[]),
+ ...(r.tollDetailsLoaded&&!(r.tollItems||[]).length&&r.tolls>0?[['Toll details','Only the total was recorded for this ride.']]:[]),
  ['Louisiana tax / fee (recorded)',money(r.tax)],['Recorded tax rate',r.taxRate===null?'Not recorded':r.taxRate+'%'],
  ['Recorded total ride charge',money(r.total)],['Payment method',r.paymentMethod],['Payment status',r.paymentStatus]];
 }

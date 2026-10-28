@@ -1,11 +1,13 @@
+import {receiptTollItems} from './receipt-toll-items.js';
 import {periodForDays,periodDayCount} from '../earnings-period.js';
 import {localDay} from '../rider-history-dates.js';
 import {auth,db,doc,getDoc,collection,query,where,onSnapshot,onAuthStateChanged} from '../firebase-session.js';
-import {receiptFolders,receiptFields,receiptNote} from './receipt-data.js?v=20261028-tolls';
+import {receiptFolders,receiptFields,receiptNote} from './receipt-data.js?v=20261028-itemized-tolls';
 import {receiptPDF} from './receipt-pdf.js?v=20261028-onepage';
 const role=document.body.dataset.receiptRole || 'driver';
 const roleLabel=role==='rider'?'Rider':'Driver';
-let pdfURLs=[];
+let pdfURLs=[],stopTollDetails=[],tollView=0;
+function clearTollDetails(){tollView++;for(const stop of stopTollDetails)stop();stopTollDetails=[];}
 function clearPDFs(){for(const url of pdfURLs)URL.revokeObjectURL(url);pdfURLs=[];}
 const status=document.getElementById('status'), folders=document.getElementById('folders');
 let stop=null,generation=0;
@@ -29,7 +31,7 @@ function receiptContent(receipt){
 }
 function render(rides,uid){
  loadedRides=rides;loadedUid=uid;
- const days=periodDayCount(periodStart.value,periodEnd.value);clearPDFs();folders.replaceChildren();
+ const days=periodDayCount(periodStart.value,periodEnd.value);clearTollDetails();clearPDFs();folders.replaceChildren();
  if(days===null){status.textContent='Choose a valid date range from 1 to 365 days.';return;}
  periodDays.value=days;
  const receipts=receiptFolders(rides,uid,role).filter(receipt=>{if(!receipt.date)return false;const day=localDay(new Date(receipt.date));return day>=periodStart.value&&day<=periodEnd.value;});
@@ -54,13 +56,26 @@ function render(rides,uid){
   const folder=document.createElement('details'),summary=document.createElement('summary');summary.textContent='Receipt folder — '+(receipt.date?new Date(receipt.date).toLocaleDateString():'Date not recorded')+' — '+receipt.id;folder.append(summary,receiptContent(receipt));
   const actions=document.createElement('div');actions.className='actions';
   const download=document.createElement('button');download.type='button';download.textContent='Download PDF';
-  try{
-   const blob=receiptPDF(receiptFields(receipt),receiptNote),url=URL.createObjectURL(blob);pdfURLs.push(url);
-   download.onclick=()=>{const link=document.createElement('a');link.href=url;link.download='FareRide-Receipt-'+receipt.id.replace(/[^a-zA-Z0-9_-]/g,'_')+'.pdf';document.body.append(link);link.click();link.remove();};
-  }catch{
-   download.disabled=true;download.textContent='PDF unavailable — use Print / Save PDF';
-  }
-  const print=document.createElement('button');print.type='button';print.textContent='Print / Save PDF';print.onclick=()=>{folder.open=true;folder.classList.add('printing');try{window.print();}finally{folder.classList.remove('printing');}};
+  let currentPDF=null;
+  const updateReceipt=()=>{
+   print.disabled=false;
+   const article=folder.querySelector('article');if(article)article.replaceWith(receiptContent(receipt));
+   if(currentPDF)URL.revokeObjectURL(currentPDF);
+   try{const blob=receiptPDF(receiptFields(receipt),receiptNote);currentPDF=URL.createObjectURL(blob);pdfURLs.push(currentPDF);
+    download.disabled=false;download.textContent='Download PDF';
+    download.onclick=()=>{const link=document.createElement('a');link.href=currentPDF;link.download='FareRide-Receipt-'+receipt.id.replace(/[^a-zA-Z0-9_-]/g,'_')+'.pdf';document.body.append(link);link.click();link.remove();};
+   }catch{download.disabled=true;download.textContent='PDF unavailable — use Print / Save PDF';}
+  };
+  download.disabled=true;download.textContent='Loading toll details…';
+  const version=tollView,expectedUid=uid;
+  const stop=onSnapshot(collection(db,'rides',receipt.id,'tollEvents'),snapshot=>{
+   if(version!==tollView||auth.currentUser?.uid!==expectedUid)return;
+   receipt.tollItems=receiptTollItems(snapshot.docs.map(item=>({...item.data(),id:item.id})));receipt.tollDetailsLoaded=true;receipt.tollDetailsError=false;updateReceipt();
+  },()=>{
+   if(version!==tollView||auth.currentUser?.uid!==expectedUid)return;
+   receipt.tollItems=[];receipt.tollDetailsLoaded=true;receipt.tollDetailsError=true;updateReceipt();
+  });stopTollDetails.push(stop);
+  const print=document.createElement('button');print.type='button';print.disabled=true;print.textContent='Print / Save PDF';print.onclick=()=>{folder.open=true;folder.classList.add('printing');try{window.print();}finally{folder.classList.remove('printing');}};
   actions.append(download,print);folder.append(actions);folders.append(folder);
  }
 }
