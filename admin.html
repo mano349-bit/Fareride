@@ -924,6 +924,7 @@ body table.operations-table .ride-info-box {
   </section>
 
 <div class="admin-tabs">
+    <button class="adminTab" data-panel="tolls">Toll approvals</button>
 
     
     <button
@@ -1366,6 +1367,7 @@ body table.operations-table .ride-info-box {
 
   </section>
 
+<section id="panel-tolls" class="admin-panel"><h2>Toll approvals</h2><p>Verify each submitted toll against the driver’s toll receipt or account before approval. Pending and rejected tolls do not affect rider charges or driver earnings. Approved tolls are reimbursed 100% to the driver.</p><p id="tollReviewStatus" role="status"></p><div id="pendingTolls"></div></section>
 </main>
 </div>
 
@@ -1392,6 +1394,7 @@ body table.operations-table .ride-info-box {
 
 <script type="module" src="readability.js?v=20261026-small-blue-final"></script>
 <script type="module" src="job-chat.js?v=20261026-job-chat"></script>
+<script type="module" src="admin-tolls.js?v=20261028-review"></script>
 </body>
 </html>
 

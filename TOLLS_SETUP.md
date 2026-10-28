@@ -1,33 +1,35 @@
-# Toll reimbursement
+# Toll submission and admin confirmation
 
-Confirmed tolls use separate accounting: the saved `totalFare` continues to represent the existing fare/tip charge, while `tollsAmount` is added once to the displayed rider total. `tollAccounting: separate-v1` identifies this convention. FareRide takes no commission on tolls; driver earnings add the full toll reimbursement. Default operating expenses exclude toll reimbursements.
+Drivers use **Submit toll for admin confirmation** on the dashboard or earnings page. A submission creates a pending claim in `rides/{rideId}/tollEvents/{eventId}`; it does not change rider charges, driver earnings, or receipt totals.
 
-Drivers record actual charges in **Record a toll** on the driver dashboard or earnings page. Every entry creates an immutable `rides/{rideId}/tollEvents/{eventId}` record and updates the ride aggregate in one transaction. Retries reuse the same event ID. Each separate crossing requires a separate submission. Incorrect confirmed entries require admin reconciliation; drivers cannot edit/delete the audit events.
+Active admins open **Admin → Toll approvals**, verify the actual charge against the driver's receipt or toll account, and approve or reject it. Approval updates the claim and ride aggregate in a single transaction. Repeated approvals cannot post the same claim twice. Rejections add no charge.
 
-## Required activation
+Approved tolls are added separately to rider totals and reimbursed 100% to the driver. FareRide's commission excludes tolls. The default one-third operating expense estimate also excludes toll reimbursements. Both receipt pages and PDF receipts use the approved ride aggregate.
 
-The website deployment does not deploy Firestore security rules. An authorized Firebase project administrator must publish this repository's updated `firestore.rules` for project `fareride-app-0907-349` before toll entry works. Use Firebase Console → Firestore Database → Rules, or deploy with the Firebase CLI from an authenticated environment:
+## Required Firebase activation
+
+Website deployment does not deploy database rules. An authorized administrator must publish the updated `firestore.rules` for `fareride-app-0907-349`:
 
 ```sh
 firebase deploy --only firestore:rules --project fareride-app-0907-349
 ```
 
-Test with driver and rider test accounts before collecting real toll reimbursements. A denied write displays an error and does not charge the rider.
+The session has no Firebase deployment credentials. Until the new rules are published, toll submission/review can be denied. Publish the latest rules even if the earlier direct-entry rules were published; the new rules remove drivers' ability to post toll charges without admin review. Test with driver, rider and admin test accounts before collecting reimbursements.
 
-## Automatic GPS detection
+## GPS and payment scope
 
-No toll location or pricing provider is connected. GPS detection and automatic pricing are not active; drivers must confirm actual charges. Provider credentials must be kept server-side. Connecting a provider also requires vehicle/axle/tag data, direction/time-aware rate lookup, crossing deduplication, and a backend to verify confirmed charges.
+Automatic GPS toll detection/pricing is not configured. Drivers submit actual tolls manually. No provider account is needed for this workflow.
 
-## Historical data and payment integration
+This updates accounting and receipts, not payment-processor charges or bank transfers. A payment integration must collect the rider total and settle the full approved toll reimbursement to the driver.
 
-Rides with older toll fields and no accounting version are not automatically migrated, because their total may already include tolls. Admin reconciliation is required before adding new toll entries to those rides. Recorded `driverEarnings` are treated as excluding tolls unless `driverEarningsIncludesTolls` is explicitly true. Set that flag for any externally recorded payout already including toll reimbursement.
+## Historical records
 
-This change updates charge and earnings records and receipts. It does not execute card charges or bank payouts. Any payment processor integration must collect `riderTotal(ride)` and settle the full toll amount to the driver.
+Existing toll aggregates are retained. Previously posted tolls are not automatically reversed. Admins should reconcile any tolls recorded before this approval workflow. Rides with older toll fields and no accounting version require admin reconciliation before new approvals. Historical driver payouts already including tolls must set `driverEarningsIncludesTolls: true` to avoid duplicate reimbursement in earnings reports.
 
-## Validation
+## Tests
 
-Accounting regression tests: `node --test toll-accounting.test.mjs admin-financials.test.mjs driver-daily-expenses.test.mjs`.
+`node --test toll-accounting.test.mjs toll-review.test.mjs admin-financials.test.mjs driver-daily-expenses.test.mjs`
 
-Firestore emulator tests are in `tests/towing-rules/toll-rules.test.mjs` and require the emulator. They cover ownership, atomic writes, aggregate tampering, invalid currency values, immutable events, and replay prevention.
+Permission tests: `firebase emulators:exec --project demo-fareride-tolls --only firestore --config firebase.tolls.test.json "node --test tests/towing-rules/toll-rules.test.mjs"`
 
-Run them with: `firebase emulators:exec --project demo-fareride-tolls --only firestore --config firebase.tolls.test.json "node --test tests/towing-rules/toll-rules.test.mjs"`. The emulator download was blocked by the execution environment (HTTP 403), so these permission tests have not been run in this session.
+The emulator download was blocked by the execution environment (HTTP 403); permission tests have not been run in this session.
