@@ -1,12 +1,15 @@
+import {tollAmount,riderTotal} from './toll-accounting.js';
 export function amounts(ride) {
   if (ride.pricingStatus === 'quote_required' || ride.fare == null || !Number.isFinite(Number(ride.fare))) return null;
   const fare = Math.max(0, Number(ride.fare));
   const tip = Math.max(0, Number(ride.tipAmount) || 0);
-  const rider = ride.totalFare != null && Number.isFinite(Number(ride.totalFare)) ? Number(ride.totalFare) : fare + tip;
+  const tolls=tollAmount(ride);
+  const rider = riderTotal(ride);
   const saved = ride.driverEarnings != null && Number.isFinite(Number(ride.driverEarnings));
   const share = Number.isFinite(Number(ride.driverSharePercent)) && ride.driverSharePercent != null ? Math.min(100, Math.max(0, Number(ride.driverSharePercent))) : 75;
-  const driver = saved ? Number(ride.driverEarnings) : Math.round((fare * share / 100 + tip) * 100) / 100;
-  return {rider, driver, estimated: !saved, rate: Number(ride.miles) > 0 ? fare / Number(ride.miles) : null};
+  const baseDriver = saved ? Number(ride.driverEarnings) : Math.round((fare * share / 100 + tip) * 100) / 100;
+  const driver = Math.round((baseDriver + (ride.driverEarningsIncludesTolls === true ? 0 : tolls))*100)/100;
+  return {rider, driver, tolls, estimated: !saved, rate: Number(ride.miles) > 0 ? fare / Number(ride.miles) : null};
 }
 export function report360(rides, now = Date.now(), days = 360) {
   const cutoff = now - days * 86400000, people = new Map();
@@ -45,3 +48,4 @@ export function dailyAccounts(rides, days = 365, now = new Date()) {
  }
  return [...groups.values()].sort((a,b)=>b.day.localeCompare(a.day)||a.role.localeCompare(b.role)||a.name.localeCompare(b.name));
 }
+

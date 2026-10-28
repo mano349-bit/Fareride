@@ -1,3 +1,4 @@
+import {riderTotal} from './toll-accounting.js';
 import {auth,db,doc,getDoc,onAuthStateChanged} from './firebase-session.js';
 import {runTransaction} from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 import {canTip,tipValues} from './rider-tip-state.js';
@@ -27,7 +28,7 @@ function preview(){
   custom.disabled=!isCustom;
   try {
     const values=tipValues(ride.fare,isCustom?custom.valueAsNumber:Number(choice.value));
-    document.getElementById('completedTipPreview').textContent='Tip: '+money(values.tipAmount)+' | Total: '+money(values.totalFare);
+    document.getElementById('completedTipPreview').textContent='Tip: '+money(values.tipAmount)+' | Total: '+money(riderTotal({...ride,totalFare:values.totalFare}));
   } catch {document.getElementById('completedTipPreview').textContent='Enter a tip percentage from 0 to 100.';}
 }
 choice.onchange=preview;custom.oninput=preview;
@@ -70,3 +71,4 @@ form.onsubmit=async event=>{
     submit.disabled=false;
   }
 };
+

@@ -11,7 +11,7 @@ export function dailyExpenses(jobs, saved = {}) {
   const expenseEstimated = !Number.isFinite(stored) || stored < 0;
   const expenseKnown = !expenseEstimated || !!job.earnings;
   const income = job.earnings?.driver || 0;
-  const expense = Math.round((expenseEstimated ? income / 3 : stored) * 100) / 100;
+  const expense = Math.round((expenseEstimated ? Math.max(0,income - (job.earnings?.tolls || 0)) / 3 : stored) * 100) / 100;
   entry.jobs.push({...job, expense, expenseEstimated, expenseKnown, net:job.earnings ? Math.round((income-expense)*100)/100 : null});
   entry.income += income;
   entry.expense += expense;
@@ -29,3 +29,4 @@ export function dailyExpenses(jobs, saved = {}) {
   net:Math.round(entries.reduce((sum,day)=>sum+day.net,0)*100)/100
  };
 }
+

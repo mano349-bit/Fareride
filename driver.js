@@ -1,3 +1,4 @@
+import {riderTotal} from './toll-accounting.js';
 import {isDriverOnline, observeDriverOnline} from './driver-availability.js?v=20261026-auto-online';
 import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
 import {visibleDriverJobs, jobMatchesFilter} from './driver-jobs.js?v=20261026-first-claim';
@@ -238,7 +239,7 @@ function renderRequests() {
                   <p>
                     <strong>Total:</strong>
                     ${money(
-                      ride.totalFare
+                      riderTotal(ride)
                     )}
                   </p>
                 `
@@ -651,3 +652,4 @@ onAuthStateChanged(auth, async user => {
   DRIVER_ID = user.uid; DRIVER_NAME = data.fullName || 'Driver';
   stopRides = startRideListener();
 });
+

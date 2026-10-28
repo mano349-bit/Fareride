@@ -1,5 +1,5 @@
 import {auth,db,doc,getDoc,collection,query,where,onSnapshot,onAuthStateChanged} from '../firebase-session.js';
-import {receiptFolders,receiptFields,receiptNote} from './receipt-data.js?v=20261028-pdf';
+import {receiptFolders,receiptFields,receiptNote} from './receipt-data.js?v=20261028-tolls';
 import {receiptPDF} from './receipt-pdf.js?v=20261028-onepage';
 const role=document.body.dataset.receiptRole || 'driver';
 const roleLabel=role==='rider'?'Rider':'Driver';
@@ -16,6 +16,14 @@ function receiptContent(receipt){
 }
 function render(rides,uid){
  const receipts=receiptFolders(rides,uid,role);clearPDFs();folders.replaceChildren();status.textContent=receipts.length?receipts.length+' receipt folders':'No completed rides yet. Your receipts will appear here after each ride.';
+ const table=document.createElement('table');table.style.cssText='width:100%;border-collapse:collapse;margin:16px 0;font-size:14px';
+ const caption=document.createElement('caption');caption.textContent='Receipt charges — tolls go 100% to the driver';table.append(caption);
+ const head=document.createElement('thead'),header=document.createElement('tr');
+ for(const label of ['Ride','Date','Fare','Tip','Toll','Total fee']){const th=document.createElement('th');th.scope='col';th.textContent=label;th.style.cssText='padding:8px;border:1px solid #0754b6;background:#fff4a3';header.append(th);}head.append(header);table.append(head);
+ const body=document.createElement('tbody');table.append(body);
+ const wrap=document.createElement('div');wrap.className='receipt-charges';wrap.style.overflowX='auto';wrap.append(table);folders.append(wrap);
+ const cash=value=>value===null?'Not recorded':new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(value);
+ for(const receipt of receipts){const row=document.createElement('tr');for(const value of [receipt.id,receipt.date?new Date(receipt.date).toLocaleDateString():'Not recorded',cash(receipt.fare),cash(receipt.tip),cash(receipt.tolls),cash(receipt.total)]){const cell=document.createElement('td');cell.textContent=value;cell.style.cssText='padding:8px;border:1px solid #0754b6;overflow-wrap:anywhere';row.append(cell);}body.append(row);}
  for(const receipt of receipts){
   const folder=document.createElement('details'),summary=document.createElement('summary');summary.textContent='Receipt folder — '+(receipt.date?new Date(receipt.date).toLocaleDateString():'Date not recorded')+' — '+receipt.id;folder.append(summary,receiptContent(receipt));
   const actions=document.createElement('div');actions.className='actions';
@@ -44,3 +52,4 @@ onAuthStateChanged(auth,async user=>{
   },()=>{if(current!==generation)return;clearPDFs();folders.replaceChildren();status.textContent='Unable to load receipts. Check your connection and account access.';});
  }catch{if(current===generation)status.textContent='Unable to verify your '+role+' account. Please sign in again.';}
 });
+

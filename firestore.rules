@@ -330,6 +330,52 @@ service cloud.firestore {
     }
 
     // One shared, append-only conversation for the rider, assigned driver and active admins.
+    // Confirmed tolls are append-only. The event and ride aggregate must commit together.
+    function tollRide(id) { return get(/databases/$(database)/documents/rides/$(id)).data; }
+    function tollDriver(id) {
+      return signedIn() && tollRide(id).driverId == request.auth.uid
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver'
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accountStatus in ['active','approved']
+        && tollRide(id).status in ['started','arrived','completed'];
+    }
+    function validTollEvent(event) {
+      return event.keys().hasOnly(['driverId','amount','location','source','createdAt'])
+        && event.driverId == request.auth.uid && event.source == 'driver-confirmed'
+        && event.amount is number && event.amount > 0 && event.amount <= 500
+        && event.amount * 100 - int(event.amount * 100 + 0.5) >= -0.0001
+        && event.amount * 100 - int(event.amount * 100 + 0.5) <= 0.0001
+        && event.location is string && event.location.size() > 0 && event.location.size() <= 200
+        && event.createdAt == request.time;
+    }
+    match /rides/{rideId} {
+      function validTollAggregate() {
+        let id = request.resource.data.lastTollId;
+        let event = getAfter(/databases/$(database)/documents/rides/$(rideId)/tollEvents/$(id)).data;
+        let previous = resource.data.get('tollsAmount', 0);
+        let next = request.resource.data.tollsAmount;
+        return id is string && id.size() > 0 && id.size() <= 100
+          && !exists(/databases/$(database)/documents/rides/$(rideId)/tollEvents/$(id))
+          && validTollEvent(event)
+          && (resource.data.get('tollAccounting', '') == 'separate-v1'
+            || (previous == 0 && resource.data.get('tolls',0) == 0))
+          && next is number && next > 0 && next <= 500
+          && next >= previous + event.amount - 0.00001
+          && next <= previous + event.amount + 0.00001;
+      }
+      allow update: if tollDriver(rideId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tollsAmount','tollAccounting','lastTollId'])
+        && request.resource.data.tollAccounting == 'separate-v1' && validTollAggregate();
+    }
+    match /rides/{rideId}/tollEvents/{eventId} {
+      allow read: if admin() || (signedIn() && (tollRide(rideId).driverId == request.auth.uid || tollRide(rideId).riderId == request.auth.uid));
+      allow create: if tollDriver(rideId) && validTollEvent(request.resource.data)
+        && getAfter(/databases/$(database)/documents/rides/$(rideId)).data.lastTollId == eventId
+        && getAfter(/databases/$(database)/documents/rides/$(rideId)).data.tollAccounting == 'separate-v1'
+        && getAfter(/databases/$(database)/documents/rides/$(rideId)).data.tollsAmount >= tollRide(rideId).get('tollsAmount',0) + request.resource.data.amount - 0.00001
+        && getAfter(/databases/$(database)/documents/rides/$(rideId)).data.tollsAmount <= tollRide(rideId).get('tollsAmount',0) + request.resource.data.amount + 0.00001;
+      allow update, delete: if false;
+    }
+
     match /rides/{rideId}/messages/{messageId} {
       function chatRide() { return get(/databases/$(database)/documents/rides/$(rideId)).data; }
       function chatMember() {
@@ -394,4 +440,5 @@ service cloud.firestore {
     }
   }
 }
+
 
