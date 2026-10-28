@@ -56,6 +56,36 @@ service cloud.firestore {
         && request.resource.data.applicationId == resource.data.applicationId;
       allow delete: if false;
     }
+    // Photo records are separate from ride history and private application documents.
+    match /rideDriverPhotos/{rideId} {
+      function activeRide() {
+        return get(/databases/$(database)/documents/rides/$(rideId)).data;
+      }
+      function application() {
+        return get(/databases/$(database)/documents/driverApplications/$('driver_' + request.auth.uid)).data;
+      }
+      function activeParticipant() {
+        return signedIn() && activeRide().status in ['accepted', 'arrived', 'started']
+          && (activeRide().riderId == request.auth.uid || activeRide().driverId == request.auth.uid);
+      }
+      function validPhoto(photo) {
+        return photo is string && photo.size() <= 350000
+          && photo.matches('data:image/jpeg;base64,[A-Za-z0-9+/=]+');
+      }
+      allow get: if admin() || activeParticipant();
+      allow list: if false;
+      allow create: if driverAccount()
+        && activeRide().driverId == request.auth.uid
+        && activeRide().status in ['accepted', 'arrived', 'started']
+        && request.resource.data.keys().hasOnly(['driverId', 'portrait', 'vehicle', 'plateNumber'])
+        && request.resource.data.driverId == request.auth.uid
+        && validPhoto(request.resource.data.portrait) && validPhoto(request.resource.data.vehicle)
+        && request.resource.data.portrait == application().documents.driverPortrait.image
+        && request.resource.data.vehicle == application().documents.vehicleFront.image
+        && request.resource.data.plateNumber is string
+        && request.resource.data.plateNumber.size() <= 40;
+      allow update, delete: if admin();
+    }
     match /rides/{rideId} {
       function approved(role) {
         return signedIn()

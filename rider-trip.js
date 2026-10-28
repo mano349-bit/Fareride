@@ -73,6 +73,7 @@ let generation = 0;
 const feedbackRide = new URLSearchParams(location.search).get('feedbackRide');
 
 function clear() {
+  window.dispatchEvent(new Event('fareride-clear-trip'));
   stop?.();
   stop = null;
   panel.hidden = true;
@@ -116,6 +117,7 @@ function watch(next) {
     },
     () => {
       panel.hidden = false;
+      window.dispatchEvent(new Event('fareride-clear-trip'));
       stage.hidden=false;
       stage.textContent =
         'Unable to load your trip. Check account approval and ride permissions.';
@@ -239,6 +241,7 @@ function discover() {
     },
     () => {
       panel.hidden = false;
+      window.dispatchEvent(new Event('fareride-clear-trip'));
       stage.hidden=false;
       stage.textContent =
         'Unable to restore your current job. Check your connection and retry.';

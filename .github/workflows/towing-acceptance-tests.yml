@@ -1,9 +1,19 @@
-name: Towing acceptance rules tests
+name: Ride acceptance and photo access tests
 on:
   push:
-    branches: [codex/two-sided-tow-acceptance]
+    branches: [main, codex/two-sided-tow-acceptance, codex/driver-ride-photos]
+    paths:
+      - "firestore.rules"
+      - "driver-photo-*.js"
+      - "rider-driver-photos.js"
+      - "tests/towing-rules/**"
+      - ".github/workflows/towing-acceptance-tests.yml"
   pull_request:
     paths:
+      - 'driver-photos.js'
+      - 'rider-driver-photos.js'
+      - 'driver-job-acceptance.js'
+      - 'registration.js'
       - 'tow-offer-state.js'
       - 'firestore*.rules'
       - 'tests/towing-rules/**'
@@ -27,9 +37,9 @@ jobs:
       - name: Install test tooling
         run: npm install --prefix tests/towing-rules --no-package-lock --no-audit --no-fund
       - name: Test offer state and driver controls
-        run: node --test tow-offer-state.test.mjs driver-actions.test.mjs
+        run: node --test tow-offer-state.test.mjs driver-actions.test.mjs registration.test.mjs driver-photo-sharing.test.mjs rider-driver-photos.test.mjs driver-job-acceptance.test.mjs driver-claim.test.mjs
       - name: Test Firestore rules against local emulator
-        run: tests/towing-rules/node_modules/.bin/firebase emulators:exec --only firestore --project demo-fareride --config firebase.test.json "node --test tests/towing-rules/towing-rules.test.mjs"
+        run: tests/towing-rules/node_modules/.bin/firebase emulators:exec --only firestore --project demo-fareride --config firebase.test.json "node --test --test-concurrency=1 tests/towing-rules/towing-rules.test.mjs tests/towing-rules/ride-photo-rules.test.mjs"
       - name: Save emulator diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4
