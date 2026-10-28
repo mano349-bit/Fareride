@@ -1,3 +1,4 @@
+import {tollAmount} from './toll-accounting.js';
 import {completedInRange} from './rider-history-dates.js';
 import { amounts } from './admin-financials.js?v=20261028-tolls';
 export function driverReport(rides, uid, costs = {}, days = 365, now = new Date()) {
@@ -13,8 +14,9 @@ export function driverReport(rides, uid, costs = {}, days = 365, now = new Date(
   const numbered=completed.map((job,index)=>({...job,jobNumber:index+1}));
   const jobs = typeof days==='object' ? completedInRange(numbered,days.start,days.end) : numbered.filter(r=>r.date>=start).reverse();
   if(jobs===null)return null;
+  const tolls=Math.round(jobs.reduce((sum,job)=>sum+Math.round(tollAmount(job)*100),0))/100;
   const income = jobs.reduce((s,r)=>s+(r.earnings?.driver || 0),0);
   const expenses = jobs.reduce((s,r)=>s+(r.cost || 0),0);
-  return {jobs,income,expenses,net:income-expenses,missing:jobs.filter(r=>r.cost===null).length,unpriced:jobs.filter(r=>!r.earnings).length};
+  return {jobs,tolls,income,expenses,net:income-expenses,missing:jobs.filter(r=>r.cost===null).length,unpriced:jobs.filter(r=>!r.earnings).length};
 }
 
