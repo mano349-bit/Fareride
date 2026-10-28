@@ -11,8 +11,9 @@ function harness(options = {}) {
     if (!elements.has(id)) elements.set(id, { value: id === 'ssnLast4' ? '0000' : id.includes('Password') ? 'example-password' : 'Example', files: [{ name: 'test.jpg', size: 10, type: id.endsWith('PortraitFile') || id === 'vehicleFrontFile' ? 'image/jpeg' : 'application/pdf' }], textContent: '', disabled: false, classList: { add() {}, remove() {} }, addEventListener() {}, reset() {} });
     return elements.get(id);
   };
+  el('riderFacePhotoFile').files = [];
   if (options.profile) records.set('users/test-uid', options.profile);
-  const context = vm.createContext({ registrationErrorMessage, prepareDriverPhoto: async () => 'data:image/jpeg;base64,YQ==', console: { log() {}, error() {} }, Date, Math, URL,
+  const context = vm.createContext({ registrationErrorMessage, prepareDriverPhoto: async () => { if (options.photoError) throw new Error('Unable to prepare a photo.'); return 'data:image/jpeg;base64,YQ=='; }, console: { log() {}, error() {} }, Date, Math, URL,
     window: { location: { href: 'https://mano349-bit.github.io/Fareride/registration.html' } },
     document: { getElementById: el }, auth: {}, db: {}, storage: {},
     doc: (_, collection, id) => `${collection}/${id}`, ref: (_, path) => path,
@@ -80,4 +81,38 @@ test('driver photos save privately without requiring new Storage upload paths',a
 test('rider registration does not require driver or vehicle photos',async()=>{
  const h=harness();h.el('driverPortraitFile').files=[];h.el('vehicleFrontFile').files=[];
  await h.submit('rider');assert.equal(h.records.get('riderApplications/rider_test-uid').status,'new');
+});
+
+
+test('rider face photo is prepared and saved privately with the application',async()=>{
+ const h=harness();h.el('riderFacePhotoFile').files=[{name:'my-face.png',type:'image/png',size:1024}];
+ await h.submit('rider');
+ const application=h.records.get('riderApplications/rider_test-uid');
+ assert.equal(application.status,'new');
+ assert.equal(application.documents.riderPortrait.originalName,'my-face.png');
+ assert.equal(application.documents.riderPortrait.contentType,'image/jpeg');
+ assert.equal(application.documents.riderPortrait.image,'data:image/jpeg;base64,YQ==');
+ assert.equal(application.documents.riderPortrait.path,undefined);
+ assert.equal(h.uploads.length,1);
+ assert.match(h.uploads[0],/driver-license/);
+});
+
+test('rider registration remains available without a face photo',async()=>{
+ const h=harness();await h.submit('rider');
+ assert.equal(h.records.get('riderApplications/rider_test-uid').documents.riderPortrait,undefined);
+});
+
+for(const file of [{name:'face.pdf',type:'application/pdf',size:10},{name:'large.jpg',type:'image/jpeg',size:10*1024*1024},{name:'empty.jpg',type:'image/jpeg',size:0}]){
+ test('invalid rider face photo is rejected before account creation: '+file.name,async()=>{
+  const h=harness();h.el('riderFacePhotoFile').files=[file];await h.submit('rider');
+  assert.equal(h.records.size,0);assert.equal(h.uploads.length,0);
+  assert.match(h.el('riderApplicationMessage').textContent,/Face photo must be an image under 10 MB/);
+ });
+}
+
+test('unreadable rider face photo does not create a partial account or claim success',async()=>{
+ const h=harness({photoError:true});h.el('riderFacePhotoFile').files=[{name:'broken.jpg',type:'image/jpeg',size:10}];
+ await h.submit('rider');assert.equal(h.records.size,0);assert.equal(h.uploads.length,0);
+ assert.match(h.el('riderApplicationMessage').textContent,/Unable to prepare a photo/);
+ assert.equal(h.el('submitRiderBtn').disabled,false);
 });

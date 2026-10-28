@@ -172,6 +172,7 @@ function documentBox(documents) {
     documents.vehicleRegistration
   );
 
+  documentRow("Rider face photo", documents.riderPortrait);
   documentRow("Face photo — passport-style, 2 × 2 inches", documents.driverPortrait);
   documentRow("Front Image of Vehicle and Plate", documents.vehicleFront);
 

@@ -363,6 +363,17 @@ textarea{
   </div>
 
 
+  <div class="file-box">
+    <label for="riderFacePhotoFile">Add face photo (optional)</label>
+    <input
+      id="riderFacePhotoFile"
+      type="file"
+      accept="image/*"
+      capture="user"
+      aria-describedby="riderFacePhotoHelp">
+    <p id="riderFacePhotoHelp">Upload a clear photo of your face, looking at the camera. Images only, under 10 MB. FareRide Admin can review this photo with your registration.</p>
+  </div>
+
   <h3 class="section-title">
     Required Identification
   </h3>
@@ -739,7 +750,7 @@ textarea{
 
 <script
   type="module"
-  src="registration.js?v=20261027-private-photos">
+  src="registration.js?v=20261028-rider-face-photo">
 </script>
 
 

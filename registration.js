@@ -444,6 +444,12 @@ async function submitRider(
     $("submitRiderBtn");
 
 
+  const facePhotoFile = $("riderFacePhotoFile").files[0];
+  if (facePhotoFile && (!/^image\//.test(facePhotoFile.type) || facePhotoFile.size <= 0 || facePhotoFile.size >= MAX_FILE_SIZE)) {
+    showMessage("riderApplicationMessage", "Face photo must be an image under 10 MB. PDFs are not accepted for face photos.", "error");
+    return;
+  }
+
   const licenseFile =
     $("riderLicenseFile")
       .files[0];
@@ -474,6 +480,14 @@ async function submitRider(
 
 
   try {
+    let facePhotoDocument;
+    if (facePhotoFile) {
+      registrationStage = 'preparing rider face photo';
+      button.textContent = "Preparing face photo...";
+      const image = await prepareDriverPhoto(facePhotoFile);
+      facePhotoDocument = {originalName: facePhotoFile.name, contentType: "image/jpeg", image};
+    }
+
     const riderAuthUser =
       await registerFareRideAccount(
 
@@ -577,7 +591,8 @@ async function submitRider(
       documents: {
 
         driverLicense:
-          licenseDocument
+          licenseDocument,
+        ...(facePhotoDocument ? {riderPortrait: facePhotoDocument} : {})
 
       },
 
