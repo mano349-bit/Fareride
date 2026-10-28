@@ -15,7 +15,21 @@ dt{font-weight:bold}dd{margin:0;overflow-wrap:anywhere}.actions{display:flex;fle
 button,nav a{padding:10px 18px;background:#0754b6;border:0;border-radius:8px;color:white;font:700 17px Arial;cursor:pointer;text-decoration:none}
 button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #0754b6;outline-offset:4px}.note{color:#475569}
 @media(max-width:600px){main{margin:12px;padding:16px}dl{grid-template-columns:1fr}dd{margin-bottom:10px}}
-@media print{nav,main>h1,main>.note,#status,.actions,summary{display:none!important}body,main{background:white;margin:0;padding:0}details{border:0}details:not(.printing){display:none}details.printing{display:block}}
+@page{size:letter portrait;margin:0.4in}
+@media print{
+ nav,main>h1,main>.note,#status,.actions,summary{display:none!important}
+ html,body,main{background:white;margin:0!important;padding:0!important;max-width:none!important}
+ body{font:10pt/1.2 Arial,sans-serif}
+ #folders{margin:0}
+ details{border:0!important;margin:0!important;padding:0!important}
+ details:not(.printing){display:none!important}
+ details.printing{display:block;break-inside:avoid}
+ article{break-inside:avoid}
+ article h2{font-size:15pt;margin:0 0 10pt}
+ article dl{display:grid!important;grid-template-columns:32% 68%!important;gap:3pt 8pt!important;margin:0}
+ article dt,article dd{font-size:10pt;line-height:1.2;margin:0!important;padding:0;overflow-wrap:anywhere}
+ article .note{font-size:8pt;line-height:1.2;margin:10pt 0 0}
+}
 </style>
 </head>
 <body data-receipt-role="driver"><main>
@@ -24,4 +38,4 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #07
 <p class="note">Each completed ride automatically appears in its own receipt folder. Open a folder to view, download the PDF, or print the receipt.</p>
 <p id="status" role="status" aria-live="polite">Checking driver sign-in…</p>
 <div id="folders"></div>
-</main><script type="module" src="driver-receipts.js?v=20261028-pdf"></script></body></html>
+</main><script type="module" src="driver-receipts.js?v=20261028-onepage"></script></body></html>

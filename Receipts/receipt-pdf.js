@@ -19,31 +19,32 @@ export function pdfFromJpegs(pages){
  return new Blob(parts,{type:'application/pdf'});
 }
 export function receiptPDF(fields,note){
- const pages=[];let canvas,ctx,y;
- function newPage(){
-  canvas=document.createElement('canvas');canvas.width=1224;canvas.height=1584;ctx=canvas.getContext('2d');
-  if(!ctx)throw Error('PDF rendering is unavailable in this browser.');
-  ctx.fillStyle='#fff';ctx.fillRect(0,0,1224,1584);ctx.fillStyle='#0754b6';ctx.font='bold 40px Arial';ctx.fillText('FareRide Ride Receipt',72,88);
-  ctx.strokeStyle='#ffdf00';ctx.lineWidth=6;ctx.strokeRect(60,115,1104,3);ctx.font='24px Arial';y=165;
- }
- function savePage(){
-  const data=atob(canvas.toDataURL('image/jpeg',0.95).split(',')[1]);
-  pages.push({width:canvas.width,height:canvas.height,bytes:Uint8Array.from(data,c=>c.charCodeAt(0))});
- }
- function line(text){
-  if(y>1480){savePage();newPage();}
-  ctx.fillStyle='#17202a';ctx.fillText(text,72,y);y+=34;
- }
- function wrapped(text){
-  let current='';
-  for(const character of String(text)){
-   if(character==='\n'){line(current);current='';continue;}
-   if(ctx.measureText(current+character).width>1080){line(current);current='';}
-   current+=character;
+ const canvas=document.createElement('canvas');canvas.width=1224;canvas.height=1584;
+ const ctx=canvas.getContext('2d');if(!ctx)throw Error('PDF rendering is unavailable in this browser.');
+ ctx.fillStyle='#fff';ctx.fillRect(0,0,1224,1584);
+ const wrap=(value,width,font)=>{
+  ctx.font=font;const lines=[];let line='';
+  for(const character of String(value)){
+   if(character==='\n'){lines.push(line);line='';continue;}
+   if(line&&ctx.measureText(line+character).width>width){lines.push(line);line='';}
+   line+=character;
   }
-  if(current)line(current);
+  lines.push(line);return lines;
+ };
+ const rows=fields.map(([label,value])=>({labels:wrap(label,350,'bold 22px Arial'),values:wrap(value,700,'22px Arial')}));
+ const notes=wrap(note,1080,'20px Arial');
+ const height=110+rows.reduce((sum,row)=>sum+Math.max(row.labels.length,row.values.length)*28+12,0)+28+notes.length*26;
+ const scale=Math.min(1,1440/height);
+ ctx.save();ctx.translate(72,72);ctx.scale(scale,scale);
+ ctx.fillStyle='#0754b6';ctx.font='bold 36px Arial';ctx.fillText('FareRide Ride Receipt',0,36);
+ ctx.strokeStyle='#ffdf00';ctx.lineWidth=5;ctx.strokeRect(0,58,1080,2);
+ let y=100;
+ for(const row of rows){
+  ctx.fillStyle='#17202a';ctx.font='bold 22px Arial';row.labels.forEach((text,i)=>ctx.fillText(text,0,y+i*28));
+  ctx.font='22px Arial';row.values.forEach((text,i)=>ctx.fillText(text,380,y+i*28));
+  y+=Math.max(row.labels.length,row.values.length)*28+12;
  }
- newPage();
- for(const [label,value] of fields){ctx.font='bold 24px Arial';wrapped(label);ctx.font='24px Arial';wrapped(value);y+=12;}
- ctx.font='22px Arial';wrapped(note);savePage();return pdfFromJpegs(pages);
+ y+=28;ctx.fillStyle='#475569';ctx.font='20px Arial';notes.forEach((text,i)=>ctx.fillText(text,0,y+i*26));ctx.restore();
+ const data=atob(canvas.toDataURL('image/jpeg',0.95).split(',')[1]);
+ return pdfFromJpegs([{width:canvas.width,height:canvas.height,bytes:Uint8Array.from(data,c=>c.charCodeAt(0))}]);
 }

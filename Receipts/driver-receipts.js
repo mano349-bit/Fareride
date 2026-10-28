@@ -1,6 +1,6 @@
 import {auth,db,doc,getDoc,collection,query,where,onSnapshot,onAuthStateChanged} from '../firebase-session.js';
 import {receiptFolders,receiptFields,receiptNote} from './receipt-data.js?v=20261028-pdf';
-import {receiptPDF} from './receipt-pdf.js';
+import {receiptPDF} from './receipt-pdf.js?v=20261028-onepage';
 const role=document.body.dataset.receiptRole || 'driver';
 const roleLabel=role==='rider'?'Rider':'Driver';
 let pdfURLs=[];
