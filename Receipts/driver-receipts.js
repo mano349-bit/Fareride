@@ -53,7 +53,7 @@ function render(rides,uid){
  const tollCell=document.createElement('td');tollCell.textContent=money(tollCents/100);const totalCell=document.createElement('td');totalCell.textContent=money(totalCents/100)+(receipts.some(receipt=>receipt.total===null)?' (known amounts)':'');
  totals.append(tollCell,totalCell);foot.append(totals);table.append(foot);
  for(const receipt of receipts){
-  const folder=document.createElement('details'),summary=document.createElement('summary');summary.textContent='Receipt folder — '+(receipt.date?new Date(receipt.date).toLocaleDateString():'Date not recorded')+' — '+receipt.id;folder.append(summary,receiptContent(receipt));
+  const folder=document.createElement('details'),summary=document.createElement('summary');folder.id='receipt-'+receipt.id;summary.textContent='Receipt folder — '+(receipt.date?new Date(receipt.date).toLocaleDateString():'Date not recorded')+' — '+receipt.id;folder.append(summary,receiptContent(receipt));
   const actions=document.createElement('div');actions.className='actions';
   const download=document.createElement('button');download.type='button';download.textContent='Download PDF';
   let currentPDF=null;
@@ -79,6 +79,7 @@ function render(rides,uid){
   actions.append(download,print);
   if(role==='driver'){const addToll=document.createElement('a');addToll.href='../driver-earnings.html?tollRide='+encodeURIComponent(receipt.id)+'#driverTollForm';addToll.textContent=receipt.tolls>0?'Add another toll to this ride':'Add toll to this ride';addToll.style.cssText='display:inline-block;padding:10px 18px;background:#0754b6;color:white;border-radius:8px;text-decoration:none';actions.append(addToll);}
   folder.append(actions);folders.append(folder);
+  if(location.hash==='#'+encodeURIComponent(folder.id)){folder.open=true;folder.scrollIntoView({block:'start'});}
  }
 }
 onAuthStateChanged(auth,async user=>{
