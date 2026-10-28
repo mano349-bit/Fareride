@@ -56,6 +56,58 @@ service cloud.firestore {
         && request.resource.data.applicationId == resource.data.applicationId;
       allow delete: if false;
     }
+    // The confirmed crop is private to the rider until it is shared for an active job.
+    match /riderFaceProfiles/{uid} {
+      function approvedRider() {
+        return owner(uid)
+          && get(/databases/$(database)/documents/users/$(uid)).data.role == 'rider'
+          && get(/databases/$(database)/documents/users/$(uid)).data.accountStatus in ['approved', 'active'];
+      }
+      function validFace(photo) {
+        return photo is string && photo.size() <= 200000
+          && photo.matches('data:image/jpeg;base64,[A-Za-z0-9+/=]+');
+      }
+      allow get: if owner(uid) || admin();
+      allow list: if false;
+      allow create, update: if approvedRider()
+        && request.resource.data.keys().hasOnly(['uid', 'image', 'updatedAt'])
+        && request.resource.data.uid == uid
+        && validFace(request.resource.data.image)
+        && request.resource.data.updatedAt is string
+        && request.resource.data.updatedAt.size() <= 40;
+      allow delete: if false;
+    }
+    // Drivers receive only the confirmed face crop for their currently assigned job.
+    match /riderFacePhotos/{rideId} {
+      function activeRide() {
+        return get(/databases/$(database)/documents/rides/$(rideId)).data;
+      }
+      function activeParticipant() {
+        return signedIn() && activeRide().status in ['accepted', 'arrived', 'started']
+          && (activeRide().riderId == request.auth.uid || activeRide().driverId == request.auth.uid);
+      }
+      function approvedRider() {
+        return signedIn()
+          && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'rider'
+          && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accountStatus in ['approved', 'active'];
+      }
+      function validFace(photo) {
+        return photo is string && photo.size() <= 200000
+          && photo.matches('data:image/jpeg;base64,[A-Za-z0-9+/=]+');
+      }
+      allow get: if admin() || (activeParticipant()
+        && (!exists(/databases/$(database)/documents/riderFacePhotos/$(rideId))
+          || resource.data.riderId == activeRide().riderId));
+      allow list: if false;
+      allow create, update: if approvedRider()
+        && activeRide().riderId == request.auth.uid
+        && activeRide().status in ['accepted', 'arrived', 'started']
+        && request.resource.data.keys().hasOnly(['riderId', 'image'])
+        && request.resource.data.riderId == request.auth.uid
+        && validFace(request.resource.data.image)
+        && request.resource.data.image == get(/databases/$(database)/documents/riderFaceProfiles/$(request.auth.uid)).data.image;
+      allow delete: if false;
+    }
     // Photo records are separate from ride history and private application documents.
     match /rideDriverPhotos/{rideId} {
       function activeRide() {
