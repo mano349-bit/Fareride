@@ -9,7 +9,7 @@ function harness(){
   if(!nodes.has(key)){const node={children:[],value:'',hidden:false,disabled:false,checked:false,textContent:'',handlers:{},
    append(...children){this.children.push(...children);if(key==='#tollRide'&&!this.value&&children[0])this.value=children[0].value;},
    replaceChildren(...children){this.children=children;if(key==='#tollRide')this.value=children[0]?.value||'';},
-   querySelector:element,addEventListener(type,fn){this.handlers[type]=fn;},focus(){this.focused=true;},reportValidity(){return true;},
+   querySelector:element,setAttribute(name,value){this[name]=value;},addEventListener(type,fn){this.handlers[type]=fn;},focus(){this.focused=true;},reportValidity(){return true;},
    get options(){return this.children;},get valueAsNumber(){return Number(this.value);}};
    nodes.set(key,node);
   }return nodes.get(key);
@@ -41,4 +41,12 @@ test('toll controls load and support two separate tolls on the same ride',async(
  assert.equal(h.element('#recordedRideTolls').children[1].children.length,2);
  assert.equal(h.element('#recordedRideTolls').children[1].children[0].textContent,'Verrazzano Bridge — $20.00');
  h.auth.currentUser=null;await h.login();assert.equal(h.element('form').hidden,true);
+});
+
+test('agreement validation uses a larger accessible notice and hides it after checking',()=>{
+ const h=harness(),checkbox=h.element('#tollCustomerAgreed'),notice=h.element('#tollAgreementNotice');let prevented=false;
+ assert.equal(notice.hidden,true);
+ checkbox.handlers.invalid({preventDefault(){prevented=true;}});
+ assert.equal(prevented,true);assert.equal(notice.hidden,false);assert.equal(checkbox.focused,true);
+ checkbox.checked=true;checkbox.handlers.change();assert.equal(notice.hidden,true);
 });

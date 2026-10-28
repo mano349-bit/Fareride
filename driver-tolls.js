@@ -2,14 +2,19 @@ import {auth,db,doc,getDoc,collection,query,where,onSnapshot,onAuthStateChanged,
 import {runTransaction} from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 import {tollUpdate,tollAmount} from './toll-accounting.js';
 const panel=document.createElement('section');panel.className='card';
-panel.innerHTML='<h2>Record a toll</h2><p>Agree on the toll amount with the customer before adding it. The full agreed toll is added to the rider total and reimbursed 100% to you. FareRide takes no commission on tolls.</p><form id="driverTollForm"><label>Ride<select id="tollRide" required></select></label><label>Toll road / booth<input id="tollRoad" maxlength="200" required></label><label>Agreed toll amount ($)<input id="tollCharge" type="number" min="0.01" max="500" step="0.01" required></label><label><input id="tollCustomerAgreed" type="checkbox" style="width:26px;height:26px;margin:10px auto;accent-color:#075fd8;cursor:pointer" required> The customer and I agreed to this toll amount.</label><button type="submit">Add agreed toll to ride total</button><button id="addAnotherToll" type="button" hidden>Add another toll for this ride</button></form><div id="recordedRideTolls"></div><p id="tollSaveStatus" role="status"></p>';
+panel.innerHTML='<h2>Record a toll</h2><p>Agree on the toll amount with the customer before adding it. The full agreed toll is added to the rider total and reimbursed 100% to you. FareRide takes no commission on tolls.</p><form id="driverTollForm"><label>Ride<select id="tollRide" required></select></label><label>Toll road / booth<input id="tollRoad" maxlength="200" required></label><label>Agreed toll amount ($)<input id="tollCharge" type="number" min="0.01" max="500" step="0.01" required></label><label><input id="tollCustomerAgreed" type="checkbox" style="width:26px;height:26px;margin:10px auto;accent-color:#075fd8;cursor:pointer" required> The customer and I agreed to this toll amount.</label><p id="tollAgreementNotice" role="alert" hidden style="font-size:18px;line-height:1.5;padding:12px 16px;margin:12px 0;background:#fff7e6;color:#8a3b00;border:2px solid #e68a00;border-radius:8px">Please check this box if you want to proceed.</p><button type="submit">Add agreed toll to ride total</button><button id="addAnotherToll" type="button" hidden>Add another toll for this ride</button></form><div id="recordedRideTolls"></div><p id="tollSaveStatus" role="status"></p>';
 document.querySelector('main').append(panel);
 const form=panel.querySelector('form'),select=panel.querySelector('#tollRide'),status=panel.querySelector('#tollSaveStatus');
 const button=form.querySelector('button'),road=panel.querySelector('#tollRoad'),charge=panel.querySelector('#tollCharge'),agreement=panel.querySelector('#tollCustomerAgreed');
 const savedTolls=panel.querySelector('#recordedRideTolls'),another=panel.querySelector('#addAnotherToll');
 let stop=null,stopTolls=null,generation=0,pending=null,tollRevision=0;
+const agreementNotice=panel.querySelector('#tollAgreementNotice');agreementNotice.hidden=true;
+agreement.setAttribute('aria-describedby','tollAgreementNotice');
+agreement.addEventListener('invalid',event=>{event.preventDefault();agreementNotice.hidden=false;agreement.focus();});
+agreement.addEventListener('change',()=>{agreementNotice.hidden=agreement.checked;});
+
 form.hidden=true;another.hidden=true;
-function clearEntry(){road.value='';charge.value='';agreement.checked=false;}
+function clearEntry(){road.value='';charge.value='';agreement.checked=false;agreementNotice.hidden=true;}
 another.onclick=()=>{clearEntry();road.focus();status.textContent='Enter the next toll for this same ride and confirm the customer agreement.';};
 function watchTolls(){
  stopTolls?.();stopTolls=null;
