@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {tollUpdate,tollAmount} from './toll-accounting.js';
-function harness(){
+function harness(search=''){
  const nodes=new Map(),listeners=[],data=new Map();let login,nextId=0;
  function element(key){
   if(!nodes.has(key)){const node={children:[],value:'',hidden:false,disabled:false,checked:false,textContent:'',handlers:{},
@@ -16,7 +16,7 @@ function harness(){
  }
  const auth={currentUser:{uid:'driver'}};
  data.set('rides/ride-1',{driverId:'driver',riderId:'rider',riderName:'Rider',status:'completed',fare:100,totalFare:100});
- const context=vm.createContext({auth,db:{},document:{createElement:type=>type==='section'?element('panel'):({children:[],append(...items){this.children.push(...items);}}),querySelector:()=>element('main')},
+ const context=vm.createContext({URLSearchParams,location:{search},auth,db:{},document:{createElement:type=>type==='section'?element('panel'):({children:[],append(...items){this.children.push(...items);}}),querySelector:()=>element('main')},
   doc:(_db,...path)=>path.join('/'),getDoc:async()=>({exists:()=>true,data:()=>({role:'driver'})}),
   collection:(_db,...path)=>({type:'collection',path:path.join('/')}),where:(...args)=>args,query:ref=>({...ref,type:'query'}),
   onAuthStateChanged:(_auth,fn)=>login=fn,onSnapshot:(ref,callback)=>{listeners.push({ref,callback});return()=>{};},
@@ -49,4 +49,10 @@ test('agreement validation uses a larger accessible notice and hides it after ch
  checkbox.handlers.invalid({preventDefault(){prevented=true;}});
  assert.equal(prevented,true);assert.equal(notice.hidden,false);assert.equal(checkbox.focused,true);
  checkbox.checked=true;checkbox.handlers.change();assert.equal(notice.hidden,true);
+});
+
+test('receipt link selects the matching ride instead of the first ride',async()=>{
+ const h=harness('?tollRide=ride-1');await h.login();
+ h.listeners[0].callback({docs:[{id:'other',data:()=>({driverId:'driver',riderId:'rider',status:'completed',completedAt:'2026-10-28'})},{id:'ride-1',data:()=>h.data.get('rides/ride-1')}]});
+ assert.equal(h.element('#tollRide').value,'ride-1');
 });

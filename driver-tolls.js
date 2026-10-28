@@ -8,6 +8,7 @@ const form=panel.querySelector('form'),select=panel.querySelector('#tollRide'),s
 const button=form.querySelector('button'),road=panel.querySelector('#tollRoad'),charge=panel.querySelector('#tollCharge'),agreement=panel.querySelector('#tollCustomerAgreed');
 const savedTolls=panel.querySelector('#recordedRideTolls'),another=panel.querySelector('#addAnotherToll');
 let stop=null,stopTolls=null,generation=0,pending=null,tollRevision=0;
+const requestedTollRide=new URLSearchParams(location.search).get('tollRide');let receiptRideSelected=false;
 const agreementNotice=panel.querySelector('#tollAgreementNotice');agreementNotice.hidden=true;
 agreement.setAttribute('aria-describedby','tollAgreementNotice');
 agreement.addEventListener('invalid',event=>{event.preventDefault();agreementNotice.hidden=false;agreement.focus();});
@@ -45,7 +46,7 @@ onAuthStateChanged(auth,async user=>{
    const rides=snapshot.docs.map(item=>({...item.data(),id:item.id})).filter(ride=>['started','arrived','completed'].includes(ride.status))
     .sort((a,b)=>String(b.completedAt||b.startedAt||'').localeCompare(String(a.completedAt||a.startedAt||'')));
    for(const ride of rides){const option=document.createElement('option');option.value=ride.id;option.textContent=(ride.riderName||'Rider')+' — '+(ride.pickup||'Pickup')+' — '+ride.id+' — tolls $'+tollAmount(ride).toFixed(2);select.append(option);}
-   if([...select.options].some(option=>option.value===previous))select.value=previous;
+   if(!receiptRideSelected&&requestedTollRide&&[...select.options].some(option=>option.value===requestedTollRide)){select.value=requestedTollRide;receiptRideSelected=true;}else if([...select.options].some(option=>option.value===previous))select.value=previous;
    form.hidden=!rides.length;watchTolls();
    status.textContent=rides.length?'Record only tolls incurred during this ride.':'No ongoing or completed rides available.';
   },()=>{if(version===generation){form.hidden=true;status.textContent='Unable to load your rides.';}});

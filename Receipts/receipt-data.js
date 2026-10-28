@@ -20,12 +20,12 @@ export function receiptFields(r){
  ['Ride started (Louisiana time)',time(r.startedAt)],['Ride completed (Louisiana time)',time(r.date)],
  ['Pickup',r.pickup],['Destination',r.dropoff],['Service',r.service],['Ride type',r.rideType],['Vehicle',r.vehicle],
  ['Distance',r.miles===null?'Not recorded':r.miles+' miles'],['Estimated duration',r.duration===null?'Not recorded':r.duration+' minutes'],
- ['Ride price',money(r.fare)],['Tip',money(r.tip)],['Tolls (100% reimbursed to driver)',money(r.tolls)],
+ ['Ride price',money(r.fare)],['Tip',money(r.tip)],['Toll fee (100% to driver)',r.tolls===null?'No toll fee saved for this ride':money(r.tolls)],
  ...(r.tollItems||[]).map((item,index)=>['Toll '+(index+1)+' — '+item.location,money(item.amount)+(item.date?' | '+time(item.date):'')]),
  ...(r.tollDetailsError?[['Toll details','Individual entries could not be loaded. The recorded toll total above is unchanged.']]:[]),
  ...(r.tollDetailsLoaded&&!(r.tollItems||[]).length&&r.tolls>0?[['Toll details','Only the total was recorded for this ride.']]:[]),
  ['Louisiana tax / fee (recorded)',money(r.tax)],['Recorded tax rate',r.taxRate===null?'Not recorded':r.taxRate+'%'],
- ['Recorded total ride charge',money(r.total)],['Payment method',r.paymentMethod],['Payment status',r.paymentStatus]];
+ ['Total ride fee including saved tolls',money(r.total)],['Payment method',r.paymentMethod],['Payment status',r.paymentStatus]];
 }
 export const receiptNote='Amounts reflect the saved ride record. Unrecorded tolls and taxes are not assumed to be zero or invented. Confirmed toll entries are added separately to the ride charge. This receipt does not confirm payment collection.';
 

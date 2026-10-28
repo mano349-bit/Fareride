@@ -2,7 +2,7 @@ import {receiptTollItems} from './receipt-toll-items.js';
 import {periodForDays,periodDayCount} from '../earnings-period.js';
 import {localDay} from '../rider-history-dates.js';
 import {auth,db,doc,getDoc,collection,query,where,onSnapshot,onAuthStateChanged} from '../firebase-session.js';
-import {receiptFolders,receiptFields,receiptNote} from './receipt-data.js?v=20261028-itemized-tolls';
+import {receiptFolders,receiptFields,receiptNote} from './receipt-data.js?v=20261028-toll-fee';
 import {receiptPDF} from './receipt-pdf.js?v=20261028-onepage';
 const role=document.body.dataset.receiptRole || 'driver';
 const roleLabel=role==='rider'?'Rider':'Driver';
@@ -26,7 +26,7 @@ function receiptContent(receipt){
  const article=document.createElement('article'), title=document.createElement('h2');title.textContent='FareRide Ride Receipt';article.append(title);
  const fields=receiptFields(receipt);
  const dl=document.createElement('dl');
- for(const [key,value] of fields){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=key;dd.textContent=value;dl.append(dt,dd);}
+ for(const [key,value] of fields){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=key;dd.textContent=value;if(key.startsWith('Toll fee')||key.startsWith('Total ride fee')){dt.style.cssText=dd.style.cssText='font-weight:700;color:#0754b6;background:#fff4a3;padding:6px;border-radius:4px';}dl.append(dt,dd);}
  const note=document.createElement('p');note.textContent=receiptNote;note.className='note';article.append(dl,note);return article;
 }
 function render(rides,uid){
@@ -76,11 +76,13 @@ function render(rides,uid){
    receipt.tollItems=[];receipt.tollDetailsLoaded=true;receipt.tollDetailsError=true;updateReceipt();
   });stopTollDetails.push(stop);
   const print=document.createElement('button');print.type='button';print.disabled=true;print.textContent='Print / Save PDF';print.onclick=()=>{folder.open=true;folder.classList.add('printing');try{window.print();}finally{folder.classList.remove('printing');}};
-  actions.append(download,print);folder.append(actions);folders.append(folder);
+  actions.append(download,print);
+  if(role==='driver'){const addToll=document.createElement('a');addToll.href='../driver-earnings.html?tollRide='+encodeURIComponent(receipt.id)+'#driverTollForm';addToll.textContent=receipt.tolls>0?'Add another toll to this ride':'Add toll to this ride';addToll.style.cssText='display:inline-block;padding:10px 18px;background:#0754b6;color:white;border-radius:8px;text-decoration:none';actions.append(addToll);}
+  folder.append(actions);folders.append(folder);
  }
 }
 onAuthStateChanged(auth,async user=>{
- const current=++generation;stop?.();stop=null;loadedRides=[];loadedUid=null;clearPDFs();folders.replaceChildren();
+ const current=++generation;stop?.();stop=null;loadedRides=[];loadedUid=null;clearTollDetails();clearPDFs();folders.replaceChildren();
  status.textContent='Sign in using '+roleLabel+' Login to view your receipts.';if(!user)return;
  status.textContent='Checking your '+role+' account…';
  try{
@@ -90,7 +92,7 @@ onAuthStateChanged(auth,async user=>{
   stop=onSnapshot(query(collection(db,'rides'),where(role+'Id','==',user.uid)),snapshot=>{
    if(current!==generation||auth.currentUser?.uid!==user.uid)return;
    render(snapshot.docs.map(item=>({...item.data(),id:item.id})),user.uid);
-  },()=>{if(current!==generation)return;clearPDFs();folders.replaceChildren();status.textContent='Unable to load receipts. Check your connection and account access.';});
+  },()=>{if(current!==generation)return;clearTollDetails();clearPDFs();folders.replaceChildren();status.textContent='Unable to load receipts. Check your connection and account access.';});
  }catch{if(current===generation)status.textContent='Unable to verify your '+role+' account. Please sign in again.';}
 });
 
