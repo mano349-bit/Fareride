@@ -75,6 +75,10 @@ let unsubscribeRide = null;
 let watchedRideId = null;
 let estimateVersion = 0;
 let submitting = false;
+let bookingDraft = false;
+let estimateInProgress = false;
+let activeRide = null;
+function updateRequestButton(){ $('requestBtn').disabled = submitting || !estimate || Boolean(activeRide); }
 const vehiclePicker = createVehiclePicker();
 const selectedService = () => document.querySelector('[name="serviceType"]:checked').value;
 function details() {
@@ -84,6 +88,8 @@ function details() {
   });
 }
 function invalidateEstimate() {
+  bookingDraft = true;
+  estimateInProgress = false;
   estimateVersion++;
   estimate = null;
   $('summary').hidden = true;
@@ -186,8 +192,10 @@ function showSummary(ride) {
 
 
 function showRideStatus(ride) {
-  if (!ride || (ride.riderId && ride.riderId !== auth.currentUser?.uid)) return;
-  showSummary(ride);
+  if (!ride || !auth.currentUser?.uid || ride.riderId !== auth.currentUser.uid) return;
+  const finished = ['completed', 'cancelled', 'canceled'].includes(ride.status);
+  activeRide = finished ? null : ride;
+  // Live ride status belongs to the trip panel, never to the editable booking estimate.
   const messages = {
     requested: 'Ride requested. Waiting for a driver.',
     accepted: '',
@@ -196,11 +204,10 @@ function showRideStatus(ride) {
     completed: '',
     cancelled: 'Ride cancelled. You can request another ride.'
   };
-  $('msg').textContent = ride.pricingStatus === 'quote_required' && ride.status === 'requested'
+  if (!bookingDraft && !estimateInProgress) $('msg').textContent = ride.pricingStatus === 'quote_required' && ride.status === 'requested'
     ? 'Tow quote requested. Review driver offers in Tow driver offers & live messages.'
     : (messages[ride.status] ?? 'Waiting for ride information.');
-  const finished = ['completed', 'cancelled'].includes(ride.status);
-  $('requestBtn').disabled = !finished;
+  updateRequestButton();
   if (finished && localStorage.getItem(LAST) === ride.id) localStorage.removeItem(LAST);
 }
 
@@ -290,6 +297,8 @@ function checkLocalRideStatus() {
 
 
 async function geocode(address) {
+  const airportAliases={lga:'LaGuardia Airport, Queens, New York, United States',jfk:'John F. Kennedy International Airport, Queens, New York, United States'};
+  const airport=airportAliases[address.trim().toLowerCase()];
   const zipCode = address.trim().match(/^(\d{5})(?:-\d{4})?$/)?.[1];
   if (zipCode) {
     try {
@@ -322,7 +331,8 @@ async function geocode(address) {
     url.searchParams.set('postalcode', zip[1]);
     url.searchParams.set('countrycodes', 'us');
   } else {
-    url.searchParams.set('q', address);
+    url.searchParams.set('q', airport || address);
+    if(airport)url.searchParams.set('countrycodes','us');
   }
 
   const response =
@@ -340,6 +350,7 @@ async function geocode(address) {
 
   const lat=Number(data[0].lat),lon=Number(data[0].lon);
   if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)throw new Error('Location lookup returned invalid coordinates. Retry or use a street address.');
+  if(airport && (lat<40||lat>42||lon< -75||lon> -72))throw new Error('Airport lookup returned an unexpected location. Enter the airport terminal address and retry.');
   return {lat,lon};
 }
 
@@ -396,6 +407,7 @@ async function calculateEstimate() {
   invalidateEstimate();
   const version = estimateVersion;
   const serviceType = selectedService();
+  const selectedRideType = $('rideType').value;
   if (serviceType === 'tow' && $('towVehicleClass')?.value === 'specialty') {
     try {
       const serviceDetails = details();
@@ -407,7 +419,7 @@ async function calculateEstimate() {
       $('mileage').textContent = 'Confirmed by provider';
       $('duration').textContent = 'Confirmed by provider';
       $('msg').textContent = 'Details ready. Send your quote request.';
-      $('requestBtn').disabled = false;
+      updateRequestButton();
     } catch (error) { $('msg').textContent = error.message; }
     return;
   }
@@ -432,6 +444,7 @@ async function calculateEstimate() {
     return;
   }
 
+  estimateInProgress = true;
   $('msg').textContent =
     'Calculating route...';
 
@@ -468,7 +481,7 @@ async function calculateEstimate() {
       ? calculateTowFare(Number(miles.toFixed(2)))
       : serviceType === 'messenger'
         ? calculateFare(miles, 'economy') * 0.85
-        : calculateFare(miles, $('rideType').value);
+        : calculateFare(miles, selectedRideType);
 
     if (version !== estimateVersion) return;
     estimate = {
@@ -499,7 +512,7 @@ async function calculateEstimate() {
           fare.toFixed(2)
         ),
 
-      rideType: serviceType === 'tow' ? 'tow' : serviceType === 'messenger' ? 'economy' : $('rideType').value
+      rideType: serviceType === 'tow' ? 'tow' : serviceType === 'messenger' ? 'economy' : selectedRideType
     };
 
     window.dispatchEvent(new CustomEvent("fareride-pickup-location",{detail:estimate.pickupLocation}));
@@ -511,12 +524,13 @@ async function calculateEstimate() {
         ? 'ZIP-area estimate ready. Use street addresses for an exact pickup and destination.'
         : serviceType === 'tow' ? 'Tow estimate ready. Confirm the final price with the tow driver before towing.' : 'Estimate ready.';
 
-    $('requestBtn').disabled =
-      false;
+    estimateInProgress = false;
+    updateRequestButton();
 
   } catch (error) {
 
     if (version !== estimateVersion) return;
+    estimateInProgress = false;
     console.error(error);
 
     $('msg').textContent =
@@ -534,7 +548,7 @@ $('estimateBtn').onclick =
 
 $('rideType').onchange = () => {
 
-  if (estimate) {
+  if ($('pickup').value.trim() && $('dropoff').value.trim()) {
     calculateEstimate();
   }
 
@@ -546,6 +560,7 @@ async event => {
 
   event.preventDefault();
   if (submitting) return;
+  if(activeRide){$('msg').textContent='You already have an active ride. Complete or cancel it before requesting another.';return;}
   if (!auth.currentUser) { $('msg').textContent = 'Sign in before requesting a service.'; return; }
 
   if (!estimate) {
@@ -557,6 +572,9 @@ async event => {
     }
   }
 
+  if(activeRide){updateRequestButton();return;}
+  const requestedEstimate=estimate,requestVersion=estimateVersion,requestUid=auth.currentUser?.uid;
+  submitting=true;updateRequestButton();
   const tipPercent = 0;
   const tipAmount = 0;
   const requestedAt =
@@ -581,7 +599,8 @@ async event => {
     );
 
   const riderProfile = await getDoc(doc(db, 'users', auth.currentUser.uid)).catch(() => null);
-  if (!riderProfile?.exists()) { $('msg').textContent = 'Unable to load your rider profile. Retry before requesting.'; return; }
+  if(auth.currentUser?.uid!==requestUid||estimateVersion!==requestVersion||estimate!==requestedEstimate||activeRide){submitting=false;updateRequestButton();return;}
+  if (!riderProfile?.exists()) { submitting=false;updateRequestButton();$('msg').textContent = 'Unable to load your rider profile. Retry before requesting.'; return; }
   const profile = riderProfile.data();
   const ride = {
 
@@ -689,7 +708,7 @@ async event => {
     $('msg').textContent =
       error.code === 'permission-denied' ? 'Request blocked: your rider account must be approved and Firebase ride permissions must be enabled.' : 'Request was not sent. Check your connection and try again.';
     submitting = false;
-    $('requestBtn').disabled = false;
+    updateRequestButton();
 
     return;
   }
@@ -707,6 +726,7 @@ async event => {
   $('requestBtn').disabled =
     true;
 
+  bookingDraft=false;
   showRideStatus(ride);
 
   watchRide(ride.id);
@@ -736,3 +756,5 @@ window.addEventListener('fareride-ride-restored',event=>{
  updateLocalRideFromFirestore(ride.id,ride);showRideStatus(ride);
  if(watchedRideId!==ride.id)watchRide(ride.id);
 });
+
+window.addEventListener('fareride-clear-trip',()=>{activeRide=null;updateRequestButton();});
