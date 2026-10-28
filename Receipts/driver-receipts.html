@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Receipts | FareRide Driver</title>
+<link rel="icon" href="../favicon.svg">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f7fb;color:#17202a;font:17px/1.6 Arial,sans-serif}
+main{max-width:1000px;margin:24px auto;padding:24px;background:white;border-radius:14px}
+h1,h2{color:#0754b6}nav{display:flex;flex-wrap:wrap;gap:12px}a{color:#0754b6;font-weight:bold}
+#folders{margin-top:24px}details{border:3px solid #0754b6;border-left:8px solid #ffdf00;border-radius:10px;margin:14px 0;padding:14px}
+summary{cursor:pointer;color:#0754b6;font-weight:bold;overflow-wrap:anywhere}dl{display:grid;grid-template-columns:minmax(100px,1fr) 2fr;gap:8px}
+dt{font-weight:bold}dd{margin:0;overflow-wrap:anywhere}.actions{display:flex;flex-wrap:wrap;gap:12px}
+button,nav a{padding:10px 18px;background:#0754b6;border:0;border-radius:8px;color:white;font:700 17px Arial;cursor:pointer;text-decoration:none}
+button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #0754b6;outline-offset:4px}.note{color:#475569}
+@media(max-width:600px){main{margin:12px;padding:16px}dl{grid-template-columns:1fr}dd{margin-bottom:10px}}
+@media print{nav,main>h1,main>.note,#status,.actions,summary{display:none!important}body,main{background:white;margin:0;padding:0}details{border:0}details:not(.printing){display:none}details.printing{display:block}}
+</style>
+</head>
+<body><main>
+<h1>Receipts</h1>
+<nav><a href="../driver.html">Driver App</a><a href="../driver-login.html">Driver Login</a></nav>
+<p class="note">Each completed ride automatically appears in its own receipt folder. Open a folder to view, download, or print the receipt.</p>
+<p id="status" role="status" aria-live="polite">Checking driver sign-in…</p>
+<div id="folders"></div>
+</main><script type="module" src="driver-receipts.js"></script></body></html>
