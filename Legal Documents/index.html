@@ -8,20 +8,84 @@
   <style>
     *{box-sizing:border-box}
     body{margin:0;background:#f4f7fb;color:#17202a;font-family:Arial,sans-serif;line-height:1.6}
-    main{max-width:800px;margin:32px auto;padding:24px;background:white;border:1px solid #dce3ec;border-radius:14px}
-    h1{color:#075fd8} a{color:#075fd8;font-weight:bold}
-    li{margin:16px 0} @media(max-width:600px){main{margin:16px;padding:20px}}
+    main{max-width:1000px;margin:32px auto;padding:28px;background:#fff;border:1px solid #dce3ec;border-radius:16px}
+    h1{margin:0;color:#0754b6} a{color:#0754b6;font-weight:700}
+    .table-frame{margin:24px 0;border:4px solid #0754b6;outline:4px solid #ffdf00;outline-offset:0;border-radius:12px;overflow:hidden}
+    table{width:100%;border-collapse:collapse;table-layout:fixed}
+    caption{text-align:left;padding:14px 18px;background:#fffbea;color:#0754b6;font-weight:700}
+    th{padding:14px 18px;background:#0754b6;color:#fff;text-align:left;border-bottom:4px solid #ffdf00}
+    th:first-child{width:112px;text-align:center}
+    td{padding:16px 18px;border-bottom:1px solid #cbd9eb;vertical-align:middle;overflow-wrap:anywhere}
+    tbody tr:nth-child(even){background:#f0f6ff}
+    tbody tr:last-child td{border-bottom:0}
+    td:first-child{text-align:center;border-right:2px solid #ffdf00}
+    td a{display:inline-block;padding:6px 0;font-size:18px;text-underline-offset:3px}
+    .check-label{display:flex;align-items:center;justify-content:center;min-height:44px;cursor:pointer}
+    input[type="checkbox"]{width:24px;height:24px;margin:0;accent-color:#0754b6;cursor:pointer}
+    a:focus-visible,input:focus-visible{outline:3px solid #0754b6;outline-offset:4px}
+    .help{color:#475569;font-size:14px}
+    #reviewProgress{font-weight:700;color:#0754b6}
+    @media(max-width:600px){main{margin:16px 12px;padding:20px 14px}th,td{padding:12px 10px}th:first-child{width:82px}td a{font-size:16px}}
   </style>
 </head>
 <body>
   <main>
     <h1>Legal Documents</h1>
-    <p>Read FareRide policies and legal documents for drivers.</p>
-    <ul>
-      <li><a href="Legal%20Document.pdf" target="_blank" rel="noopener">Fare-Ride Zero Tolerance Policy — Louisiana (PDF)</a></li>
-    </ul>
-    <p>PDF documents open in a new tab.</p>
+    <p>Read FareRide policies and legal documents for drivers. Check each document after you have reviewed it.</p>
+    <p id="reviewProgress" role="status" aria-live="polite">0 of 6 documents reviewed</p>
+    <div class="table-frame">
+      <table>
+        <caption>Driver document checklist</caption>
+        <thead><tr><th scope="col">Reviewed</th><th scope="col">PDF Document</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><label class="check-label"><input type="checkbox" data-document="zero-tolerance" aria-label="Mark Fare-Ride Zero Tolerance Policy — Louisiana as reviewed"></label></td>
+            <td><a href="Legal%20Document.pdf" target="_blank" rel="noopener">Fare-Ride Zero Tolerance Policy — Louisiana (PDF)</a></td>
+          </tr>
+          <tr>
+            <td><label class="check-label"><input type="checkbox" data-document="tnc-instructions" aria-label="Mark Fare-Ride Louisiana TNC — Aligned Instructions as reviewed"></label></td>
+            <td><a href="Fare-Ride_Louisiana_TNC_Aligned%20instructions.pdf" target="_blank" rel="noopener">Fare-Ride Louisiana TNC — Aligned Instructions (PDF)</a></td>
+          </tr>
+          <tr>
+            <td><label class="check-label"><input type="checkbox" data-document="cashless-payment" aria-label="Mark Fare-Ride Cashless Payment Policy and Affidavit — Louisiana as reviewed"></label></td>
+            <td><a href="Fare-Ride_Cashless_Payment_Policy_and_Affidavit_Louisiana.pdf" target="_blank" rel="noopener">Fare-Ride Cashless Payment Policy and Affidavit — Louisiana (PDF)</a></td>
+          </tr>
+          <tr>
+            <td><label class="check-label"><input type="checkbox" data-document="tnc-updated" aria-label="Mark Fare-Ride Louisiana TNC — Updated as reviewed"></label></td>
+            <td><a href="Fare-Ride_Louisiana_TNC_Updated.pdf" target="_blank" rel="noopener">Fare-Ride Louisiana TNC — Updated (PDF)</a></td>
+          </tr>
+          <tr>
+            <td><label class="check-label"><input type="checkbox" data-document="nondiscrimination" aria-label="Mark Fare-Ride Nondiscrimination Policy — Louisiana as reviewed"></label></td>
+            <td><a href="Fare-Ride_Nondiscrimination_Policy_Louisiana.pdf" target="_blank" rel="noopener">Fare-Ride Nondiscrimination Policy — Louisiana (PDF)</a></td>
+          </tr>
+          <tr>
+            <td><label class="check-label"><input type="checkbox" data-document="launch-guide" aria-label="Mark Fare-Ride State Launch Guide — Application and Operating Checklist as reviewed"></label></td>
+            <td><a href="Fare-Ride_State_Launch_Guide%20Application%20and%20operating%20checklist.pdf" target="_blank" rel="noopener">Fare-Ride State Launch Guide — Application and Operating Checklist (PDF)</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="help">PDFs open in a new tab. Checklist selections are saved in this browser when storage is available. This checklist is for your reference and does not submit a signed acknowledgment.</p>
     <a href="../registration.html">Driver Registration</a>
   </main>
+  <script>
+    const checkboxes = [...document.querySelectorAll('[data-document]')];
+    const progress = document.getElementById('reviewProgress');
+    const storageKey = 'fareride-legal-documents-reviewed-v1';
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(storageKey) || '{}') || {}; } catch {}
+    function updateProgress() {
+      progress.textContent = checkboxes.filter(box => box.checked).length + ' of ' + checkboxes.length + ' documents reviewed';
+    }
+    for (const box of checkboxes) {
+      box.checked = saved[box.dataset.document] === true;
+      box.addEventListener('change', () => {
+        const selections = Object.fromEntries(checkboxes.map(item => [item.dataset.document, item.checked]));
+        try { localStorage.setItem(storageKey, JSON.stringify(selections)); } catch {}
+        updateProgress();
+      });
+    }
+    updateProgress();
+  </script>
 </body>
 </html>
