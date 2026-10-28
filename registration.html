@@ -145,6 +145,39 @@ textarea{
   border-radius:10px;
 }
 
+
+.legal-documents-box{
+  text-align:center;
+}
+
+.legal-documents-link{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  max-width:100%;
+  min-height:48px;
+  padding:12px 24px;
+  border:2px solid #0754b6;
+  border-radius:10px;
+  background:#0754b6;
+  color:#fff;
+  font-size:24px;
+  font-weight:800;
+  line-height:1.3;
+  text-decoration:none;
+  overflow-wrap:anywhere;
+}
+
+.legal-documents-link:hover{
+  background:#003f91;
+  border-color:#003f91;
+}
+
+.legal-documents-link:focus-visible{
+  outline:3px solid #075fd8;
+  outline-offset:3px;
+}
+
 .notice{
   margin-top:20px;
   padding:15px;
@@ -455,8 +488,8 @@ textarea{
     Drivers Keep 75% of the Ride Fare
   </div>
 
-  <div class="file-box">
-    <a href="Legal%20Documents/index.html" target="_blank" rel="noopener" style="font-weight:800;color:#075fd8;">Legal Documents</a>
+  <div class="file-box legal-documents-box">
+    <a class="legal-documents-link" href="Legal%20Documents/index.html" target="_blank" rel="noopener">Legal Documents</a>
     <p>Read FareRide policies and legal documents. Opens in a new tab so you can continue your application.</p>
   </div>
 
