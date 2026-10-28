@@ -454,11 +454,35 @@ main .rider-feedback button {
   border:1px solid #075fd8;
 }
 
-#summary, #summary p, #summary b, #summary span {
-  color:#00ffff !important;
-  -webkit-text-fill-color:#00ffff !important;
+#rideForm #summary {
+  font-size:clamp(28px,5.2vw,40px) !important;
+  justify-content:center !important;
+  align-items:center !important;
+  flex-wrap:wrap !important;
+  text-align:center !important;
+}
+#rideForm #summary p {
+  flex:1 1 180px !important;
+  min-width:0;
+  white-space:normal !important;
+  text-align:center !important;
+}
+#rideForm #summary,
+#rideForm #summary p,
+#rideForm #summary b,
+#rideForm #summary span {
+  color:#075fd8 !important;
+  -webkit-text-fill-color:#075fd8 !important;
   font-weight:700;
-  text-shadow:0 1px 1px #003399;
+  text-shadow:none !important;
+}
+#rideForm #summary p,
+#rideForm #summary b,
+#rideForm #summary span {
+  font-size:inherit !important;
+}
+@media(max-width:340px) {
+  #rideForm #summary { font-size:24px !important; }
 }
 </style>
 
