@@ -40,8 +40,6 @@ export function chatJobLabel(ride) {
   const fullId = String(ride.id ?? '');
   const page = globalThis.location?.pathname ?? '';
 
-  // Display only the last four characters for riders and drivers.
-  // The full ID remains unchanged for selecting and loading chats.
   const displayedId = /\/(rider|driver)\.html$/.test(page)
     ? fullId.slice(-4)
     : fullId;
@@ -62,9 +60,7 @@ export function chatMessage(ride, identity, value) {
   const text = String(value ?? '').trim();
 
   if (!text || text.length > CHAT_TEXT_LIMIT) {
-    throw new Error(
-      'Enter a message of 1–2,000 characters.'
-    );
+    throw new Error('Enter a message of 1–2,000 characters.');
   }
 
   return {
