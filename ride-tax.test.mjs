@@ -62,3 +62,11 @@ test('uploaded spreadsheet populates every state rate and preview without fabric
  assert(fields.some(([label,value])=>label==='Calculated total including tax'&&value==='$29.75'));
  assert.equal(previewReceipt.tax,null);assert.equal(previewReceipt.total,28.33);assert.equal(riderTotal(ride),28.33);
 });
+
+test('sandbox payment receipt is labeled test-only and never presented as real collection',()=>{
+ const value={...ride,sandboxPayment:{method:'PayPal',status:'Test payment succeeded — no real funds collected',reference:'sandbox-order',amount:28.33,testOnly:true}};
+ const receipt=receiptFolders([value],'r','rider')[0],fields=receiptFields(receipt);
+ assert.equal(receipt.paymentMethod,'PayPal (TEST)');assert.match(receipt.paymentStatus,/no real funds/);
+ assert(fields.some(([label,text])=>label==='Test payment mode'&&text==='Sandbox — no real funds collected'));
+ assert.equal(receiptFolders([{...value,paymentMethod:'Cash',paymentStatus:'paid'}],'r','rider')[0].paymentMethod,'Cash');
+});

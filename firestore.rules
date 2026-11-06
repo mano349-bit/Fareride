@@ -201,6 +201,7 @@ service cloud.firestore {
           && (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['driverRating','driverComment'])
           ))
         || (reviewer('rider') && resource.data.riderId == request.auth.uid
+          && resource.data.get('sandboxPaymentLock', false) == false
           && resource.data.get('tipSubmitted', false) == false
           && resource.data.get('tipAmount', 0) == 0
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tipPercent','tipAmount','totalFare','tipSubmitted'])
@@ -239,6 +240,7 @@ service cloud.firestore {
       allow update: if driverAccount() && resource.data.driverId == request.auth.uid
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accountStatus in ['approved','active']
         && resource.data.status == 'completed'
+        && resource.data.get('sandboxPaymentLock', false) == false
         && resource.data.get('rideTax', null) == null
         && resource.data.get('taxAmount', null) == null && resource.data.get('taxRatePercent', null) == null
         && resource.data.fare is number && resource.data.fare >= 0
@@ -393,12 +395,13 @@ service cloud.firestore {
           && next <= previous + event.amount + 0.00001;
       }
       allow update: if tollDriver(rideId)
+        && resource.data.get('sandboxPaymentLock', false) == false
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tollsAmount','tollAccounting','lastTollId'])
         && request.resource.data.tollAccounting == 'separate-v1' && validTollAggregate();
     }
     match /rides/{rideId}/tollEvents/{eventId} {
       allow read: if admin() || (signedIn() && (tollRide(rideId).driverId == request.auth.uid || tollRide(rideId).riderId == request.auth.uid));
-      allow create: if tollDriver(rideId) && validTollEvent(request.resource.data)
+      allow create: if tollDriver(rideId) && tollRide(rideId).get('sandboxPaymentLock', false) == false && validTollEvent(request.resource.data)
         && request.resource.data.riderId == tollRide(rideId).riderId
         && getAfter(/databases/$(database)/documents/rides/$(rideId)).data.lastTollId == eventId
         && getAfter(/databases/$(database)/documents/rides/$(rideId)).data.tollAccounting == 'separate-v1'
@@ -466,6 +469,10 @@ service cloud.firestore {
         && request.resource.data.available is bool && request.resource.data.updatedAt == request.time;
       allow delete: if owner(uid);
     }
+    // Browser clients access payment data through the authenticated server only.
+    match /paymentSandboxAttempts/{id} { allow read, write: if false; }
+    match /paymentSandboxCustomers/{id} { allow read, write: if false; }
+    match /paymentSandboxArchive/{id} { allow read, write: if false; }
     match /config/{docId} {
       allow read, write: if false;
     }
