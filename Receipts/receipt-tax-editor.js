@@ -61,10 +61,9 @@ export function receiptTaxEditor(ride,{onPreview=()=>{},readOnly=false}={}){
    message.textContent='Tax saved. The receipt and PDF will update from the saved ride record.';
   }catch(error){message.textContent=error.code==='permission-denied'?'Tax could not be saved. Updated Firestore tax permissions must be deployed by the project owner.':error.message;save.disabled=false;detect.disabled=false;}
  };
- state.value=stateCode(ride.taxState||ride.pickupState)||'';
+ state.value=stateCode(ride.taxState||ride.pickupState)||'LA';
  if(readOnly){confirmed.parentElement.hidden=true;save.hidden=true;message.textContent='This is a calculation preview. Only the assigned driver can save verified tax to the ride record.';}
  select();
- let detected=false;
- section.addEventListener('fareride-tax-open',()=>{if(!detected){detected=true;detect.click();}});
+ detection.textContent='Default: Louisiana (5%) when no state is saved. Choose another state or use Detect from saved trip GPS to change it.';
  return section;
 }
