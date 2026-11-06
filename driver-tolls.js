@@ -8,20 +8,26 @@ const form=panel.querySelector('form'),select=panel.querySelector('#tollRide'),s
 const button=form.querySelector('button'),road=panel.querySelector('#tollRoad'),charge=panel.querySelector('#tollCharge'),agreement=panel.querySelector('#tollCustomerAgreed');
 const savedTolls=panel.querySelector('#recordedRideTolls'),another=panel.querySelector('#addAnotherToll'),notice=panel.querySelector('#tollAgreementNotice');
 const requestedJob=new URLSearchParams(location.search).get('tollRide'),money=n=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(n);
-let stop=null,stopTolls=null,generation=0,tollRevision=0,jobs=new Map(),pending=null,saving=false,requestedApplied=false;
+let stop=null,stopTolls=null,generation=0,tollRevision=0,jobs=new Map(),pending=null,saving=false,requestedApplied=false,manualSelection=false;
 notice.hidden=true;form.hidden=true;another.hidden=true;
 agreement.setAttribute('aria-describedby','tollAgreementNotice');
 agreement.addEventListener('invalid',event=>{event.preventDefault();notice.hidden=false;agreement.focus();});
 agreement.addEventListener('change',()=>{notice.hidden=agreement.checked;});
+function tollJobTime(job){
+ const values=job.status==='completed'?[job.completedAt,job.startedAt,job.acceptedAt,job.requestedAt]:[job.acceptedAt,job.startedAt,job.requestedAt];
+ for(const value of values){const time=value?.toMillis?value.toMillis():value?.toDate?value.toDate().getTime():value==null?NaN:new Date(value).getTime();if(Number.isFinite(time))return time;}
+ return 0;
+}
 function clearEntry(){road.value='';charge.value='';agreement.checked=false;notice.hidden=true;}
 function syncJob(){
  const job=jobs.get(select.value);
- select.disabled=saving;button.disabled=saving||!job;another.disabled=saving||!job;
- for(const input of [road,charge,agreement])input.disabled=saving||!job;
+ const canRecord=job&&['started','arrived','completed'].includes(job.status);
+ select.disabled=saving;button.disabled=saving||!canRecord;another.disabled=saving||!canRecord;
+ for(const input of [road,charge,agreement])input.disabled=saving||!canRecord;
  if(!job){jobInfo.textContent='Select a job before entering a toll.';return;}
  const when=job.completedAt||job.startedAt||job.requestedAt;
  const date=when?.toDate?when.toDate():new Date(when||NaN);
- jobInfo.textContent='Job ID: '+job.id+'\nRider: '+(job.riderName||job.riderId)+'\nPickup: '+(job.pickup||'Not recorded')+'\nDestination: '+(job.dropoff||'Not recorded')+'\nStatus: '+job.status+' | '+(Number.isFinite(date.getTime())?date.toLocaleString():'Date not recorded')+'\nSaved tolls for this job: '+money(tollAmount(job));
+ jobInfo.textContent='Job ID: '+job.id+'\nRider: '+(job.riderName||job.riderId)+'\nPickup: '+(job.pickup||'Not recorded')+'\nDestination: '+(job.dropoff||'Not recorded')+'\nStatus: '+job.status+' | '+(Number.isFinite(date.getTime())?date.toLocaleString():'Date not recorded')+'\nSaved tolls for this job: '+money(tollAmount(job))+(job.status==='accepted'?'\nStart this job before recording a toll.':'');
 }
 function watchTolls(){
  stopTolls?.();stopTolls=null;const version=++tollRevision,uid=auth.currentUser?.uid,jobId=select.value;
@@ -34,28 +40,30 @@ function watchTolls(){
   for(const record of records){const li=document.createElement('li');li.textContent=record.location+' — '+money(Number(record.amount));list.append(li);}savedTolls.append(heading,list);
  },()=>{if(version===tollRevision)savedTolls.textContent='Individual toll entries could not be loaded for job '+jobId+'. This does not confirm whether a new toll was saved.';});
 }
-select.addEventListener('change',()=>{clearEntry();pending=null;syncJob();watchTolls();status.textContent=jobs.has(select.value)?'Tolls will be saved only to the job shown above.':'Select the correct job.';});
+select.addEventListener('change',()=>{manualSelection=true;clearEntry();pending=null;syncJob();watchTolls();status.textContent=jobs.has(select.value)?'Tolls will be saved only to the job shown above.':'Select the correct job.';});
 for(const input of [road,charge])input.addEventListener('input',()=>{agreement.checked=false;notice.hidden=true;});
 another.onclick=()=>{clearEntry();road.focus();status.textContent='Enter another agreed toll for job '+select.value;};
 onAuthStateChanged(auth,async user=>{
- const version=++generation;stop?.();stop=null;stopTolls?.();stopTolls=null;tollRevision++;jobs=new Map();pending=null;saving=false;requestedApplied=false;
+ const version=++generation;stop?.();stop=null;stopTolls?.();stopTolls=null;tollRevision++;jobs=new Map();pending=null;saving=false;requestedApplied=false;manualSelection=false;
  select.replaceChildren();savedTolls.replaceChildren();form.hidden=true;another.hidden=true;clearEntry();syncJob();status.textContent='Sign in as a driver to record tolls.';if(!user)return;
  try{
   const profile=await getDoc(doc(db,'users',user.uid));if(version!==generation)return;if(!profile.exists()||profile.data().role!=='driver')return;
   status.textContent='Loading your jobs…';
   stop=onSnapshot(query(collection(db,'rides'),where('driverId','==',user.uid)),snapshot=>{
    if(version!==generation)return;const previous=select.value;
-   const rides=snapshot.docs.map(item=>({...item.data(),id:item.id})).filter(job=>job.driverId===user.uid&&['started','arrived','completed'].includes(job.status))
-    .sort((a,b)=>String(b.completedAt||b.startedAt||'').localeCompare(String(a.completedAt||a.startedAt||'')));
+   const rides=snapshot.docs.map(item=>({...item.data(),id:item.id})).filter(job=>job.driverId===user.uid&&['accepted','started','arrived','completed'].includes(job.status))
+    .sort((a,b)=>Number(a.status==='completed')-Number(b.status==='completed')||tollJobTime(b)-tollJobTime(a)||String(a.id).localeCompare(String(b.id)));
    jobs=new Map(rides.map(job=>[job.id,job]));select.replaceChildren();
    const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='Choose the job for this toll';select.append(placeholder);
    for(const job of rides){const option=document.createElement('option');option.value=job.id;option.textContent=(job.riderName||'Rider')+' | '+(job.pickup||'Pickup')+' → '+(job.dropoff||'Destination')+' | '+job.id;select.append(option);}
-   if(previous&&jobs.has(previous))select.value=previous;
-   else if(!requestedApplied&&requestedJob&&jobs.has(requestedJob)){select.value=requestedJob;requestedApplied=true;}
-   else select.value='';
-   if(previous&&select.value!==previous&&!saving){clearEntry();pending=null;status.textContent='The selected job is no longer available. Choose the correct job again.';}
+   const hasEntry=Boolean(road.value.trim()||charge.value||agreement.checked||pending);
+   if(previous&&jobs.has(previous)&&(saving||hasEntry||manualSelection))select.value=previous;
+   else if(!requestedApplied&&requestedJob&&jobs.has(requestedJob)){select.value=requestedJob;requestedApplied=true;manualSelection=true;}
+   else if(previous&&!jobs.has(previous)&&(hasEntry||saving))select.value='';
+   else select.value=rides[0]?.id||'';
+   if(previous&&select.value!==previous&&!saving){clearEntry();pending=null;manualSelection=false;status.textContent=select.value?'Current or latest job selected. Verify the job details before entering a toll.':'The selected job is no longer available. Choose the correct job again.';}
    form.hidden=!rides.length;syncJob();watchTolls();
-   if(status.textContent==='Loading your jobs…')status.textContent=rides.length?'Choose the correct job before entering a toll.':'No ongoing or completed jobs available.';
+   if(status.textContent==='Loading your jobs…')status.textContent=rides.length?'Current or latest job selected. Verify the job details before entering a toll.':'No ongoing or completed jobs available.';
   },()=>{if(version===generation){form.hidden=true;status.textContent='Jobs could not be loaded. No new toll has been saved by this form.';}});
  }catch{if(version===generation)status.textContent='Unable to verify driver access.';}
 });
