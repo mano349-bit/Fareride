@@ -217,6 +217,36 @@ service cloud.firestore {
 
       );
     }
+    // A driver may add one explicit tax record; existing receipts cannot be silently retaxed.
+    match /rides/{rideId} {
+      function validReceiptTax(tax) {
+        return tax is map
+          && tax.keys().hasOnly(['state','jurisdiction','rate','base','fixed','amount','source','recordedBy','riderAgreed','reviewedOn','selection'])
+          && tax.keys().hasAll(['state','jurisdiction','rate','base','fixed','amount','source','recordedBy','riderAgreed','reviewedOn','selection'])
+          && tax.state in ['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC','OTHER']
+          && tax.jurisdiction is string && tax.jurisdiction.size() > 0 && tax.jurisdiction.size() <= 120
+          && tax.rate is number && tax.rate >= 0 && tax.rate <= 100
+          && tax.base is number && tax.base >= 0 && tax.base <= 1000000
+          && tax.fixed is number && tax.fixed >= 0 && tax.fixed <= 500
+          && math.abs(tax.base * 100 - math.round(tax.base * 100)) < 0.00001
+          && math.abs(tax.fixed * 100 - math.round(tax.fixed * 100)) < 0.00001
+          && tax.amount is number
+          && tax.amount == math.round((tax.base * tax.rate / 100 + tax.fixed) * 100) / 100.0
+          && tax.source == 'driver-confirmed' && tax.recordedBy == request.auth.uid && tax.riderAgreed == true
+          && tax.reviewedOn is string && tax.reviewedOn.size() == 10
+          && tax.selection in ['manual','pickup-gps'];
+      }
+      allow update: if driverAccount() && resource.data.driverId == request.auth.uid
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accountStatus in ['approved','active']
+        && resource.data.status == 'completed'
+        && resource.data.get('rideTax', null) == null
+        && resource.data.get('taxAmount', null) == null && resource.data.get('taxRatePercent', null) == null
+        && resource.data.fare is number && resource.data.fare >= 0
+        && resource.data.get('pricingStatus', '') != 'quote_required'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rideTax','rideTaxRecordedAt'])
+        && validReceiptTax(request.resource.data.rideTax)
+        && request.resource.data.rideTaxRecordedAt == request.time;
+    }
     function towApproved(role) {
       return signedIn()
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role
