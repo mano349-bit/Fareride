@@ -1,4 +1,4 @@
-import {CHAT_TEXT_LIMIT, chatParticipant, canSendChat, chatJobs, chatJobLabel, chatMessage} from './job-chat-state.js?v=20261026-job-chat';
+import {CHAT_TEXT_LIMIT, chatParticipant, canSendChat, chatJobs, defaultChatJob, chatJobLabel, chatMessage} from './job-chat-state.js?v=20261106-current-job';
 
 // The view owns subscriptions and drafts so switching jobs or accounts cannot mix conversations.
 export function mountJobChat(host, transport) {
@@ -92,8 +92,10 @@ export function mountJobChat(host, transport) {
     const version = sessionVersion;
     stopJobs = transport.watchJobs(next, rides => {
       if (destroyed || version !== sessionVersion) return;
+      const previousJobs = jobs;
       jobs = chatJobs(rides, identity);
-      if (!selected && jobs.length) selectJob(jobs[0].id);
+      const nextSelected = defaultChatJob(jobs, identity, selected, previousJobs);
+      if (nextSelected !== selected) selectJob(nextSelected);
       else {pickerOptions(); if (!selected) status.textContent = 'Your conversation appears when you have a live job.';}
     }, () => {
       if (destroyed || version !== sessionVersion) return;
