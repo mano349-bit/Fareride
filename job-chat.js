@@ -2,8 +2,8 @@ import {auth, db, doc, getDoc, collection, query, where, orderBy, addDoc, server
 import {limit} from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
 import {observeAdmin} from './admin-session.js';
-import {LIVE_CHAT_STATUSES} from './job-chat-state.js?v=20261026-job-chat';
-import {mountJobChat} from './job-chat-view.js?v=20261026-job-chat';
+import {LIVE_CHAT_STATUSES} from './job-chat-state.js?v=20261106-current-job';
+import {mountJobChat} from './job-chat-view.js?v=20261106-current-job';
 
 const role = location.pathname.endsWith('/admin.html') ? 'admin' : location.pathname.endsWith('/driver.html') ? 'driver' : 'rider';
 const host = document.getElementById('jobChat');
