@@ -8,7 +8,7 @@ export function receiptFolders(rides,uid,role='driver'){
   return {id:String(r.id),date:date(r.completedAt),requestedAt:date(r.requestedAt),startedAt:date(r.startedAt),
    driver:r.driverName||'Not recorded',rider:r.riderName||'Not recorded',pickup:r.pickup||'Not recorded',dropoff:r.dropoff||'Not recorded',
    service:r.serviceType||'ride',rideType:r.rideType||'Not recorded',miles:amount(r.miles),duration:amount(r.durationMinutes),
-   fare,tip:amount(r.tipAmount),tolls:r.tollsAmount!=null||r.tolls!=null?tollAmount(r):null,tax:amount(r.taxAmount),taxRate:amount(r.taxRatePercent),
+   fare,tip:amount(r.tipAmount),tolls:r.tollsAmount!=null||r.tolls!=null?tollAmount(r):null,tax:amount(r.rideTax?.amount??r.taxAmount),taxRate:amount(r.rideTax?.rate??r.taxRatePercent),taxJurisdiction:r.rideTax?.jurisdiction||r.taxJurisdiction||'Jurisdiction not recorded',taxBase:amount(r.rideTax?.base),taxFixed:amount(r.rideTax?.fixed),taxSource:r.rideTax?.source||'Not recorded',
    total:riderTotal(r),paymentMethod:r.paymentMethod||'Not recorded',paymentStatus:r.paymentStatus||'Not recorded',
    vehicle:[r.vehicleYear,r.vehicleMake,r.vehicleModel].filter(Boolean).join(' ')||'Not recorded'};
  }).sort((a,b)=>(b.date||'').localeCompare(a.date||'')||a.id.localeCompare(b.id));
@@ -24,8 +24,16 @@ export function receiptFields(r){
  ...(r.tollItems||[]).map((item,index)=>['Toll '+(index+1)+' — '+item.location,money(item.amount)+(item.date?' | '+time(item.date):'')]),
  ...(r.tollDetailsError?[['Toll details','Individual entries could not be loaded. The recorded toll total above is unchanged.']]:[]),
  ...(r.tollDetailsLoaded&&!(r.tollItems||[]).length&&r.tolls>0?[['Toll details','Only the total was recorded for this ride.']]:[]),
- ['Louisiana tax / fee (recorded)',money(r.tax)],['Recorded tax rate',r.taxRate===null?'Not recorded':r.taxRate+'%'],
- ['Total ride fee including saved tolls',money(r.total)],['Payment method',r.paymentMethod],['Payment status',r.paymentStatus]];
+ ...(r.calculatedTax&&r.tax===null?[
+ ['Tax jurisdiction',r.calculatedTax.jurisdiction],
+ ['State tax rate (uploaded table)',r.calculatedTax.rate+'%'],
+ ['Calculated tax — not recorded / collected',money(r.calculatedTax.amount)],
+ ['Taxable amount',money(r.calculatedTax.base)],
+ ['Tax rate source',r.calculatedTax.source+' — '+r.calculatedTax.effectiveDate],
+ ['Calculated total including tax',r.total===null?'Not recorded':money((Math.round(r.total*100)+Math.round(r.calculatedTax.amount*100))/100)]
+ ]:[['Tax jurisdiction',r.taxJurisdiction],['Tax / fee (recorded)',money(r.tax)],['Recorded tax rate',r.taxRate===null?'Not recorded':r.taxRate+'%']]),
+ ...(r.taxBase===null?[]:[['Taxable amount',money(r.taxBase)],['Fixed tax / fee',money(r.taxFixed)],['Tax source',r.taxSource]]),
+ ['Total ride fee including saved tolls and tax',money(r.total)],['Payment method',r.paymentMethod],['Payment status',r.paymentStatus]];
 }
-export const receiptNote='Amounts reflect the saved ride record. Unrecorded tolls and taxes are not assumed to be zero or invented. Confirmed toll entries are added separately to the ride charge. This receipt does not confirm payment collection.';
+export const receiptNote='Amounts reflect the saved ride record. Unrecorded tolls and taxes are not assumed to be zero or invented. Confirmed toll entries and separately recorded tax are added to the ride charge. Tax uses the saved jurisdiction, rate and taxable amount; later rate changes do not alter this receipt. Table-based calculations are estimates, exclude local tax unless entered, and do not prove a tax was charged or collected. This receipt does not confirm payment collection.';
 

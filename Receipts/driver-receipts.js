@@ -1,8 +1,9 @@
+import {receiptTaxEditor} from './receipt-tax-editor.js';
 import {receiptTollItems} from './receipt-toll-items.js';
 import {periodForDays,periodDayCount} from '../earnings-period.js';
 import {localDay} from '../rider-history-dates.js';
 import {auth,db,doc,getDoc,collection,query,where,onSnapshot,onAuthStateChanged} from '../firebase-session.js';
-import {receiptFolders,receiptFields,receiptNote} from './receipt-data.js?v=20261028-toll-fee';
+import {receiptFolders,receiptFields,receiptNote} from './receipt-data.js?v=20261106-table-tax';
 import {receiptPDF} from './receipt-pdf.js?v=20261028-onepage';
 const role=document.body.dataset.receiptRole || 'driver';
 const roleLabel=role==='rider'?'Rider':'Driver';
@@ -26,7 +27,7 @@ function receiptContent(receipt){
  const article=document.createElement('article'), title=document.createElement('h2');title.textContent='FareRide Ride Receipt';article.append(title);
  const fields=receiptFields(receipt);
  const dl=document.createElement('dl');
- for(const [key,value] of fields){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=key;dd.textContent=value;if(key.startsWith('Toll fee')||key.startsWith('Total ride fee')){dt.style.cssText=dd.style.cssText='font-weight:700;color:#0754b6;background:#fff4a3;padding:6px;border-radius:4px';}dl.append(dt,dd);}
+ for(const [key,value] of fields){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=key;dd.textContent=value;if(key.startsWith('Toll fee')||key.startsWith('Total ride fee')||key.startsWith('Calculated tax')||key.startsWith('State tax rate')){dt.style.cssText=dd.style.cssText='font-weight:700;color:#0754b6;background:#fff4a3;padding:6px;border-radius:4px';}dl.append(dt,dd);}
  const note=document.createElement('p');note.textContent=receiptNote;note.className='note';article.append(dl,note);return article;
 }
 function render(rides,uid){
@@ -43,15 +44,15 @@ function render(rides,uid){
  const table=document.createElement('table');table.style.cssText='width:100%;border-collapse:collapse;margin:16px 0;font-size:14px';
  const caption=document.createElement('caption');caption.textContent='Receipt charges — tolls go 100% to the driver';table.append(caption);
  const head=document.createElement('thead'),header=document.createElement('tr');
- for(const label of ['Ride','Date','Fare','Tip','Toll','Total fee']){const th=document.createElement('th');th.scope='col';th.textContent=label;th.style.cssText='padding:8px;border:1px solid #0754b6;background:#fff4a3';header.append(th);}head.append(header);table.append(head);
+ for(const label of ['Ride','Date','Fare','Tip','Toll','Tax','Total fee']){const th=document.createElement('th');th.scope='col';th.textContent=label;th.style.cssText='padding:8px;border:1px solid #0754b6;background:#fff4a3';header.append(th);}head.append(header);table.append(head);
  const body=document.createElement('tbody');table.append(body);
  const wrap=document.createElement('div');wrap.className='receipt-charges';wrap.style.overflowX='auto';wrap.append(table);folders.append(wrap);
  const cash=value=>value===null?'Not recorded':new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(value);
- for(const receipt of receipts){const row=document.createElement('tr');for(const value of [receipt.id,receipt.date?new Date(receipt.date).toLocaleDateString():'Not recorded',cash(receipt.fare),cash(receipt.tip),cash(receipt.tolls),cash(receipt.total)]){const cell=document.createElement('td');cell.textContent=value;cell.style.cssText='padding:8px;border:1px solid #0754b6;overflow-wrap:anywhere';row.append(cell);}body.append(row);}
+ for(const receipt of receipts){const row=document.createElement('tr');for(const value of [receipt.id,receipt.date?new Date(receipt.date).toLocaleDateString():'Not recorded',cash(receipt.fare),cash(receipt.tip),cash(receipt.tolls),cash(receipt.tax),cash(receipt.total)]){const cell=document.createElement('td');cell.textContent=value;cell.style.cssText='padding:8px;border:1px solid #0754b6;overflow-wrap:anywhere';row.append(cell);}body.append(row);}
  const foot=document.createElement('tfoot'),totals=document.createElement('tr');
  const label=document.createElement('th');label.scope='row';label.colSpan=4;label.textContent='Period totals';totals.append(label);
  const tollCell=document.createElement('td');tollCell.textContent=money(tollCents/100);const totalCell=document.createElement('td');totalCell.textContent=money(totalCents/100)+(receipts.some(receipt=>receipt.total===null)?' (known amounts)':'');
- totals.append(tollCell,totalCell);foot.append(totals);table.append(foot);
+ const taxCell=document.createElement('td');taxCell.textContent=money(receipts.reduce((sum,r)=>sum+Math.round((r.tax||0)*100),0)/100)+(receipts.some(r=>r.tax===null)?' (recorded amounts)':'');totals.append(tollCell,taxCell,totalCell);foot.append(totals);table.append(foot);
  for(const receipt of receipts){
   const folder=document.createElement('details'),summary=document.createElement('summary');folder.id='receipt-'+receipt.id;summary.textContent='Receipt folder — '+(receipt.date?new Date(receipt.date).toLocaleDateString():'Date not recorded')+' — '+receipt.id;folder.append(summary,receiptContent(receipt));
   const actions=document.createElement('div');actions.className='actions';
@@ -78,7 +79,10 @@ function render(rides,uid){
   const print=document.createElement('button');print.type='button';print.disabled=true;print.textContent='Print / Save PDF';print.onclick=()=>{folder.open=true;folder.classList.add('printing');try{window.print();}finally{folder.classList.remove('printing');}};
   actions.append(download,print);
   if(role==='driver'){const addToll=document.createElement('a');addToll.href='../driver-earnings.html?tollRide='+encodeURIComponent(receipt.id)+'#driverTollForm';addToll.textContent=receipt.tolls>0?'Add another toll to this ride':'Add toll to this ride';addToll.style.cssText='display:inline-block;padding:10px 18px;background:#0754b6;color:white;border-radius:8px;text-decoration:none';actions.append(addToll);}
-  folder.append(actions);folders.append(folder);
+  folder.append(actions);
+  const raw=rides.find(r=>r.id===receipt.id);
+  if(raw&&!raw.rideTax&&raw.taxAmount==null&&raw.taxRatePercent==null){const editor=receiptTaxEditor(raw,{readOnly:role!=='driver',onPreview:tax=>{receipt.calculatedTax=tax;updateReceipt();}});folder.append(editor);folder.addEventListener('toggle',()=>{if(folder.open)editor.dispatchEvent(new Event('fareride-tax-open'));});}
+  folders.append(folder);
   if(location.hash==='#'+encodeURIComponent(folder.id)){folder.open=true;folder.scrollIntoView({block:'start'});}
  }
 }

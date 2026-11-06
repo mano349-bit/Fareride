@@ -1,3 +1,4 @@
+import {savedTaxAmount} from './ride-tax.js';
 export const TOLL_ACCOUNTING = 'separate-v1';
 const cents=value=>Math.round((Number(value)||0)*100);
 export function tollAmount(ride){
@@ -6,7 +7,7 @@ export function tollAmount(ride){
 }
 export function riderTotal(ride){
  const base=ride.totalFare!=null?Number(ride.totalFare):ride.fare!=null?Number(ride.fare)+Number(ride.tipAmount||0):NaN;
- return Number.isFinite(base)?(cents(base)+(ride.tollAccounting===TOLL_ACCOUNTING?cents(tollAmount(ride)):0))/100:null;
+ return Number.isFinite(base)?(cents(base)+(ride.tollAccounting===TOLL_ACCOUNTING?cents(tollAmount(ride)):0)+cents(savedTaxAmount(ride)))/100:null;
 }
 export function tollUpdate(ride,uid,event,id){
  if(!uid||ride.driverId!==uid||!['started','arrived','completed'].includes(ride.status))throw Error('Tolls can only be recorded for your ongoing or completed ride.');
