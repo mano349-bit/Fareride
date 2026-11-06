@@ -27,7 +27,11 @@
       "firestore-towing-console.rules",
       "storage.rules",
       "STORAGE_UPLOAD_FIX.md",
-      "firebase.storage.test.json"
+      "firebase.storage.test.json",
+      "PAYMENTS_SETUP.md",
+      "**/.env*",
+      "**/*secret*",
+      "**/payment-config*.json"
     ],
     "headers": [
       {
@@ -39,6 +43,15 @@
           }
         ]
       }
+    ],
+    "rewrites": [
+      {
+        "source": "/api/payments/**",
+        "function": {
+          "functionId": "paymentsApi",
+          "region": "us-central1"
+        }
+      }
     ]
   },
   "firestore": {
@@ -47,5 +60,9 @@
   },
   "storage": {
     "rules": "storage.rules"
+  },
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs22"
   }
 }

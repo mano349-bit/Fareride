@@ -78,6 +78,7 @@ function render(rides,uid){
   });stopTollDetails.push(stop);
   const print=document.createElement('button');print.type='button';print.disabled=true;print.textContent='Print / Save PDF';print.onclick=()=>{folder.open=true;folder.classList.add('printing');try{window.print();}finally{folder.classList.remove('printing');}};
   actions.append(download,print);
+  const paymentLink=document.createElement('a');paymentLink.href='../'+(role==='rider'?'rider':'driver')+'-payments.html?ride='+encodeURIComponent(receipt.id);paymentLink.textContent=role==='rider'?'Payment methods / pay (test mode)':'Payment status (test mode)';actions.append(paymentLink);
   if(role==='driver'){const addToll=document.createElement('a');addToll.href='../driver-earnings.html?tollRide='+encodeURIComponent(receipt.id)+'#driverTollForm';addToll.textContent=receipt.tolls>0?'Add another toll to this ride':'Add toll to this ride';addToll.style.cssText='display:inline-block;padding:10px 18px;background:#0754b6;color:white;border-radius:8px;text-decoration:none';actions.append(addToll);}
   folder.append(actions);
   const raw=rides.find(r=>r.id===receipt.id);

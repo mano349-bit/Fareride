@@ -1,0 +1,18 @@
+{
+  "name": "fareride-payment-sandbox",
+  "private": true,
+  "type": "module",
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "test": "node --test payment-model.test.js payment-providers.test.js",
+    "test:integration": "node --experimental-test-module-mocks --test payment-handler.integration.mjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.0",
+    "firebase-functions": "^6.0.0",
+    "stripe": "^20.0.0"
+  }
+}
