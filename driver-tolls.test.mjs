@@ -30,8 +30,8 @@ function harness(search=''){
  const submit=()=>el('form').onsubmit({preventDefault(){}});
  return {el,data,listeners,login:()=>login(auth.currentUser),snapshot,choose,fill,submit,fail:error=>failure=error,pause:promise=>gate=promise,loseResponse:()=>loseResponse=true};
 }
-test('no job is auto-selected; receipt deep link selects only the requested job',async()=>{
- const h=harness();await h.login();h.snapshot();assert.equal(h.el('#tollRide').value,'');assert.equal(h.el('button').disabled,true);
+test('latest job is selected by default; receipt deep link selects the requested job',async()=>{
+ const h=harness();await h.login();h.snapshot();assert.equal(h.el('#tollRide').value,'job-1');assert.equal(h.el('button').disabled,false);
  const linked=harness('?tollRide=job-2');await linked.login();linked.snapshot();assert.equal(linked.el('#tollRide').value,'job-2');assert.match(linked.el('#tollSelectedJob').textContent,/Hartford/);
 });
 test('two tolls are saved only to the selected job',async()=>{
@@ -66,4 +66,24 @@ test('removed job does not silently switch to another job',async()=>{
 test('assignment change prevents toll being saved to a different rider',async()=>{
  const h=harness();await h.login();h.snapshot();h.choose('job-2');h.fill();h.data.set('rides/job-2',{...h.data.get('rides/job-2'),riderId:'different'});await h.submit();
  assert.match(h.el('#tollSaveStatus').textContent,/assignment changed/);assert.equal(h.data.get('rides/job-2').tollsAmount,undefined);
+});
+
+test('active job takes priority over a recently completed job',async()=>{
+ const h=harness();await h.login();h.data.set('rides/job-1',{...h.data.get('rides/job-1'),completedAt:'2026-11-06T12:00:00Z'});
+ h.data.set('rides/job-2',{...h.data.get('rides/job-2'),status:'started',acceptedAt:'2026-11-06T10:00:00Z'});h.snapshot();
+ assert.equal(h.el('#tollRide').value,'job-2');
+});
+test('most recently completed job defaults when there is no active job',async()=>{
+ const h=harness();await h.login();for(const [id,time]of [['job-1','2026-11-06T10:00:00Z'],['job-2','2026-11-06T12:00:00Z']])h.data.set('rides/'+id,{...h.data.get('rides/'+id),completedAt:time});
+ h.snapshot();assert.equal(h.el('#tollRide').value,'job-2');
+});
+test('new accepted job defaults before starting but toll inputs stay disabled',async()=>{
+ const h=harness();await h.login();h.snapshot();h.data.set('rides/job-2',{...h.data.get('rides/job-2'),status:'accepted',acceptedAt:'2026-11-06T12:00:00Z'});h.snapshot();
+ assert.equal(h.el('#tollRide').value,'job-2');assert.equal(h.el('button').disabled,true);assert.equal(h.el('#tollRoad').disabled,true);
+ h.data.set('rides/job-2',{...h.data.get('rides/job-2'),status:'started'});h.snapshot();assert.equal(h.el('button').disabled,false);
+});
+test('new job does not redirect an entered toll or explicit job choice',async()=>{
+ const h=harness();await h.login();h.snapshot();h.fill();h.data.set('rides/job-2',{...h.data.get('rides/job-2'),status:'started'});h.snapshot();
+ assert.equal(h.el('#tollRide').value,'job-1');assert.equal(h.el('#tollCharge').value,'20');
+ const manual=harness();await manual.login();manual.snapshot();manual.choose('job-1');manual.data.set('rides/job-2',{...manual.data.get('rides/job-2'),status:'started'});manual.snapshot();assert.equal(manual.el('#tollRide').value,'job-1');
 });
