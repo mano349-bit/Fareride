@@ -30,3 +30,33 @@ test('message validates text and supplies the authenticated sender identity', ()
   for(const text of ['', '   ', 'a'.repeat(2001)]) assert.throws(()=>chatMessage(ride,driver,text));
   assert.equal(chatMessage(ride,driver,'a'.repeat(2000)).text.length,2000);
 });
+
+test('driver chat defaults to the most recently accepted job rather than alphabetical ID', () => {
+  const old = {...ride,id:'aaa-old',acceptedAt:'2026-11-06T10:00:00Z'};
+  const current = {...ride,id:'zzz-new',acceptedAt:'2026-11-06T11:00:00Z'};
+  assert.deepEqual(chatJobs([old,current],driver).map(job=>job.id),['zzz-new','aaa-old']);
+});
+
+test('new driver assignment replaces previous completed chat and keeps unrelated jobs out', async () => {
+  const {defaultChatJob}=await import('./job-chat-state.js');
+  const current={...ride,id:'new',acceptedAt:'2026-11-06T11:00:00Z'};
+  const jobs=chatJobs([{...ride,id:'old',status:'completed'},current,{...current,id:'other',driverId:'someone'}],driver);
+  assert.equal(defaultChatJob(jobs,driver,'old',[]),'new');
+  assert.equal(defaultChatJob(jobs,driver,'',[]),'new');
+});
+
+test('manual live chat choice survives GPS updates; new acceptance switches the default',async()=>{
+  const {defaultChatJob}=await import('./job-chat-state.js');
+  const old={...ride,id:'old',acceptedAt:'2026-11-06T10:00:00Z'},current={...ride,id:'current',acceptedAt:'2026-11-06T11:00:00Z'};
+  const jobs=chatJobs([old,current],driver);
+  assert.equal(defaultChatJob(jobs,driver,'old',jobs),'old');
+  assert.equal(defaultChatJob(jobs,driver,'old',[old]),'current');
+  assert.equal(defaultChatJob([],driver,'old',jobs),'old');
+  assert.equal(defaultChatJob(jobs,admin,'old',[]),'old');
+  assert.equal(defaultChatJob(jobs,rider,'old',[]),'old');
+});
+
+test('driver ordering supports Firestore timestamps and falls back to requested date',()=>{
+ const timestamp={...ride,id:'timestamp',acceptedAt:{toMillis:()=>2000}},fallback={...ride,id:'fallback',requestedAt:'1970-01-01T00:00:01Z'};
+ assert.equal(chatJobs([fallback,timestamp],driver)[0].id,'timestamp');
+});

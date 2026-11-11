@@ -32,7 +32,8 @@ export function chatJobs(rides, identity) {
   return rides
     .filter(ride => canSendChat(ride, identity))
     .sort((a, b) =>
-      String(a.id).localeCompare(String(b.id))
+      (identity?.role === 'driver' ? chatJobTime(b) - chatJobTime(a) : 0)
+      || String(a.id).localeCompare(String(b.id))
     );
 }
 
@@ -68,4 +69,22 @@ export function chatMessage(ride, identity, value) {
     senderRole: identity.role,
     text
   };
+}
+
+function chatJobTime(ride) {
+  for (const value of [ride.acceptedAt, ride.startedAt, ride.requestedAt]) {
+    const time = value?.toMillis ? value.toMillis() : value?.toDate ? value.toDate().getTime() : value == null ? NaN : new Date(value).getTime();
+    if (Number.isFinite(time)) return time;
+  }
+  return 0;
+}
+
+export function defaultChatJob(jobs, identity, selected, previousJobs = []) {
+  if (!jobs.length) return selected;
+  if (!selected) return jobs[0].id;
+  if (identity?.role !== 'driver') return selected;
+  // A new assignment takes priority over an old conversation, including read-only history.
+  const previous = new Set(previousJobs.map(job => job.id));
+  if (jobs.some(job => !previous.has(job.id)) || !jobs.some(job => job.id === selected)) return jobs[0].id;
+  return selected;
 }
