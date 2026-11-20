@@ -23,6 +23,8 @@
     .check-label{display:flex;align-items:center;justify-content:center;min-height:44px;cursor:pointer}
     input[type="checkbox"]{width:24px;height:24px;margin:0;accent-color:#0754b6;cursor:pointer}
     a:focus-visible,input:focus-visible{outline:3px solid #0754b6;outline-offset:4px}
+    .permit-checklist li+li{margin-top:8px}
+    .policy-draft{padding:0 16px;margin:12px 0;border:1px solid #cbd9eb;border-radius:8px}
     .help{color:#475569;font-size:14px}
     #reviewProgress{font-weight:700;color:#0754b6}
     @media(max-width:600px){main{margin:16px 12px;padding:20px 14px}th,td{padding:12px 10px}th:first-child{width:82px}td a{font-size:16px}}
@@ -30,12 +32,46 @@
 </head>
 <body>
   <main>
-    <h1>Legal Documents</h1>
-    <p>Read FareRide policies and legal documents for drivers. Check each document after you have reviewed it.</p>
+    <h1>Documents</h1>
+    <p><a href="../index.html">Fare Ride Home</a></p>
+
+    <section aria-labelledby="permit-checklist-title">
+      <h2 id="permit-checklist-title">Louisiana rideshare permit checklist</h2>
+      <p><a href="https://dotd.la.gov/media/00mgk4qi/tnc-application-for-permit-permit-renewal-w-affidavit.pdf">Louisiana DOTD permit application and affidavit (PDF)</a></p>
+      <ol class="permit-checklist">
+        <li><strong>Certificate of insurance.</strong> Obtain from Fare Ride’s insurer with Louisiana DOTD listed as a certificate holder.</li>
+        <li><strong>Certificate of good standing.</strong> Obtain from the Louisiana Secretary of State.</li>
+        <li><strong>Louisiana agent for service of process.</strong> Provide the agent’s name and contact information in the application.</li>
+        <li><a href="Fare-Ride_Nondiscrimination_Policy_Louisiana.pdf">Rider and driver nondiscrimination policy (PDF)</a></li>
+        <li><a href="Legal%20Document.pdf">Zero Tolerance Policy (PDF)</a></li>
+        <li><a href="#fare-transparency">Fare Transparency Policy draft</a></li>
+        <li><a href="#digital-identification">Digital Identification Network Policy draft</a></li>
+        <li><a href="Fare-Ride_Electronic_Receipts_Policy_Louisiana.pdf">Electronic Receipts Policy (PDF)</a></li>
+        <li><a href="Fare-Ride_Cashless_Payment_Policy_and_Affidavit_Louisiana.pdf">Cashless Payment Policy and Affidavit (PDF)</a></li>
+      </ol>
+      <p>Attach a corporate resolution or other certified proof of the signer’s authority. Have the authorized representative sign and complete the notarized affidavit. DOTD asks for the application at least 30 days before planned Louisiana operations and annual renewals by July 1.</p>
+    </section>
+
+    <section aria-labelledby="drafts-title">
+      <h2 id="drafts-title">Draft policies for company review</h2>
+      <article class="policy-draft" id="fare-transparency">
+        <h3>Fare Transparency Policy</h3>
+        <p>Fare Ride will disclose the fare or how it is calculated through the app or website before a prearranged ride begins. When Fare Ride does not disclose the fare in advance, the rider will have the option to request and see an estimated fare before the ride begins.</p>
+        <p class="help">Before signing the DOTD affidavit, confirm which option Fare Ride provides and select the corresponding option on the state form.</p>
+      </article>
+      <article class="policy-draft" id="digital-identification">
+        <h3>Digital Identification Network Policy</h3>
+        <p>Before the rider enters the vehicle for a prearranged ride, Fare Ride will display the assigned driver’s photo and the vehicle’s license plate number in the rider’s trip details. If Fare Ride assigns a different driver or vehicle, the trip details will show the updated photo and plate before pickup.</p>
+        <p class="help">Before signing the DOTD affidavit, verify the rider can see both details before entering the vehicle.</p>
+      </article>
+    </section>
+
+    <h2>Saved Fare Ride PDFs</h2>
+    <p>Check each document after reviewing it.</p>
     <p id="reviewProgress" role="status" aria-live="polite">0 of 7 documents reviewed</p>
     <div class="table-frame">
       <table>
-        <caption>Driver document checklist</caption>
+        <caption>PDF review checklist</caption>
         <thead><tr><th scope="col">Reviewed</th><th scope="col">PDF Document</th></tr></thead>
         <tbody>
           <tr>
