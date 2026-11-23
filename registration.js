@@ -13,14 +13,13 @@ import {
 import { registrationErrorMessage } from './registration-errors.js';
 
 let registrationStage = 'registration';
-let verificationWarning = '';
+
 
 
 
 import {
   createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  sendEmailVerification
+  signInWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 const $ = id =>
   document.getElementById(id);
@@ -285,7 +284,7 @@ async function registerFareRideAccount(
   let credential;
 
   registrationStage = 'creating or signing in to your account';
-  verificationWarning = '';
+
 
 
   try {
@@ -371,40 +370,6 @@ async function registerFareRideAccount(
     }
   );
 
-
-  if (
-    !user.emailVerified
-  ) {
-
-    const actionCodeSettings = {
-      url: new URL(role === 'driver' ? './driver-login.html' : './rider-login.html', window.location.href).href,
-      handleCodeInApp: false
-    };
-
-    try {
-
-      await sendEmailVerification(
-        user,
-        actionCodeSettings
-      );
-
-      console.log(
-        "FareRide verification email sent to:",
-        email
-      );
-
-    } catch (emailError) {
-
-      console.error(
-        "VERIFICATION EMAIL FAILED:",
-        emailError
-      );
-
-      verificationWarning = ' Your application was saved, but verification email delivery failed. ' + registrationErrorMessage(emailError, 'sending verification email');
-
-    }
-
-  }
 
 
   return user;
@@ -682,7 +647,7 @@ async function submitRider(
 
     showMessage(
       "riderApplicationMessage",
-      "Rider registration submitted for review." + (riderAuthUser.emailVerified ? ' Your email is already verified.' : verificationWarning || ' Check your email to verify your account.') + ' Use Rider Login after approval.',
+      "Rider registration submitted for review. Use Rider Login after approval.",
       "success"
     );
 
@@ -1045,7 +1010,7 @@ async function submitDriver(
 
     showMessage(
       "applicationMessage",
-      "Driver application submitted for review." + (driverAuthUser.emailVerified ? ' Your email is already verified.' : verificationWarning || ' Check your email to verify your account.') + ' Use Driver Login after approval.',
+      "Driver application submitted for review. Use Driver Login after approval.",
       "success"
     );
 
