@@ -572,13 +572,6 @@ async function submitRider(
     const applicationId =
       'rider_' + riderAuthUser.uid;
 
-    registrationStage = 'checking rider application';
-    const existingApplication = await getDoc(doc(db, 'riderApplications', applicationId));
-    if (existingApplication.exists()) {
-      throw new Error('A rider application is already on file for this account. Use Rider Login or contact the administrator.');
-    }
-
-
     const licenseDocument =
       await uploadDocument(
         "riderApplications",
@@ -862,13 +855,6 @@ async function submitDriver(
 
     const applicationId =
       'driver_' + driverAuthUser.uid;
-
-    registrationStage = 'checking driver application';
-    const existingApplication = await getDoc(doc(db, 'driverApplications', applicationId));
-    if (existingApplication.exists()) {
-      throw new Error('A driver application is already on file for this account. Use Driver Login or contact the administrator.');
-    }
-
 
     const documents = {};
 
