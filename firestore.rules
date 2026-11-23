@@ -62,17 +62,15 @@ service cloud.firestore {
       allow list: if collection in ['riderApplications', 'driverApplications'] && admin();
       allow create: if collection in ['riderApplications', 'driverApplications']
         && signedIn()
-        && request.resource.data.keys().hasOnly(['applicationId', 'role', 'uid', 'fullName', 'phone', 'email', 'dateOfBirth', 'address', 'city', 'state', 'zipCode', 'documents', 'legalAcceptance', 'status', 'adminNotes', 'submittedAt', 'approvedAt', 'suspendedAt', 'updatedAt', 'ssnLast4', 'vehicleYear', 'vehicleMake', 'vehicleModel', 'vehicleColor', 'plateNumber', 'insuranceCompany', 'insurancePolicyNumber', 'insuranceExpiration', 'applicantNotes', 'rating'])
-        && validLegalAcceptance(request.resource.data.legalAcceptance)
         && applicationId == (collection == 'riderApplications' ? 'rider_' : 'driver_') + request.auth.uid
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.applicationId == applicationId
-        && request.resource.data.email == request.auth.token.email
         && request.resource.data.role == (collection == 'riderApplications' ? 'rider' : 'driver')
         && request.resource.data.status == 'new'
         && request.resource.data.adminNotes == ''
         && request.resource.data.approvedAt == null
-        && request.resource.data.suspendedAt == null;
+        && request.resource.data.suspendedAt == null
+        && validLegalAcceptance(request.resource.data.legalAcceptance);
       allow update: if collection in ['riderApplications', 'driverApplications'] && admin()
         && request.resource.data.uid == resource.data.uid
         && request.resource.data.role == resource.data.role
