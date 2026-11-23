@@ -140,6 +140,18 @@ function applyRide(nextRide,stageConfirmed=true) {
 
   const state = riderTripState(currentRide);
 
+  // Rating and tip are always optional. A finished ride must never block
+  // the rider from calculating and requesting the next ride, even on
+  // mobile devices that still have the previous trip cached in memory.
+  if (state.finished) {
+    try {
+      if (localStorage.getItem('fareride_last_ride_id') === currentRide.id) {
+        localStorage.removeItem('fareride_last_ride_id');
+      }
+    } catch {}
+    window.dispatchEvent(new Event('fareride-clear-trip'));
+  }
+
   panel.hidden = false;
   stage.textContent = state.message;
   stage.hidden=true;
