@@ -28,7 +28,7 @@ async function advanceGpsStage(position,id,uid){
 const section = document.createElement('section');
 section.style.cssText = 'max-width:900px;margin:20px auto;padding:20px;background:white;border:1px solid #ccc;border-radius:12px';
 section.hidden = true;
-section.innerHTML = '<h2>Rider and driver live map</h2><p id="liveDriverDetails"></p><a id="liveDriverPhone" hidden></a><p id="liveMapStatus" role="status" style="margin:0"></p><button type="button" hidden>Retry location</button><div id="rideLiveMap" style="height:360px;margin-top:8px"></div>';
+section.innerHTML = '<h2>Rider and driver live map</h2><p id="liveDriverDetails"></p><div id="liveContactActions" style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0"><a id="liveDriverPhone" hidden></a><a id="liveWhatsApp" hidden target="_blank" rel="noopener noreferrer"></a></div><p id="liveMapStatus" role="status" style="margin:0"></p><button type="button" hidden>Retry location</button><div id="rideLiveMap" style="height:360px;margin-top:8px"></div>';
 if(isDriver){
  const controls=document.querySelector('section[aria-label="Driver job controls"]');
  if(controls)controls.after(section);else document.querySelector('main').append(section);
@@ -59,7 +59,18 @@ function render(){
  const riderName = (!isDriver && profile?.fullName) || ride.riderName || 'Rider';
  const driverName = (isDriver && profile?.fullName) || ride.driverName || 'Driver';
  const phone=section.querySelector('#liveDriverPhone');
- phone.hidden=!number;phone.textContent=`Call ${isDriver?'rider':'driver'}: ${contact}`;phone.style.cssText='padding:12px 16px;margin:10px 0;background:#0875e1;color:white;border-radius:8px;font-weight:700;text-decoration:none';if(number)phone.href=`tel:${number}`;else phone.removeAttribute('href');
+ const whatsapp=section.querySelector('#liveWhatsApp');
+ phone.hidden=!number;
+ phone.textContent=`Call ${isDriver?'rider':'driver'}: ${contact}`;
+ phone.style.cssText='padding:12px 16px;background:#0875e1;color:white;border-radius:8px;font-weight:700;text-decoration:none';
+ if(number)phone.href=`tel:${number}`;else phone.removeAttribute('href');
+
+ const whatsappDigits=number ? number.replace(/\D/g,'') : '';
+ const whatsappNumber=whatsappDigits.length===10 ? '1'+whatsappDigits : whatsappDigits;
+ whatsapp.hidden=!whatsappNumber;
+ whatsapp.textContent=`WhatsApp ${isDriver?'rider':'driver'}`;
+ whatsapp.style.cssText='padding:12px 16px;background:#25D366;color:white;border-radius:8px;font-weight:700;text-decoration:none';
+ if(whatsappNumber)whatsapp.href=`https://wa.me/${whatsappNumber}`;else whatsapp.removeAttribute('href');
  const point=validCoordinates(ride.riderLocation)?ride.riderLocation:ride.pickupLocation;
  const center=validCoordinates(point)?point:ride.driverLocation;
  if(window.L){
