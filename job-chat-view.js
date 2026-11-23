@@ -1,4 +1,4 @@
-import {CHAT_TEXT_LIMIT, chatParticipant, canSendChat, chatJobs, chatJobLabel, chatMessage} from './job-chat-state.js?v=20261026-job-chat';
+import {CHAT_TEXT_LIMIT, chatParticipant, canSendChat, chatJobs, chatJobLabel, chatMessage} from './job-chat-state.js?v=20261123-current-job-only';
 
 // The view owns subscriptions and drafts so switching jobs or accounts cannot mix conversations.
 export function mountJobChat(host, transport) {
