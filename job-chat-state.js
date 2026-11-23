@@ -28,12 +28,41 @@ export function canSendChat(ride, identity) {
     && LIVE_CHAT_STATUSES.includes(ride.status);
 }
 
+function rideTime(ride) {
+  const value =
+    ride.startedAt ||
+    ride.arrivedAt ||
+    ride.acceptedAt ||
+    ride.requestedAt ||
+    0;
+
+  if (value?.toMillis) return value.toMillis();
+
+  const time = new Date(value).getTime();
+  return Number.isFinite(time) ? time : 0;
+}
+
 export function chatJobs(rides, identity) {
-  return rides
+  const available = rides
     .filter(ride => canSendChat(ride, identity))
-    .sort((a, b) =>
-      String(a.id).localeCompare(String(b.id))
-    );
+    .sort((a, b) => {
+      const priority = status => ({
+        started: 4,
+        arrived: 3,
+        accepted: 2,
+        requested: 1
+      })[status] || 0;
+
+      return priority(b.status) - priority(a.status)
+        || rideTime(b) - rideTime(a)
+        || String(b.id).localeCompare(String(a.id));
+    });
+
+  // Rider and driver chat must always follow only their current live job.
+  // Admin intentionally keeps the full live-job list.
+  return identity?.role === 'admin'
+    ? available
+    : available.slice(0, 1);
 }
 
 export function chatJobLabel(ride) {
