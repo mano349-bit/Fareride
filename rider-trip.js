@@ -29,19 +29,34 @@ panel.innerHTML = `
   <h2>Your Trip</h2>
   <p id="tripStage" role="status" aria-live="polite"></p>
 
-  <a
-    id="tripCallDriver"
-    hidden
-    style="
-      padding:12px 16px;
-      margin:12px 0;
-      background:#0875e1;
-      color:white;
-      border-radius:8px;
-      font-weight:700;
-      text-decoration:none
-    "
-  >Call driver</a>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0">
+    <a
+      id="tripCallDriver"
+      hidden
+      style="
+        padding:12px 16px;
+        background:#0875e1;
+        color:white;
+        border-radius:8px;
+        font-weight:700;
+        text-decoration:none
+      "
+    >Call driver</a>
+    <a
+      id="tripWhatsAppDriver"
+      hidden
+      target="_blank"
+      rel="noopener noreferrer"
+      style="
+        padding:12px 16px;
+        background:#25D366;
+        color:white;
+        border-radius:8px;
+        font-weight:700;
+        text-decoration:none
+      "
+    >WhatsApp driver</a>
+  </div>
 
 
 
@@ -157,16 +172,27 @@ function applyRide(nextRide,stageConfirmed=true) {
   stage.hidden=true;
 
   const call = panel.querySelector('#tripCallDriver');
+  const whatsapp = panel.querySelector('#tripWhatsAppDriver');
   const number = phoneNumber(currentRide.driverPhone);
 
   call.hidden = !number || state.finished;
   call.textContent =
     'Call driver: ' + (currentRide.driverPhone || '');
 
+  const whatsappDigits = number ? number.replace(/\D/g, '') : '';
+  const whatsappNumber = whatsappDigits.length === 10 ? '1' + whatsappDigits : whatsappDigits;
+  whatsapp.hidden = !whatsappNumber || state.finished;
+
   if (number && !state.finished) {
     call.href = 'tel:' + number;
   } else {
     call.removeAttribute('href');
+  }
+
+  if (whatsappNumber && !state.finished) {
+    whatsapp.href = 'https://wa.me/' + whatsappNumber;
+  } else {
+    whatsapp.removeAttribute('href');
   }
 
   window.dispatchEvent(
