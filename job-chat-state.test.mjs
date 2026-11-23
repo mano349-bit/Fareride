@@ -30,3 +30,13 @@ test('message validates text and supplies the authenticated sender identity', ()
   for(const text of ['', '   ', 'a'.repeat(2001)]) assert.throws(()=>chatMessage(ride,driver,text));
   assert.equal(chatMessage(ride,driver,'a'.repeat(2000)).text.length,2000);
 });
+
+test('rider and driver chat show only their current live job while admin keeps all live jobs', () => {
+  const older = {...ride,id:'older',status:'accepted',requestedAt:'2026-11-23T10:00:00Z'};
+  const current = {...ride,id:'current',status:'started',requestedAt:'2026-11-23T11:00:00Z',startedAt:'2026-11-23T11:15:00Z'};
+  const waiting = {...ride,id:'waiting',status:'requested',driverId:null,requestedAt:'2026-11-23T12:00:00Z'};
+
+  assert.deepEqual(chatJobs([older,current,waiting],rider).map(job=>job.id),['current']);
+  assert.deepEqual(chatJobs([older,current],driver).map(job=>job.id),['current']);
+  assert.deepEqual(chatJobs([older,current,waiting],admin).map(job=>job.id),['current','older','waiting']);
+});
