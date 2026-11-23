@@ -14,11 +14,11 @@ const status=document.getElementById('status'), folders=document.getElementById(
 let stop=null,generation=0;
 let loadedRides=[],loadedUid=null;
 const filters=document.createElement('div');filters.className='receipt-period';
-filters.innerHTML='<label>Start date <input id="receiptStart" type="date" required></label><label>End date <input id="receiptEnd" type="date" required></label><label>Days (1–365) <input id="receiptDays" type="number" min="1" max="365" step="1" value="365" required></label><button id="receiptApplyDays" type="button">Apply days</button>';
+filters.innerHTML='<label>Start date <input id="receiptStart" type="date" required></label><label>End date <input id="receiptEnd" type="date" required></label><label>Days (1–365) <input id="receiptDays" type="number" min="1" max="365" step="1" value="1" required></label><button id="receiptApplyDays" type="button">Apply days</button>';
 filters.style.cssText='display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin:16px 0';
 folders.before(filters);
 const periodStart=filters.querySelector('#receiptStart'),periodEnd=filters.querySelector('#receiptEnd'),periodDays=filters.querySelector('#receiptDays');
-const initial=periodForDays(localDay(),365);periodStart.value=initial.start;periodEnd.value=initial.end;
+const initial=periodForDays(localDay(),1);periodStart.value=initial.start;periodEnd.value=initial.end;
 const refreshPeriod=()=>{if(loadedUid)render(loadedRides,loadedUid);};
 periodStart.onchange=periodEnd.onchange=refreshPeriod;
 filters.querySelector('#receiptApplyDays').onclick=()=>{if(!periodDays.reportValidity())return;const range=periodForDays(periodEnd.value||localDay(),Number(periodDays.value));if(!range)return;periodStart.value=range.start;periodEnd.value=range.end;refreshPeriod();};
