@@ -34,11 +34,16 @@ function setupLegalAcceptance() {
   for (const box of document.querySelectorAll('.legal-acceptance-box')) {
     const checks = [...box.querySelectorAll('.legal-review')];
     const progress = box.querySelector('.legal-progress');
+    const selectAll = box.querySelector('.legal-select-all');
     const update = () => {
       const count = checks.filter(item => item.checked).length;
       if (progress) progress.textContent = count + ' of ' + checks.length + ' documents reviewed';
     };
     for (const item of checks) item.addEventListener('change', update);
+    selectAll?.addEventListener('click', () => {
+      for (const item of checks) item.checked = true;
+      update();
+    });
     update();
   }
 }
