@@ -157,7 +157,41 @@ textarea{
 .legal-acceptance-list input,.legal-final-agreement input{width:22px;height:22px;flex:0 0 auto;margin:2px 0 0;accent-color:#0754b6}
 .legal-acceptance-list a{color:#0754b6;font-weight:800}
 .legal-progress{font-weight:900;color:#0754b6}
+.legal-select-all{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin:8px 0 4px;
+  padding:10px 18px;
+  border:0;
+  border-radius:8px;
+  background:#0754b6;
+  color:#fff;
+  font-size:18px;
+  font-weight:900;
+  cursor:pointer;
+}
 .legal-final-agreement{margin-top:14px;border:2px solid #16a34a;background:#ecfdf3}
+.certify-strong{
+  display:flex !important;
+  align-items:center;
+  gap:10px;
+  margin-top:20px;
+  padding:12px 14px;
+  border:3px solid #d92d20;
+  border-radius:10px;
+  background:#fff0f0;
+  color:#b42318;
+  font-size:24px;
+  font-weight:900;
+}
+.certify-strong input{
+  width:28px !important;
+  height:28px !important;
+  margin:0 !important;
+  accent-color:#d92d20;
+  flex:0 0 auto;
+}
 
 .legal-documents-link{
   display:inline-flex;
@@ -459,6 +493,7 @@ textarea{
   <h3 class="section-title">FareRide Policies, Terms and Legal Documents</h3>
   <div class="file-box legal-acceptance-box" data-legal-prefix="rider">
     <p><strong>Required before registration can be completed:</strong> Open and review each document, then check the box confirming you have read it.</p>
+    <button class="legal-select-all" type="button">Select All</button>
     <div class="legal-acceptance-list">
       <label><input class="legal-review" type="checkbox" data-document="zero-tolerance" required> <span><a href="Legal%20Documents/Legal%20Document.pdf" target="_blank" rel="noopener">Fare-Ride Zero Tolerance Policy — Louisiana (PDF)</a></span></label>
       <label><input class="legal-review" type="checkbox" data-document="tnc-instructions" required> <span><a href="Legal%20Documents/Fare-Ride_Louisiana_TNC_Aligned%20instructions.pdf" target="_blank" rel="noopener">Fare-Ride Louisiana TNC — Aligned Instructions (PDF)</a></span></label>
@@ -476,15 +511,14 @@ textarea{
   </div>
 
 
-  <label style="margin-top:20px;">
+  <label class="certify-strong">
 
     <input
       id="riderCertify"
       type="checkbox"
-      style="width:auto;margin-right:8px;"
       required>
 
-    I certify that the information provided is accurate.
+    <span>I certify that the information provided is accurate.</span>
 
   </label>
 
@@ -811,16 +845,14 @@ textarea{
   </div>
 
 
-  <label style="margin-top:20px;">
+  <label class="certify-strong">
 
     <input
       id="certify"
       type="checkbox"
-      style="width:auto;margin-right:8px;"
       required>
 
-    I certify that the information provided
-    is accurate.
+    <span>I certify that the information provided is accurate.</span>
 
   </label>
 
@@ -847,7 +879,7 @@ textarea{
 
 <script
   type="module"
-  src="registration.js?v=20261123-no-email-verification">
+  src="registration.js?v=20261123-select-all-certify">
 </script>
 
 
