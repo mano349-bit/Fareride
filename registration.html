@@ -151,6 +151,13 @@ textarea{
 }
 
 .driver-document-buttons{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:14px}
+.legal-acceptance-box{border:2px solid #0754b6;background:#fffbea}
+.legal-acceptance-list{display:grid;gap:10px;margin:14px 0}
+.legal-acceptance-list label,.legal-final-agreement{display:flex;align-items:flex-start;gap:10px;padding:10px;border:1px solid #cbd9eb;border-radius:8px;background:#fff}
+.legal-acceptance-list input,.legal-final-agreement input{width:22px;height:22px;flex:0 0 auto;margin:2px 0 0;accent-color:#0754b6}
+.legal-acceptance-list a{color:#0754b6;font-weight:800}
+.legal-progress{font-weight:900;color:#0754b6}
+.legal-final-agreement{margin-top:14px;border:2px solid #16a34a;background:#ecfdf3}
 
 .legal-documents-link{
   display:inline-flex;
@@ -445,6 +452,27 @@ textarea{
     FareRide uses the uploaded identification
     only for account review and verification.
 
+  </div>
+
+
+
+  <h3 class="section-title">FareRide Policies, Terms and Legal Documents</h3>
+  <div class="file-box legal-acceptance-box" data-legal-prefix="rider">
+    <p><strong>Required before registration can be completed:</strong> Open and review each document, then check the box confirming you have read it.</p>
+    <div class="legal-acceptance-list">
+      <label><input class="legal-review" type="checkbox" data-document="zero-tolerance" required> <span><a href="Legal%20Documents/Legal%20Document.pdf" target="_blank" rel="noopener">Fare-Ride Zero Tolerance Policy — Louisiana (PDF)</a></span></label>
+      <label><input class="legal-review" type="checkbox" data-document="tnc-instructions" required> <span><a href="Legal%20Documents/Fare-Ride_Louisiana_TNC_Aligned%20instructions.pdf" target="_blank" rel="noopener">Fare-Ride Louisiana TNC — Aligned Instructions (PDF)</a></span></label>
+      <label><input class="legal-review" type="checkbox" data-document="cashless-payment" required> <span><a href="Legal%20Documents/Fare-Ride_Cashless_Payment_Policy_and_Affidavit_Louisiana.pdf" target="_blank" rel="noopener">Fare-Ride Cashless Payment Policy and Affidavit — Louisiana (PDF)</a></span></label>
+      <label><input class="legal-review" type="checkbox" data-document="tnc-updated" required> <span><a href="Legal%20Documents/Fare-Ride_Louisiana_TNC_Updated.pdf" target="_blank" rel="noopener">Fare-Ride Louisiana TNC — Updated (PDF)</a></span></label>
+      <label><input class="legal-review" type="checkbox" data-document="nondiscrimination" required> <span><a href="Legal%20Documents/Fare-Ride_Nondiscrimination_Policy_Louisiana.pdf" target="_blank" rel="noopener">Fare-Ride Nondiscrimination Policy — Louisiana (PDF)</a></span></label>
+      <label><input class="legal-review" type="checkbox" data-document="launch-guide" required> <span><a href="Legal%20Documents/Fare-Ride_State_Launch_Guide%20Application%20and%20operating%20checklist.pdf" target="_blank" rel="noopener">Fare-Ride State Launch Guide — Application and Operating Checklist (PDF)</a></span></label>
+      <label><input class="legal-review" type="checkbox" data-document="electronic-receipts" required> <span><a href="Legal%20Documents/Fare-Ride_Electronic_Receipts_Policy_Louisiana.pdf" target="_blank" rel="noopener">Fare-Ride Electronic Receipts Policy — Louisiana (PDF)</a></span></label>
+    </div>
+    <p class="legal-progress" role="status" aria-live="polite">0 of 7 documents reviewed</p>
+    <label class="legal-final-agreement">
+      <input class="legal-agree" type="checkbox" required>
+      <span>I confirm that I have read the documents above and agree to FareRide's terms, policies, and applicable requirements presented in these documents.</span>
+    </label>
   </div>
 
 
@@ -762,6 +790,27 @@ textarea{
   </label>
 
 
+
+  <h3 class="section-title">FareRide Policies, Terms and Legal Documents</h3>
+  <div class="file-box legal-acceptance-box" data-legal-prefix="driver">
+    <p><strong>Required before registration can be completed:</strong> Open and review each document, then check the box confirming you have read it.</p>
+    <div class="legal-acceptance-list">
+      <label><input class="legal-review" type="checkbox" data-document="zero-tolerance" required> <span><a href="Legal%20Documents/Legal%20Document.pdf" target="_blank" rel="noopener">Fare-Ride Zero Tolerance Policy — Louisiana (PDF)</a></span></label>
+      <label><input class="legal-review" type="checkbox" data-document="tnc-instructions" required> <span><a href="Legal%20Documents/Fare-Ride_Louisiana_TNC_Aligned%20instructions.pdf" target="_blank" rel="noopener">Fare-Ride Louisiana TNC — Aligned Instructions (PDF)</a></span></label>
+      <label><input class="legal-review" type="checkbox" data-document="cashless-payment" required> <span><a href="Legal%20Documents/Fare-Ride_Cashless_Payment_Policy_and_Affidavit_Louisiana.pdf" target="_blank" rel="noopener">Fare-Ride Cashless Payment Policy and Affidavit — Louisiana (PDF)</a></span></label>
+      <label><input class="legal-review" type="checkbox" data-document="tnc-updated" required> <span><a href="Legal%20Documents/Fare-Ride_Louisiana_TNC_Updated.pdf" target="_blank" rel="noopener">Fare-Ride Louisiana TNC — Updated (PDF)</a></span></label>
+      <label><input class="legal-review" type="checkbox" data-document="nondiscrimination" required> <span><a href="Legal%20Documents/Fare-Ride_Nondiscrimination_Policy_Louisiana.pdf" target="_blank" rel="noopener">Fare-Ride Nondiscrimination Policy — Louisiana (PDF)</a></span></label>
+      <label><input class="legal-review" type="checkbox" data-document="launch-guide" required> <span><a href="Legal%20Documents/Fare-Ride_State_Launch_Guide%20Application%20and%20operating%20checklist.pdf" target="_blank" rel="noopener">Fare-Ride State Launch Guide — Application and Operating Checklist (PDF)</a></span></label>
+      <label><input class="legal-review" type="checkbox" data-document="electronic-receipts" required> <span><a href="Legal%20Documents/Fare-Ride_Electronic_Receipts_Policy_Louisiana.pdf" target="_blank" rel="noopener">Fare-Ride Electronic Receipts Policy — Louisiana (PDF)</a></span></label>
+    </div>
+    <p class="legal-progress" role="status" aria-live="polite">0 of 7 documents reviewed</p>
+    <label class="legal-final-agreement">
+      <input class="legal-agree" type="checkbox" required>
+      <span>I confirm that I have read the documents above and agree to FareRide's terms, policies, and applicable requirements presented in these documents.</span>
+    </label>
+  </div>
+
+
   <label style="margin-top:20px;">
 
     <input
@@ -798,7 +847,7 @@ textarea{
 
 <script
   type="module"
-  src="registration.js?v=20261028-rider-face-photo">
+  src="registration.js?v=20261123-required-legal-acceptance">
 </script>
 
 
