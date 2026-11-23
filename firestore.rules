@@ -16,6 +16,26 @@ service cloud.firestore {
     function driverAccount() {
       return signedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver';
     }
+    function validLegalAcceptance(value) {
+      return value is map
+        && value.keys().hasOnly(['version', 'acceptedAt', 'documents', 'agreed'])
+        && value.version == '2026-11-23-v1'
+        && value.acceptedAt is string
+        && value.acceptedAt.size() > 0
+        && value.acceptedAt.size() <= 40
+        && value.agreed == true
+        && value.documents is list
+        && value.documents.size() == 7
+        && value.documents.hasAll([
+          'zero-tolerance',
+          'tnc-instructions',
+          'cashless-payment',
+          'tnc-updated',
+          'nondiscrimination',
+          'launch-guide',
+          'electronic-receipts'
+        ]);
+    }
     match /admins/{uid} {
       allow get: if owner(uid);
       allow list, write: if false;
@@ -29,8 +49,10 @@ service cloud.firestore {
         && request.resource.data.email == request.auth.token.email
         && request.resource.data.role in ['rider', 'driver']
         && request.resource.data.accountStatus == 'pending';
-      allow update: if (owner(uid) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fullName', 'phone', 'email', 'updatedAt'])
-        && request.resource.data.email == request.auth.token.email)
+      allow update: if (owner(uid) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fullName', 'phone', 'email', 'legalAcceptance', 'updatedAt'])
+        && request.resource.data.email == request.auth.token.email
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['legalAcceptance'])
+          || validLegalAcceptance(request.resource.data.legalAcceptance)))
         || (admin() && request.resource.data.uid == resource.data.uid && request.resource.data.role == resource.data.role);
       allow delete: if false;
     }
@@ -40,7 +62,8 @@ service cloud.firestore {
       allow list: if collection in ['riderApplications', 'driverApplications'] && admin();
       allow create: if collection in ['riderApplications', 'driverApplications']
         && signedIn()
-        && request.resource.data.keys().hasOnly(['applicationId', 'role', 'uid', 'fullName', 'phone', 'email', 'dateOfBirth', 'address', 'city', 'state', 'zipCode', 'documents', 'status', 'adminNotes', 'submittedAt', 'approvedAt', 'suspendedAt', 'updatedAt', 'ssnLast4', 'vehicleYear', 'vehicleMake', 'vehicleModel', 'vehicleColor', 'plateNumber', 'insuranceCompany', 'insurancePolicyNumber', 'insuranceExpiration', 'applicantNotes', 'rating'])
+        && request.resource.data.keys().hasOnly(['applicationId', 'role', 'uid', 'fullName', 'phone', 'email', 'dateOfBirth', 'address', 'city', 'state', 'zipCode', 'documents', 'legalAcceptance', 'status', 'adminNotes', 'submittedAt', 'approvedAt', 'suspendedAt', 'updatedAt', 'ssnLast4', 'vehicleYear', 'vehicleMake', 'vehicleModel', 'vehicleColor', 'plateNumber', 'insuranceCompany', 'insurancePolicyNumber', 'insuranceExpiration', 'applicantNotes', 'rating'])
+        && validLegalAcceptance(request.resource.data.legalAcceptance)
         && applicationId == (collection == 'riderApplications' ? 'rider_' : 'driver_') + request.auth.uid
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.applicationId == applicationId
