@@ -29,6 +29,46 @@ const $ = id =>
 const MAX_FILE_SIZE =
   10 * 1024 * 1024;
 
+const LEGAL_ACCEPTANCE_VERSION = '2026-11-23-v1';
+
+function setupLegalAcceptance() {
+  for (const box of document.querySelectorAll('.legal-acceptance-box')) {
+    const checks = [...box.querySelectorAll('.legal-review')];
+    const progress = box.querySelector('.legal-progress');
+    const update = () => {
+      const count = checks.filter(item => item.checked).length;
+      if (progress) progress.textContent = count + ' of ' + checks.length + ' documents reviewed';
+    };
+    for (const item of checks) item.addEventListener('change', update);
+    update();
+  }
+}
+
+function legalAcceptanceFor(formId) {
+  const form = document.getElementById(formId);
+  const box = form?.querySelector('.legal-acceptance-box');
+  if (!box) throw new Error('FareRide legal acceptance section could not load. Reload the page and try again.');
+
+  const checks = [...box.querySelectorAll('.legal-review')];
+  const agreement = box.querySelector('.legal-agree');
+  const missing = checks.filter(item => !item.checked);
+
+  if (missing.length || !agreement?.checked) {
+    const first = missing[0] || agreement;
+    first?.focus();
+    throw new Error('Open and review all FareRide legal documents, check all 7 document boxes, and accept the FareRide terms before completing registration.');
+  }
+
+  return {
+    version: LEGAL_ACCEPTANCE_VERSION,
+    acceptedAt: new Date().toISOString(),
+    documents: checks.map(item => item.dataset.document),
+    agreed: true
+  };
+}
+
+setupLegalAcceptance();
+
 
 /* =========================================================
    HELPERS
@@ -443,6 +483,14 @@ async function submitRider(
   const button =
     $("submitRiderBtn");
 
+  let legalAcceptance;
+  try {
+    legalAcceptance = legalAcceptanceFor("riderRegistrationForm");
+  } catch (error) {
+    showMessage("riderApplicationMessage", error.message, "error");
+    return;
+  }
+
 
   const facePhotoFile = $("riderFacePhotoFile").files[0];
   if (facePhotoFile && (!/^image\//.test(facePhotoFile.type) || facePhotoFile.size <= 0 || facePhotoFile.size >= MAX_FILE_SIZE)) {
@@ -514,6 +562,12 @@ async function submitRider(
       );
 
 
+
+    registrationStage = 'saving legal acceptance';
+    await setDoc(doc(db, 'users', riderAuthUser.uid), {
+      legalAcceptance: legalAcceptance,
+      updatedAt: new Date().toISOString()
+    }, {merge:true});
 
     const applicationId =
       'rider_' + riderAuthUser.uid;
@@ -599,6 +653,9 @@ async function submitRider(
       status:
         "new",
 
+      legalAcceptance:
+        legalAcceptance,
+
       adminNotes:
         "",
 
@@ -681,6 +738,14 @@ async function submitDriver(
 
   const button =
     $("submitApplicationBtn");
+
+  let legalAcceptance;
+  try {
+    legalAcceptance = legalAcceptanceFor("driverApplicationForm");
+  } catch (error) {
+    showMessage("applicationMessage", error.message, "error");
+    return;
+  }
 
 
   const ssnLast4 =
@@ -788,6 +853,12 @@ async function submitDriver(
       );
 
 
+
+    registrationStage = 'saving legal acceptance';
+    await setDoc(doc(db, 'users', driverAuthUser.uid), {
+      legalAcceptance: legalAcceptance,
+      updatedAt: new Date().toISOString()
+    }, {merge:true});
 
     const applicationId =
       'driver_' + driverAuthUser.uid;
@@ -942,6 +1013,9 @@ async function submitDriver(
         $("applicantNotes")
           .value
           .trim(),
+
+      legalAcceptance:
+        legalAcceptance,
 
       status:
         "new",
