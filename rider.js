@@ -78,7 +78,15 @@ let submitting = false;
 let bookingDraft = false;
 let estimateInProgress = false;
 let activeRide = null;
-function updateRequestButton(){ $('requestBtn').disabled = submitting || !estimate || Boolean(activeRide); }
+function isBlockingActiveRide() {
+  return Boolean(
+    activeRide &&
+    !['completed', 'cancelled', 'canceled'].includes(activeRide.status)
+  );
+}
+function updateRequestButton(){
+  $('requestBtn').disabled = submitting || !estimate || isBlockingActiveRide();
+}
 const vehiclePicker = createVehiclePicker();
 const selectedService = () => document.querySelector('[name="serviceType"]:checked').value;
 function details() {
@@ -560,7 +568,7 @@ async event => {
 
   event.preventDefault();
   if (submitting) return;
-  if(activeRide){$('msg').textContent='You already have an active ride. Complete or cancel it before requesting another.';return;}
+  if(isBlockingActiveRide()){$('msg').textContent='You already have an active ride. Complete or cancel it before requesting another.';return;}
   if (!auth.currentUser) { $('msg').textContent = 'Sign in before requesting a service.'; return; }
 
   if (!estimate) {
@@ -572,7 +580,7 @@ async event => {
     }
   }
 
-  if(activeRide){updateRequestButton();return;}
+  if(isBlockingActiveRide()){updateRequestButton();return;}
   const requestedEstimate=estimate,requestVersion=estimateVersion,requestUid=auth.currentUser?.uid;
   submitting=true;updateRequestButton();
   const tipPercent = 0;
@@ -599,7 +607,7 @@ async event => {
     );
 
   const riderProfile = await getDoc(doc(db, 'users', auth.currentUser.uid)).catch(() => null);
-  if(auth.currentUser?.uid!==requestUid||estimateVersion!==requestVersion||estimate!==requestedEstimate||activeRide){submitting=false;updateRequestButton();return;}
+  if(auth.currentUser?.uid!==requestUid||estimateVersion!==requestVersion||estimate!==requestedEstimate||isBlockingActiveRide()){submitting=false;updateRequestButton();return;}
   if (!riderProfile?.exists()) { submitting=false;updateRequestButton();$('msg').textContent = 'Unable to load your rider profile. Retry before requesting.'; return; }
   const profile = riderProfile.data();
   const ride = {
