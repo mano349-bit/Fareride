@@ -1,4 +1,4 @@
-import {CHAT_TEXT_LIMIT, chatParticipant, canSendChat, chatJobs, chatJobLabel, chatMessage} from './job-chat-state.js?v=20261123-current-job-only';
+import {CHAT_TEXT_LIMIT, chatParticipant, canSendChat, chatJobs, chatJobLabel, chatMessage, nextChatSelection} from './job-chat-state.js?v=20261125-accepted-chat';
 
 // The view owns subscriptions and drafts so switching jobs or accounts cannot mix conversations.
 export function mountJobChat(host, transport) {
@@ -25,7 +25,6 @@ export function mountJobChat(host, transport) {
   }
   function pickerOptions() {
     const available = [...jobs];
-    if (selected && !available.some(job => job.id === selected)) available.unshift(ride || {id: selected, status: 'unavailable'});
     picker.replaceChildren();
     if (!available.length) {
       const option = document.createElement('option');
@@ -49,15 +48,20 @@ export function mountJobChat(host, transport) {
   function selectJob(id) {
     if (selected) drafts.set(selected, input.value);
     clearThread(); selected = id; input.value = drafts.get(id) || ''; pickerOptions(); controls();
-    if (!id || !identity) {status.textContent = identity ? 'Your conversation appears when you have a live job.' : 'Sign in to use live job chat.'; return;}
+    if (!id || !identity) {status.textContent = identity ? 'Chat opens automatically when a driver accepts the job.' : 'Sign in to use live job chat.'; return;}
     status.textContent = 'Connecting to this job’s chat…';
     const version = threadVersion, session = sessionVersion;
     const current = () => !destroyed && sessionVersion === session && threadVersion === version;
     stopRide = transport.watchRide(id, next => {
       if (!current()) return;
       if (!next || !chatParticipant(next, identity)) {denyThread('This conversation is no longer available to your account.'); return;}
-      ride = {...next, id}; pickerOptions(); controls();
-      if (!canSendChat(ride, identity)) status.textContent = 'Job ended. This conversation is read-only.';
+      ride = {...next, id};
+      if (!canSendChat(ride, identity)) {
+        jobs = jobs.filter(job => job.id !== id);
+        drafts.delete(id); input.value = '';
+        selectJob(nextChatSelection(jobs, '', identity)); return;
+      }
+      pickerOptions(); controls();
       if (!stopMessages) stopMessages = transport.watchMessages(id, messages => {
         if (!current() || !chatParticipant(ride, identity)) return;
         const nearBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 60;
@@ -93,14 +97,15 @@ export function mountJobChat(host, transport) {
     stopJobs = transport.watchJobs(next, rides => {
       if (destroyed || version !== sessionVersion) return;
       jobs = chatJobs(rides, identity);
-      if (!selected && jobs.length) selectJob(jobs[0].id);
-      else {pickerOptions(); if (!selected) status.textContent = 'Your conversation appears when you have a live job.';}
+      const target = nextChatSelection(jobs, selected, identity);
+      if (target !== selected) selectJob(target);
+      else {pickerOptions(); if (!selected) status.textContent = 'Chat opens automatically when a driver accepts the job.';}
     }, () => {
       if (destroyed || version !== sessionVersion) return;
       status.textContent = 'Unable to load live jobs. Choose Reconnect chat.'; retry.hidden = false;
     });
   }
-  retry.addEventListener('click', () => {if (selected) selectJob(selected); else sessionChanged(identity);});
+  retry.addEventListener('click', () => sessionChanged(identity));
   picker.addEventListener('change', () => selectJob(picker.value));
   input.addEventListener('input', () => {drafts.set(selected, input.value); controls();});
   form.addEventListener('submit', async event => {
