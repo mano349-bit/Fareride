@@ -1790,6 +1790,9 @@ $('driverShareInput').addEventListener('change', syncPlatformShare);
 
 async function saveRates() {
   syncPlatformShare();
+  const towFields = ['towHookupInput','towLoadedMileInput','towDeadheadMileInput'];
+  const [towHookup,towLoadedMile,towDeadheadMile] = towFields.map(id=>Number($(id).value));
+  if(towFields.some(id=>!$(id).value.trim()) || ![[towHookup,10000],[towLoadedMile,1000],[towDeadheadMile,1000]].every(([v,max])=>Number.isFinite(v)&&v>=0&&v<=max)){ $('ratesMessage').textContent='Enter valid nonnegative towing rates.';return; }
 
   const baseFare =
     Number(
@@ -1859,6 +1862,7 @@ async function saveRates() {
         'current'
       ),
       {
+        towHookup, towLoadedMile, towDeadheadMile,
         baseFare:
           baseFare,
 
@@ -2000,6 +2004,9 @@ function startLiveListeners() {
 
         const pricing = snapshot.exists() ? snapshot.data() : {baseFare:3.5,perMile:2.25,comfortMultiplier:1.25,xlMultiplier:1.5,driverSharePercent:75,platformSharePercent:25};
         if (!snapshot.exists()) $('ratesMessage').textContent = 'Default rates are shown. Click Save Rates to publish them.';
+        $('towHookupInput').value = pricing.towHookup ?? 112;
+        $('towLoadedMileInput').value = pricing.towLoadedMile ?? 6;
+        $('towDeadheadMileInput').value = pricing.towDeadheadMile ?? 0;
         currentPricing = pricing;
         renderPricingPeriod();
 
