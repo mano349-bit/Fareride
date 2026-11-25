@@ -1821,6 +1821,10 @@ async function saveRates() {
     );
 
 
+  if (['baseFareInput','perMileInput','comfortMultiplierInput','xlMultiplierInput','driverShareInput','platformShareInput'].some(id => !$(id).value.trim()) || ![[baseFare,0,10000],[perMile,0,1000],[comfort,1,10],[xl,1,10],[driverShare,0,100],[platformShare,0,100]].every(([n,min,max])=>Number.isFinite(n)&&n>=min&&n<=max)) {
+    $('ratesMessage').textContent = 'Enter valid nonnegative rates, multipliers between 1 and 10, and percentages between 0 and 100.'; return;
+  }
+
   if (
     driverShare +
     platformShare !==
@@ -1875,7 +1879,7 @@ async function saveRates() {
 
     $('ratesMessage')
       .textContent =
-        'Rates saved successfully.';
+        'Rates saved successfully. New estimates use these rates; existing jobs are unchanged.';
 
 
   } catch (error) {
@@ -1984,17 +1988,8 @@ function startLiveListeners() {
 
       snapshot => {
 
-        if (
-          !snapshot.exists()
-        ) {
-
-          return;
-
-        }
-
-
-        const pricing =
-          snapshot.data();
+        const pricing = snapshot.exists() ? snapshot.data() : {baseFare:3.5,perMile:2.25,comfortMultiplier:1.25,xlMultiplier:1.5,driverSharePercent:75,platformSharePercent:25};
+        if (!snapshot.exists()) $('ratesMessage').textContent = 'Default rates are shown. Click Save Rates to publish them.';
         currentPricing = pricing;
         renderPricingPeriod();
 
@@ -2046,6 +2041,7 @@ function startLiveListeners() {
           'Pricing listener failed:',
           error
         );
+        $('ratesMessage').textContent = 'Unable to read rates. Publish the updated Firebase rules and check your connection.';
 
       }
     );
