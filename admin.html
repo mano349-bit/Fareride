@@ -1293,7 +1293,7 @@ body table.operations-table .ride-info-box {
     <h2>FareRide Rates Control</h2>
 
     <p>
-      Control passenger fares, bike delivery (85% of Economy) and the commission for new jobs. Towing base rates are unchanged. Existing job prices remain unchanged.
+      Control passenger fares, bike delivery (85% of Economy) and the commission for new jobs. Standard towing rates are adjustable below; specialty towing still requires a quote. Existing job prices remain unchanged.
     </p>
 
     <div class="rate-grid">
@@ -1361,6 +1361,13 @@ body table.operations-table .ride-info-box {
 
     </div>
 
+    <h2>Standard Tow Truck Pricing</h2>
+    <div class="rate-grid">
+      <label>Hookup fee ($)<input id="towHookupInput" type="number" min="0" max="10000" step="0.01" value="112"></label>
+      <label>Loaded mileage ($/mile)<input id="towLoadedMileInput" type="number" min="0" max="1000" step="0.01" value="6"></label>
+      <label>Travel to customer ($/mile — quote reference)<input id="towDeadheadMileInput" type="number" min="0" max="1000" step="0.01" value="0"></label>
+    </div>
+    <p>Travel to pickup is not automatically charged because the assigned truck and its distance are not yet known. Confirm it in the final quote. Heavy or specialty vehicles require a provider quote.</p>
     <button
       id="saveRatesBtn"
       class="save-rates">
@@ -1377,7 +1384,7 @@ body table.operations-table .ride-info-box {
 
 <script
   type="module"
-  src="admin.js?v=20261125-workspace-tabs">
+  src="admin.js?v=20261125-admin-tow">
 </script>
 
 
