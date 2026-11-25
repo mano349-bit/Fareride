@@ -177,7 +177,8 @@ service cloud.firestore {
         || (approved('rider') && resource.data.riderId == request.auth.uid)
         || (driverAccount() && (resource.data.status == 'requested' || resource.data.driverId == request.auth.uid));
       allow create: if approved('rider')
-        && request.resource.data.keys().hasOnly(['id', 'serviceType', 'serviceDetails', 'pricingStatus', 'riderName', 'riderPhone', 'riderId', 'pickup', 'dropoff', 'pickupLocation', 'dropoffLocation', 'miles', 'durationMinutes', 'fare', 'rideType', 'tipPercent', 'tipAmount', 'totalFare', 'status', 'requestedAt', 'estimatedArrivalMinutes', 'estimatedArrivalAt', 'estimatedFinishAt', 'driverId', 'driverName', 'driverLocation', 'acceptedAt', 'arrivedAt', 'startedAt', 'completedAt', 'cancelledAt'])
+        && request.resource.data.keys().hasOnly(['id', 'serviceType', 'serviceDetails', 'pricingStatus', 'riderName', 'riderPhone', 'riderId', 'pickup', 'dropoff', 'pickupLocation', 'dropoffLocation', 'miles', 'durationMinutes', 'fare', 'rideType', 'tipPercent', 'tipAmount', 'totalFare', 'status', 'requestedAt', 'estimatedArrivalMinutes', 'estimatedArrivalAt', 'estimatedFinishAt', 'driverId', 'driverName', 'driverLocation', 'acceptedAt', 'arrivedAt', 'startedAt', 'completedAt', 'cancelledAt', 'driverSharePercent'])
+        && validRideShare()
         && request.resource.data.id == rideId && request.resource.data.riderId == request.auth.uid
         && request.resource.data.status == 'requested'
         && request.resource.data.driverId == null && request.resource.data.driverName == null
@@ -487,6 +488,27 @@ service cloud.firestore {
         && request.resource.data.lng is number && request.resource.data.lng >= -180 && request.resource.data.lng <= 180
         && request.resource.data.available is bool && request.resource.data.updatedAt == request.time;
       allow delete: if owner(uid);
+    }
+    // Rates are readable by signed-in customers; only active admins may change them.
+    match /pricing/current {
+      allow get: if signedIn();
+      allow list, delete: if false;
+      allow create, update: if admin()
+        && request.resource.data.keys().hasOnly(['baseFare','perMile','comfortMultiplier','xlMultiplier','driverSharePercent','platformSharePercent','updatedAt'])
+        && request.resource.data.baseFare is number && request.resource.data.baseFare >= 0 && request.resource.data.baseFare <= 10000
+        && request.resource.data.perMile is number && request.resource.data.perMile >= 0 && request.resource.data.perMile <= 1000
+        && request.resource.data.comfortMultiplier is number && request.resource.data.comfortMultiplier >= 1 && request.resource.data.comfortMultiplier <= 10
+        && request.resource.data.xlMultiplier is number && request.resource.data.xlMultiplier >= 1 && request.resource.data.xlMultiplier <= 10
+        && request.resource.data.driverSharePercent is number && request.resource.data.driverSharePercent >= 0 && request.resource.data.driverSharePercent <= 100
+        && request.resource.data.platformSharePercent is number && request.resource.data.platformSharePercent >= 0 && request.resource.data.platformSharePercent <= 100
+        && request.resource.data.driverSharePercent + request.resource.data.platformSharePercent == 100
+        && request.resource.data.updatedAt is string;
+    }
+    function validRideShare() {
+      let path = /databases/$(database)/documents/pricing/current;
+      return !('driverSharePercent' in request.resource.data)
+        || (request.resource.data.driverSharePercent is number
+          && request.resource.data.driverSharePercent == (exists(path) ? get(path).data.driverSharePercent : 75));
     }
     match /config/{docId} {
       allow read, write: if false;
