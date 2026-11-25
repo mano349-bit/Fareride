@@ -1350,10 +1350,13 @@ body table.operations-table .ride-info-box {
         <input
           id="platformShareInput"
           type="number"
+          readonly
+          aria-describedby="platformShareHelp"
           step="1"
           min="0"
           max="100"
           value="25">
+        <small id="platformShareHelp">Calculated automatically: 100% minus Driver Share.</small>
       </label>
 
     </div>
@@ -1374,7 +1377,7 @@ body table.operations-table .ride-info-box {
 
 <script
   type="module"
-  src="admin.js?v=20261125-applicant-rates">
+  src="admin.js?v=20261125-auto-commission">
 </script>
 
 
