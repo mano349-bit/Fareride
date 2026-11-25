@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {chatJobs, chatParticipant, canSendChat, chatMessage} from './job-chat-state.js';
+import {chatJobs, chatParticipant, canSendChat, chatMessage, nextChatSelection} from './job-chat-state.js';
 const ride = {id:'job',riderId:'r',driverId:'d',status:'accepted'};
 const rider = {uid:'r',role:'rider'}, driver = {uid:'d',role:'driver'}, admin = {uid:'a',role:'admin'};
 test('rider, assigned driver and verified admin share the same live job', () => {
@@ -9,9 +9,9 @@ test('rider, assigned driver and verified admin share the same live job', () => 
 test('other drivers, riders and signed-out users cannot join the job', () => {
   for (const actor of [null,{uid:'other',role:'driver'},{uid:'other',role:'rider'},{uid:'r',role:'driver'}]) assert.equal(canSendChat(ride,actor),false);
 });
-test('before assignment only its rider and admin can chat', () => {
+test('before assignment chat is disabled for everyone', () => {
   const open = {...ride,status:'requested',driverId:null};
-  assert.equal(canSendChat(open,rider),true);assert.equal(canSendChat(open,admin),true);assert.equal(canSendChat(open,driver),false);
+  assert.equal(canSendChat(open,rider),false);assert.equal(canSendChat(open,admin),false);assert.equal(canSendChat(open,driver),false);
 });
 test('passenger, tow and bike jobs use the same conversation policy', () => {
   for(const serviceType of ['ride','tow','messenger']) assert.equal(canSendChat({...ride,serviceType},driver),true);
@@ -38,5 +38,7 @@ test('rider and driver chat show only their current live job while admin keeps a
 
   assert.deepEqual(chatJobs([older,current,waiting],rider).map(job=>job.id),['current']);
   assert.deepEqual(chatJobs([older,current],driver).map(job=>job.id),['current']);
-  assert.deepEqual(chatJobs([older,current,waiting],admin).map(job=>job.id),['current','older','waiting']);
+  assert.deepEqual(chatJobs([older,current,waiting],admin).map(job=>job.id),['current','older']);
 });
+
+test('completed selection is replaced by newly accepted job, or cleared',()=>{for(const actor of [rider,driver,admin]){const fresh={...ride,id:'fresh'};const jobs=chatJobs([{...ride,id:'old',status:'completed'},fresh],actor);assert.equal(nextChatSelection(jobs,'old',actor),'fresh');assert.equal(nextChatSelection([],'old',actor),'');}});
