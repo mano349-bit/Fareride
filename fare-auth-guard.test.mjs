@@ -21,7 +21,7 @@ test('approved rider remains signed in without verified email',async()=>{
 test('stale profile lookup cannot redirect a newly signed in rider',async()=>{
   const h=harness();const old=h.change({uid:'old',emailVerified:false});const current=h.change({uid:'rider',emailVerified:true});
   h.pending.shift()({exists:()=>false});await old;
-  h.pending.shift()({exists:()=>true,data:()=>({role:'rider'})});await current;
+  h.pending.shift()({exists:()=>true,data:()=>({role:'rider',accountStatus:'approved'})});await current;
   assert.deepEqual(h.redirects,[]);
 });
 test('missing profile does not redirect or destroy an authenticated session',async()=>{
@@ -43,3 +43,5 @@ test('server-confirmed suspended account still cannot access protected page',asy
 test('missing restored session reports a distinct reason',async()=>{
  const h=harness();await h.change(null);assert.equal(h.redirects[0],'./rider-login.html?reason=session-missing');
 });
+
+test('pending account cannot bypass approval with verified email or stale approval flag',async()=>{const h=harness();const run=h.change({uid:'rider',emailVerified:true});h.pending.shift()({exists:()=>true,data:()=>({role:'rider',accountStatus:'pending',approved:true})});await run;assert.equal(h.redirects.length,1);});
