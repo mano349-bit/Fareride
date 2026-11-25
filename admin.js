@@ -1778,7 +1778,18 @@ async function deleteApplicant(id) {
    RATES CONTROL
 ========================================================= */
 
+// Keep the two commission percentages complementary while editing.
+function syncPlatformShare() {
+  const driver = $('driverShareInput');
+  const platform = $('platformShareInput');
+  const value = driver.valueAsNumber;
+  platform.value = Number.isFinite(value) && value >= 0 && value <= 100 ? String(Math.round((100 - value) * 100) / 100) : '';
+}
+$('driverShareInput').addEventListener('input', syncPlatformShare);
+$('driverShareInput').addEventListener('change', syncPlatformShare);
+
 async function saveRates() {
+  syncPlatformShare();
 
   const baseFare =
     Number(
@@ -1827,9 +1838,7 @@ async function saveRates() {
   }
 
   if (
-    driverShare +
-    platformShare !==
-    100
+    Math.abs(driverShare + platformShare - 100) > 0.000001
   ) {
 
     $('ratesMessage')
