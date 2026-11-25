@@ -7,3 +7,5 @@ test('standard tow is hookup plus loaded miles, rounded to cents',()=>{
 test('invalid or negative tow distances cannot produce fares',()=>{
  for(const value of [-1,NaN,Infinity,null,'10'])assert.throws(()=>calculateTowFare(value),/valid towing distance/);
 });
+
+test('custom admin rates calculate loaded towing without inventing deadhead mileage',()=>{assert.equal(calculateTowFare(10,{hookup:125,perMile:5}),175);assert.throws(()=>calculateTowFare(10,{hookup:-1,perMile:5}));});
