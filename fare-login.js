@@ -169,16 +169,15 @@ async function login() {
 
     const profileRole = String(profile.role || "").trim().toLowerCase();
     const status = String(profile.accountStatus || profile.status || "").trim().toLowerCase();
-    const approved = profile.approved === true || status === "approved" || status === "active";
+    const approved = status === "approved" || status === "active";
 
-    if (!user.emailVerified && !approved) {
+    if (!approved) {
 
       showMessage(
-        "Your FareRide account is waiting for approval. Verify your email, or wait for FareRide Admin to approve your application."
+        "Your FareRide account is not active. Please contact FareRide Admin for approval or reactivation."
       );
 
-      resendButton.style.display =
-        "block";
+      resendButton.style.display = "none";
 
       return;
 
