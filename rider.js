@@ -1,6 +1,6 @@
 import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
 import {createVehiclePicker} from './vehicle-picker.js?v=20261013-regular-vehicles';
-import {TOW_PRICING, calculateTowFare} from './tow-pricing.js';
+import {TOW_PRICING, calculateTowFare} from './tow-pricing.js?v=20261125-admin-tow';
 import { getDocFromServer } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 import { SERVICES, validateServiceDetails, priceLabel } from './services.js';
 /* =========================================================
@@ -65,7 +65,10 @@ const DEFAULTS = {
   perMile: 2.25,
   comfortMultiplier: 1.25,
   xlMultiplier: 1.5,
-  driverSharePercent: 75
+  driverSharePercent: 75,
+  towHookup: 112,
+  towLoadedMile: 6,
+  towDeadheadMile: 0
 };
 
 const $ = id =>
@@ -118,7 +121,7 @@ function updateService() {
   $('estimateBtn').textContent = specialty ? 'Review quote request' : type === 'tow' ? 'Calculate towing mileage & fare' : 'Calculate mileage & fare';
   $('requestBtn').textContent = specialty ? 'Request towing quote' : SERVICES[type].action;
   $('serviceNote').textContent = type !== 'tow' ? 'Choose your service and calculate an estimate. Bike delivery costs 15% less than Economy sedan rates.'
-    : specialty ? 'Heavy vehicles and recovery require a provider quote before dispatch.' : 'Standard light-duty towing uses $112 hookup + $6 per loaded mile. Final price and availability must be confirmed with the tow driver.';
+    : specialty ? 'Heavy vehicles and recovery require a provider quote before dispatch.' : 'Standard towing estimates use the current FareRide hookup and loaded-mile rates. Travel to pickup is not included; confirm the final price with the tow driver.';
   invalidateEstimate();
 }
 $('rideForm').addEventListener('input', event => { invalidateEstimate(); });
@@ -129,8 +132,8 @@ $('towVehicleClass')?.addEventListener('change', updateService);
 async function getSettings() {
   const snapshot = await getDocFromServer(doc(db, 'pricing', 'current'));
   if (!snapshot.exists()) return {...DEFAULTS};
-  const rates = snapshot.data();
-  const limits = {baseFare:[0,10000],perMile:[0,1000],comfortMultiplier:[1,10],xlMultiplier:[1,10],driverSharePercent:[0,100]};
+  const rates = {...DEFAULTS,...snapshot.data()};
+  const limits = {baseFare:[0,10000],perMile:[0,1000],comfortMultiplier:[1,10],xlMultiplier:[1,10],driverSharePercent:[0,100],towHookup:[0,10000],towLoadedMile:[0,1000],towDeadheadMile:[0,1000]};
   for (const [key,[min,max]] of Object.entries(limits)) {
     if (!Number.isFinite(rates[key]) || rates[key] < min || rates[key] > max) throw new Error('FareRide pricing is unavailable. Contact Admin.');
   }
@@ -193,7 +196,8 @@ function showSummary(ride) {
   $('duration').textContent = Number(ride.durationMinutes || 0) + (ride.serviceType === 'tow' ? ' min driving' : ' min');
   if (towBreakdown && ride.serviceType === 'tow' && ride.pricingStatus === 'estimated') {
     towBreakdown.hidden = false;
-    towBreakdown.textContent = 'Estimated towing: ' + money(TOW_PRICING.hookup) + ' hookup + ' + Number(ride.miles).toFixed(2) + ' miles × ' + money(TOW_PRICING.perMile) + '/mile = ' + money(ride.fare) + '. Tips are separate. Taxes, tolls, recovery, storage, after-hours and specialty equipment are not included; confirm the final price with the tow driver.';
+    const rates = ride.pricingSettings;
+    towBreakdown.textContent = (rates ? 'Estimated towing: ' + money(rates.towHookup) + ' hookup + ' + Number(ride.miles).toFixed(2) + ' loaded miles × ' + money(rates.towLoadedMile) + '/mile = ' : 'Saved towing estimate: ') + money(ride.fare) + '. Travel to pickup is not included' + (rates && rates.towDeadheadMile > 0 ? ' (reference rate ' + money(rates.towDeadheadMile) + '/mile)' : '') + '. Confirm final price with the tow driver. Tips, taxes, tolls, recovery, storage and specialty equipment are separate.';
   }
 }
 
@@ -487,7 +491,7 @@ async function calculateEstimate() {
       );
 
     const fare = serviceType === 'tow'
-      ? calculateTowFare(Number(miles.toFixed(2)))
+      ? calculateTowFare(Number(miles.toFixed(2)), {hookup:settings.towHookup,perMile:settings.towLoadedMile})
       : serviceType === 'messenger'
         ? calculateFare(miles, 'economy', settings) * 0.85
         : calculateFare(miles, selectedRideType, settings);
