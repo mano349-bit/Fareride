@@ -9,9 +9,10 @@ function harness(){
   return elements.get(id);
  };
  element('pickup').value='lga';element('dropoff').value='jfk';element('rideType').value='economy';
+ let rates=null;
  const context=vm.createContext({
   console,URL,Number,Intl,Math,Date,JSON,Map,crypto:{randomUUID:()=> 'new-job'},setTimeout,clearTimeout,AbortController,
-  auth:{currentUser:{uid:'r'}},db:{},doc:(_db,collection,id)=>({collection,id}),setDoc:async()=>{},getDoc:()=>profileWait||Promise.resolve({exists:()=>true,data:()=>({fullName:'Rider'})}),
+  auth:{currentUser:{uid:'r'}},db:{},getDocFromServer:async()=>({exists:()=>rates!==null,data:()=>rates}),doc:(_db,collection,id)=>({collection,id}),setDoc:async()=>{},getDoc:()=>profileWait||Promise.resolve({exists:()=>true,data:()=>({fullName:'Rider'})}),
   localStorage:{getItem:key=>saved.get(key)||null,setItem:(key,value)=>saved.set(key,value),removeItem:key=>saved.delete(key)},
   document:{getElementById:element,querySelector:()=>({value:'ride'}),querySelectorAll:()=>[]},
   window:{addEventListener:(type,fn)=>events.set(type,fn),dispatchEvent(){}},
@@ -27,7 +28,7 @@ function harness(){
  });
  const source=fs.readFileSync('rider.js','utf8').replace(/^import[\s\S]*?from\s*["'][^"']+["'];\s*/gm,'');
  vm.runInContext(source,context);
- return {context,element,events,requests,calculate:()=>context.calculateEstimate(),snapshot:ride=>context.showRideStatus({id:'old',riderId:'r',...ride}),deferRoute:response=>{routeResponse=response;},deferProfile:promise=>{profileWait=promise;},state:code=>vm.runInContext(code,context)};
+ return {context,element,events,requests,setRates:value=>{rates=value;},calculate:()=>context.calculateEstimate(),snapshot:ride=>context.showRideStatus({id:'old',riderId:'r',...ride}),deferRoute:response=>{routeResponse=response;},deferProfile:promise=>{profileWait=promise;},state:code=>vm.runInContext(code,context)};
 }
 test('airport estimate stays unchanged after unrelated completed ride snapshots',async()=>{
  const h=harness();await h.calculate();
@@ -62,3 +63,5 @@ test('airport aliases reject a geocoder result outside the New York region',asyn
  const h=harness();h.context.fetch=async()=>({ok:true,json:async()=>[{lat:'25.9',lon:'-80.1'}]});
  await assert.rejects(h.context.geocode('lga'),/unexpected location/);
 });
+
+test('admin rates drive new estimates and save the commission in the draft',async()=>{const h=harness();h.setRates({baseFare:5,perMile:3,comfortMultiplier:1.25,xlMultiplier:1.5,driverSharePercent:80});await h.calculate();assert.equal(h.element('fare').textContent,'$40.88');assert.equal(h.state('estimate.driverSharePercent'),80);});
