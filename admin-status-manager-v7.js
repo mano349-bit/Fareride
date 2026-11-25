@@ -66,6 +66,9 @@ function role(r){
   tabs.append(b);panes.append(p);
  });w.append(tabs,panes);return w;
 }
+const ratesPanel = document.getElementById('panel-rates');
+const ratesHome = document.getElementById('ratesHome');
+function parkRates(){if(ratesPanel && ratesHome){ratesPanel.hidden=true;ratesHome.after(ratesPanel);}}
 function render(){
  calendarCleanups.splice(0).forEach(cleanup=>cleanup());
  let host=document.getElementById("fr7-fixed-host");
@@ -73,9 +76,13 @@ function render(){
   host=document.createElement("div");host.id="fr7-fixed-host";
   document.body.insertBefore(host,document.body.firstChild);
  }
+ // Move the original controls, never clone them or discard their event handlers or draft values.
+ parkRates();
  host.replaceChildren();
  const top=document.createElement("div");top.className="fr7-top";top.innerHTML="<h1>FareRide Applicant Management</h1><p>Checkboxes and status tabs stay available even when the older Admin page redraws.</p>";
- host.append(top,role("driver"),role("rider"));
+ host.append(top);
+ if(ratesPanel){host.append(ratesPanel);ratesPanel.hidden=false;}
+ host.append(role("driver"),role("rider"));
 }
 let timer;
 let authorized = false;
@@ -88,6 +95,7 @@ observeAdmin(approved => {
  stops.splice(0).forEach(stop => stop());
  clearTimeout(timer);
  S.driver = []; S.rider = [];
+ parkRates();
  document.getElementById('fr7-fixed-host')?.remove();
  if (!approved) return;
  for(const r of ["driver","rider"])stops.push(onSnapshot(collection(db,C[r]),s=>{S[r]=s.docs.map(d=>({id:d.id,...d.data()}));schedule()},e=>console.error("FareRide manager listener:",r,e)));
