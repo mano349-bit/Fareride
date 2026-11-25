@@ -360,6 +360,7 @@ observeAdmin(approved => {
 ========================================================= */
 
 function showPanel(name) {
+  if (name === 'rates') { $('panel-rates').scrollIntoView({block:'start',behavior:'smooth'}); return; }
 
   document
     .querySelectorAll(
@@ -2170,15 +2171,8 @@ onAdminCalendar(() => { renderRides(); renderApplicants(); renderPricingPeriod()
 
 function renderPricingPeriod() {
  const panel=$('panel-rates');
+ if(!panel)return;
  let summary=$('ratesPeriodStatus');
- if(!summary){
-  summary=document.createElement('p');summary.id='ratesPeriodStatus';summary.setAttribute('role','status');
-  const edit=document.createElement('button');edit.type='button';edit.textContent='Edit current rates';
-  edit.onclick=()=>{for(const child of panel.children) if(child.dataset.currentRates==='true') child.hidden=false;};
-  panel.querySelector('.admin-calendar').after(summary,edit);
-  for(const child of panel.children) if(child!==summary && child!==edit && child.tagName!=='H2' && !child.querySelector('.admin-calendar')) child.dataset.currentRates='true';
- }
- const matches=currentPricing && adminRecords([currentPricing],'rates','rates').length>0;
- summary.textContent=matches?'Current rates were updated within the selected dates.':currentPricing?'No dated rate settings in this period. You can still edit the current rates.':'Waiting for current rates...';
- for(const child of panel.children) if(child.dataset.currentRates==='true') child.hidden=!matches;
+ if(!summary){summary=document.createElement('p');summary.id='ratesPeriodStatus';summary.setAttribute('role','status');panel.querySelector('h2').after(summary);}
+ summary.textContent=currentPricing?.updatedAt?'Current rates last saved: '+dateText(currentPricing.updatedAt):currentPricing?'Default rates — save to publish.':'Waiting for current rates…';
 }
