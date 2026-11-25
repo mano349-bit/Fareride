@@ -494,7 +494,10 @@ service cloud.firestore {
       allow get: if signedIn();
       allow list, delete: if false;
       allow create, update: if admin()
-        && request.resource.data.keys().hasOnly(['baseFare','perMile','comfortMultiplier','xlMultiplier','driverSharePercent','platformSharePercent','updatedAt'])
+        && request.resource.data.keys().hasOnly(['baseFare','perMile','comfortMultiplier','xlMultiplier','driverSharePercent','platformSharePercent','updatedAt','towHookup','towLoadedMile','towDeadheadMile'])
+        && (!('towHookup' in request.resource.data) || (request.resource.data.towHookup is number && request.resource.data.towHookup >= 0 && request.resource.data.towHookup <= 10000))
+        && (!('towLoadedMile' in request.resource.data) || (request.resource.data.towLoadedMile is number && request.resource.data.towLoadedMile >= 0 && request.resource.data.towLoadedMile <= 1000))
+        && (!('towDeadheadMile' in request.resource.data) || (request.resource.data.towDeadheadMile is number && request.resource.data.towDeadheadMile >= 0 && request.resource.data.towDeadheadMile <= 1000))
         && request.resource.data.baseFare is number && request.resource.data.baseFare >= 0 && request.resource.data.baseFare <= 10000
         && request.resource.data.perMile is number && request.resource.data.perMile >= 0 && request.resource.data.perMile <= 1000
         && request.resource.data.comfortMultiplier is number && request.resource.data.comfortMultiplier >= 1 && request.resource.data.comfortMultiplier <= 10
