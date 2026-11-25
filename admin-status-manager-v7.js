@@ -69,7 +69,26 @@ function role(r){
 const ratesPanel = document.getElementById('panel-rates');
 const ratesHome = document.getElementById('ratesHome');
 function parkRates(){if(ratesPanel && ratesHome){ratesPanel.hidden=true;ratesHome.after(ratesPanel);}}
+const adminFrame = document.querySelector('.admin-content-frame');
+let activeSection = 'rates';
+const mainTabs = [['rates','FareRide Rates Control'],['driver','Driver Applicant Manager'],['rider','Rider Applicant Manager'],['admin','FareRide Admin']];
+function activateSection(key){
+ if(!mainTabs.some(([id])=>id===key))return;
+ activeSection=key;
+ const host=document.getElementById('fr7-fixed-host');
+ if(!host)return;
+ host.querySelectorAll('[data-fr7-section]').forEach(panel=>panel.hidden=panel.dataset.fr7Section!==key);
+ host.querySelectorAll('[data-fr7-tab]').forEach(button=>{
+  const selected=button.dataset.fr7Tab===key;
+  button.classList.toggle('active',selected);
+  button.setAttribute('aria-selected',String(selected));
+ });
+ if(adminFrame)adminFrame.hidden=authorized && key!=='admin';
+}
+window.addEventListener('fareride-open-rates',()=>activateSection('rates'));
 function render(){
+ if(!authorized)return;
+ const checked=new Set([...document.querySelectorAll('#fr7-fixed-host .fr7-c:checked')].map(cb=>[cb.dataset.role,cb.dataset.group,cb.dataset.id].join('|')));
  calendarCleanups.splice(0).forEach(cleanup=>cleanup());
  let host=document.getElementById("fr7-fixed-host");
  if(!host){
@@ -80,9 +99,17 @@ function render(){
  parkRates();
  host.replaceChildren();
  const top=document.createElement("div");top.className="fr7-top";top.innerHTML="<h1>FareRide Applicant Management</h1><p>Checkboxes and status tabs stay available even when the older Admin page redraws.</p>";
- host.append(top);
- if(ratesPanel){host.append(ratesPanel);ratesPanel.hidden=false;}
- host.append(role("driver"),role("rider"));
+ const tabs=document.createElement('div');tabs.className='fr7-main-tabs';tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','FareRide management sections');
+ for(const [key,label] of mainTabs){
+  const button=document.createElement('button');button.type='button';button.className='fr7-main-tab';button.dataset.fr7Tab=key;button.textContent=label;button.setAttribute('role','tab');button.onclick=()=>activateSection(key);tabs.append(button);
+ }
+ top.append(tabs);host.append(top);
+ if(ratesPanel){ratesPanel.dataset.fr7Section='rates';host.append(ratesPanel);}
+ for(const r of ['driver','rider']){
+  const panel=role(r);panel.dataset.fr7Section=r;host.append(panel);
+ }
+ for(const cb of host.querySelectorAll('.fr7-c'))if(checked.has([cb.dataset.role,cb.dataset.group,cb.dataset.id].join('|'))){cb.checked=true;cb.onchange?.();}
+ activateSection(activeSection);
 }
 let timer;
 let authorized = false;
@@ -97,6 +124,8 @@ observeAdmin(approved => {
  S.driver = []; S.rider = [];
  parkRates();
  document.getElementById('fr7-fixed-host')?.remove();
+ if(adminFrame)adminFrame.hidden=false;
+ activeSection='rates';
  if (!approved) return;
  for(const r of ["driver","rider"])stops.push(onSnapshot(collection(db,C[r]),s=>{S[r]=s.docs.map(d=>({id:d.id,...d.data()}));schedule()},e=>console.error("FareRide manager listener:",r,e)));
  schedule();
