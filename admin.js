@@ -360,7 +360,7 @@ observeAdmin(approved => {
 ========================================================= */
 
 function showPanel(name) {
-  if (name === 'rates') { $('panel-rates').scrollIntoView({block:'start',behavior:'smooth'}); return; }
+  if (name === 'rates') { window.dispatchEvent(new Event('fareride-open-rates')); return; }
 
   document
     .querySelectorAll(
