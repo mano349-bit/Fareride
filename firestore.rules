@@ -14,7 +14,8 @@ service cloud.firestore {
         && presence.updatedAt > request.time - duration.value(90, 's');
     }
     function driverAccount() {
-      return signedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver';
+      return signedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver'
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accountStatus in ['approved', 'active'];
     }
     function validLegalAcceptance(value) {
       return value is map
