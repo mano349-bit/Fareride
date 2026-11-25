@@ -1,6 +1,7 @@
 import {liveSnapshot} from './live-firestore.js?v=20261013-live-sync';
 import {createVehiclePicker} from './vehicle-picker.js?v=20261013-regular-vehicles';
 import {TOW_PRICING, calculateTowFare} from './tow-pricing.js';
+import { getDocFromServer } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 import { SERVICES, validateServiceDetails, priceLabel } from './services.js';
 /* =========================================================
    FARERIDE MOBILE NETWORK HELPER
@@ -57,14 +58,14 @@ import {
 } from "./firebase-session.js";
 
 const RK = 'fareride_rides_v2';
-const SK = 'fareride_settings_v2';
 const LAST = 'fareride_last_ride_id';
 
 const DEFAULTS = {
   baseFare: 3.5,
   perMile: 2.25,
   comfortMultiplier: 1.25,
-  xlMultiplier: 1.5
+  xlMultiplier: 1.5,
+  driverSharePercent: 75
 };
 
 const $ = id =>
@@ -125,17 +126,15 @@ document.querySelectorAll('[name="serviceType"]').forEach(input => input.addEven
 updateService();
 $('towVehicleClass')?.addEventListener('change', updateService);
 
-function getSettings() {
-  try {
-    return {
-      ...DEFAULTS,
-      ...JSON.parse(
-        localStorage.getItem(SK) || '{}'
-      )
-    };
-  } catch {
-    return { ...DEFAULTS };
+async function getSettings() {
+  const snapshot = await getDocFromServer(doc(db, 'pricing', 'current'));
+  if (!snapshot.exists()) return {...DEFAULTS};
+  const rates = snapshot.data();
+  const limits = {baseFare:[0,10000],perMile:[0,1000],comfortMultiplier:[1,10],xlMultiplier:[1,10],driverSharePercent:[0,100]};
+  for (const [key,[min,max]] of Object.entries(limits)) {
+    if (!Number.isFinite(rates[key]) || rates[key] < min || rates[key] > max) throw new Error('FareRide pricing is unavailable. Contact Admin.');
   }
+  return {...DEFAULTS,...rates};
 }
 
 
@@ -385,11 +384,9 @@ async function getRoute(from, to) {
 
 function calculateFare(
   miles,
-  rideType
+  rideType,
+  settings
 ) {
-
-  const settings =
-    getSettings();
 
   let multiplier = 1;
 
@@ -418,10 +415,12 @@ async function calculateEstimate() {
   const selectedRideType = $('rideType').value;
   if (serviceType === 'tow' && $('towVehicleClass')?.value === 'specialty') {
     try {
+      const settings = await getSettings();
+      if (version !== estimateVersion) return;
       const serviceDetails = details();
       const pickup = $('pickup').value.trim(), dropoff = $('dropoff').value.trim();
       if (!pickup || !dropoff) throw new Error('Enter pickup and destination.');
-      estimate = { pickup, dropoff, serviceType, serviceDetails, pricingStatus: 'quote_required', fare: null, miles: null, durationMinutes: null, rideType: serviceType, pickupLocation: null, dropoffLocation: null };
+      estimate = { pickup, dropoff, serviceType, serviceDetails, pricingStatus: 'quote_required', driverSharePercent: settings.driverSharePercent, pricingSettings: settings, fare: null, miles: null, durationMinutes: null, rideType: serviceType, pickupLocation: null, dropoffLocation: null };
       $('summary').hidden = false;
       $('fare').textContent = 'Quote required';
       $('mileage').textContent = 'Confirmed by provider';
@@ -461,6 +460,8 @@ async function calculateEstimate() {
 
   try {
 
+    const settings = await getSettings();
+    if (version !== estimateVersion) return;
     const [from, to] =
       await Promise.all([
         geocode(pickup),
@@ -488,12 +489,13 @@ async function calculateEstimate() {
     const fare = serviceType === 'tow'
       ? calculateTowFare(Number(miles.toFixed(2)))
       : serviceType === 'messenger'
-        ? calculateFare(miles, 'economy') * 0.85
-        : calculateFare(miles, selectedRideType);
+        ? calculateFare(miles, 'economy', settings) * 0.85
+        : calculateFare(miles, selectedRideType, settings);
 
     if (version !== estimateVersion) return;
     estimate = {
       serviceType, serviceDetails, pricingStatus: 'estimated',
+      driverSharePercent: settings.driverSharePercent, pricingSettings: settings,
       pickup,
       dropoff,
 
@@ -609,6 +611,10 @@ async event => {
   const riderProfile = await getDoc(doc(db, 'users', auth.currentUser.uid)).catch(() => null);
   if(auth.currentUser?.uid!==requestUid||estimateVersion!==requestVersion||estimate!==requestedEstimate||isBlockingActiveRide()){submitting=false;updateRequestButton();return;}
   if (!riderProfile?.exists()) { submitting=false;updateRequestButton();$('msg').textContent = 'Unable to load your rider profile. Retry before requesting.'; return; }
+  let latestRates;
+  try { latestRates = await getSettings(); } catch (error) { submitting=false; updateRequestButton(); $('msg').textContent='Unable to verify current prices. Check your connection and retry.'; return; }
+  if(auth.currentUser?.uid!==requestUid||estimateVersion!==requestVersion||estimate!==requestedEstimate||isBlockingActiveRide()){submitting=false;updateRequestButton();return;}
+  if(Object.keys(DEFAULTS).some(key=>latestRates[key]!==requestedEstimate.pricingSettings?.[key])) { submitting=false; invalidateEstimate(); $('msg').textContent='FareRide rates changed. Please calculate a new estimate before booking.'; return; }
   const profile = riderProfile.data();
   const ride = {
 
@@ -618,6 +624,7 @@ async event => {
     serviceType: estimate.serviceType,
     serviceDetails: estimate.serviceDetails,
     pricingStatus: estimate.pricingStatus,
+    driverSharePercent: estimate.driverSharePercent,
 
     riderName:
       profile.fullName || auth.currentUser.displayName || 'Rider',
