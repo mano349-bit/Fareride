@@ -1,5 +1,4 @@
 export const LIVE_CHAT_STATUSES = [
-  'requested',
   'accepted',
   'started',
   'arrived'
@@ -25,6 +24,7 @@ export function chatParticipant(ride, identity) {
 
 export function canSendChat(ride, identity) {
   return chatParticipant(ride, identity)
+    && Boolean(ride.driverId)
     && LIVE_CHAT_STATUSES.includes(ride.status);
 }
 
@@ -97,4 +97,10 @@ export function chatMessage(ride, identity, value) {
     senderRole: identity.role,
     text
   };
+}
+
+// Non-admin chat always follows the current assigned job; never retain an ended job.
+export function nextChatSelection(jobs, selected, identity) {
+  if (identity?.role === 'admin' && jobs.some(job => job.id === selected)) return selected;
+  return jobs[0]?.id || '';
 }
